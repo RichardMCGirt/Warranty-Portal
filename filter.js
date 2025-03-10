@@ -44,7 +44,6 @@ function observeTableData(selector) {
         for (const mutation of mutationsList) {
             if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
                 filterRows();
-                console.log("🔄 Table updated, regenerating checkboxes...");
                 generateCheckboxes(); // ✅ Regenerate checkboxes based on displayed data
                 rowsAdded = true;
                 observer.disconnect(); // Stop observing once data is loaded
@@ -125,7 +124,6 @@ async function fetchFieldTechs() {
             }
         });
 
-        console.log("✅ Airtable data fetched, waiting for table to populate...");
         
     } catch (error) {
         console.error('❌ Error fetching field techs:', error);
@@ -136,10 +134,8 @@ function filterRows() {
     const selectedBranches = Array.from(document.querySelectorAll('#filter-branch input[name="branch"]:checked'))
         .map(checkbox => checkbox.value.toLowerCase().trim());
 
-    console.log("📌 Selected filters before filtering:", selectedBranches);
 
     if (selectedBranches.length === 0 || selectedBranches.includes("all")) {
-        console.log("✅ Showing all rows (no filter applied)");
         document.querySelectorAll('#airtable-data tbody tr, #feild-data tbody tr').forEach(row => {
             row.style.display = ""; // Show all rows
         });
@@ -169,7 +165,6 @@ function filterRows() {
             const fieldTech = fieldTechColumn.textContent.toLowerCase().trim();
             const isVisible = selectedBranches.some(branch => fieldTech.includes(branch));
 
-            console.log(`🔎 Checking row '${fieldTech}': ${isVisible ? "Visible" : "Hidden"}`);
 
             row.style.display = isVisible ? "" : "none";
 
@@ -240,10 +235,8 @@ function loadFiltersFromLocalStorage() {
 
     if (storedFilters) {
         const selectedFilters = JSON.parse(storedFilters);
-        console.log("📌 Saved filters from localStorage:", selectedFilters);
 
         waitForElements(() => {
-            console.log("✅ Checkboxes exist, setting filters...");
             document.querySelectorAll('#filter-branch input[name="branch"]').forEach(checkbox => {
                 checkbox.checked = selectedFilters.includes(checkbox.value);
             });
@@ -252,7 +245,6 @@ function loadFiltersFromLocalStorage() {
         });
     } else {
         document.querySelector('#filter-branch input[value="All"]').checked = true;
-        console.log("⚠️ No filters found, defaulting to 'All'.");
     }
 }
 
@@ -261,7 +253,6 @@ function waitForTableData(callback) {
     const tableCheckInterval = setInterval(() => {
         const tableRows = document.querySelectorAll('#airtable-data tbody tr, #feild-data tbody tr');
         if (tableRows.length > 0) {
-            console.log("✅ Table data loaded, applying filters...");
             clearInterval(tableCheckInterval);
             callback();
         } else {
@@ -272,7 +263,6 @@ function waitForTableData(callback) {
 
 function handleCheckboxChange(event) {
     const checkbox = event.target;
-    console.log(`📌 Checkbox Changed: ${checkbox.value} - ${checkbox.checked ? "Checked" : "Unchecked"}`);
 
     const checkboxes = document.querySelectorAll('#filter-branch input[name="branch"]');
     const allCheckbox = document.querySelector('#filter-branch input[value="All"]');
@@ -295,7 +285,6 @@ function attachCheckboxListeners() {
 
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
-            console.log(`📌 Checkbox Changed: ${checkbox.value} - ${checkbox.checked ? "Checked" : "Unchecked"}`);
 
             if (checkbox.value === "All" && checkbox.checked) {
                 // ✅ If "All" is checked, uncheck all other checkboxes

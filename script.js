@@ -51,12 +51,9 @@ document.addEventListener("DOMContentLoaded", function () {
     async function fetchAirtableFields() {
         const url = `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableName}?maxRecords=1`;
     
-        console.log("Starting to fetch Airtable fields...");
-        console.log("Request URL:", url);
     
         // Avoid logging sensitive information in production
         if (process.env.NODE_ENV === 'development') {
-            console.log("API Key (Development only):", airtableApiKey);
         }
     
         try {
@@ -66,7 +63,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 },
             });
     
-            console.log("Response received. Status:", response.status);
     
             // Check if the response was successful
             if (!response.ok) {
@@ -79,7 +75,6 @@ document.addEventListener("DOMContentLoaded", function () {
             // Check if records exist and log the fields
             const fields = data.records?.[0]?.fields;
             if (fields) {
-                console.log("Fetched Fields Data:", fields);
             } else {
                 console.warn("No fields found in the returned data.");
             }
@@ -227,8 +222,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Count records by status
             const fieldTechReviewNeededCount = allRecords.filter(record => record.fields['Status'] === 'Field Tech Review Needed').length;
             const scheduledAwaitingFieldCount = allRecords.filter(record => record.fields['Status'] === 'Scheduled- Awaiting Field').length;
-            console.log(`📌 Field Tech Review Needed: ${fieldTechReviewNeededCount}`);
-            console.log(`📌 Scheduled - Awaiting Field: ${scheduledAwaitingFieldCount}`);
+    
     
             const [primaryRecords, secondaryRecords] = await Promise.all([
                 filterAndSortRecords(allRecords, 'Field Tech Review Needed', false),
@@ -265,8 +259,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     async function filterAndSortRecords(records, status, isSecondary) {
-        console.log(`🔍 Filtering records for status: ${status}`);
-        console.log(`📌 Total records before filtering: ${records.length}`);
+      
     
         const filteredRecords = records.filter(record => {
             const match = record.fields['Status'] === status;
@@ -274,7 +267,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         
     
-        console.log(`✅ Found ${filteredRecords.length} records for status: ${status}`);
     
         // Ensure sorting only happens when 'displayFieldManager' exists
         const sortedRecords = filteredRecords.sort((a, b) => {
@@ -283,7 +275,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return aField.localeCompare(bField);
         });
     
-        console.log(`📌 Sorted ${sortedRecords.length} records for status: ${status}`);
     
         return sortedRecords;
     }
@@ -383,7 +374,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function fetchDataAndInitializeFilter() {
         await fetchAllData(); // Ensure this function populates the tables
-        console.log("Data loaded from Airtable.");
     }
     
     // Call this function after DOMContentLoaded
@@ -398,12 +388,10 @@ function filterRecords() {
     }
 
     const selectedBranch = dropdown.value;
-    console.log(`Selected branch: "${selectedBranch}"`);
 
     const tables = ['#airtable-data', '#feild-data'];
 
     tables.forEach(tableSelector => {
-        console.log(`Filtering table: ${tableSelector}`);
         const rows = document.querySelectorAll(`${tableSelector} tbody tr`);
 
         if (rows.length === 0) {
@@ -415,7 +403,6 @@ function filterRecords() {
             const branchCell = row.querySelector('td:first-child');
             if (branchCell) {
                 const branch = branchCell.textContent.trim();
-                console.log(`Row ${index + 1}: Branch = "${branch}"`);
                 if (selectedBranch === '' || branch === selectedBranch) {
                     row.style.display = '';
                 } else {
@@ -432,7 +419,6 @@ function filterRecords() {
 document.addEventListener('DOMContentLoaded', () => {
     const dropdown = document.querySelector('#filter-dropdown');
     if (dropdown) {
-        console.log("Dropdown found. Adding change event listener."); // Debug log
         dropdown.addEventListener('change', filterRecords); // Filter on dropdown change
     } else {
         console.error("Dropdown with ID #filter-dropdown not found.");
@@ -485,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
         let lastCell = null;
         let rowspanCount = 1;
-    
+        let rowGroupStart = null;
     
         rows.forEach((row, index) => {
             const currentCell = row.cells[columnIndex];
@@ -495,56 +481,113 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
     
-    
             if (lastCell && lastCell.textContent.trim() === currentCell.textContent.trim()) {
                 rowspanCount++;
                 lastCell.rowSpan = rowspanCount;
                 currentCell.style.display = "none"; // Hide duplicate cell
             } else {
+                if (rowGroupStart) {
+                    rowGroupStart.classList.add("merged-group-start"); // Mark first row in a merged group
+                }
                 lastCell = currentCell;
-                rowspanCount = 1; // Reset rowspan count
+                rowspanCount = 1;
+                rowGroupStart = row; // Track first row in this new group
             }
         });
     
+        if (rowGroupStart) {
+            rowGroupStart.classList.add("merged-group-start"); // Ensure the last group is marked
+        }
     }
-
-    // Reapply row colors after merging
-document.querySelectorAll("tbody tr").forEach((row, index) => {
-    row.style.backgroundColor = index % 2 === 0 ? "#ffffff" : "#f8f8f8";
-});
-
     
-    // ✅ Ensure data is fully loaded before running merge
-    async function waitForTableData(tableSelector, columnIndex) {
-        
-        let retries = 10; // Adjust based on load time
+    
+    
+    function applyAlternatingRowColors(tableSelector) {
+    
+        const rows = Array.from(document.querySelectorAll(`${tableSelector} tbody tr`));
+    
+        if (rows.length === 0) {
+            console.warn(`⚠️ No visible rows found in ${tableSelector}. Skipping color application.`);
+            return;
+        }
+    
+    
+        let lastColor = "#ffffff"; // Start with white
+        let previousMergedGroup = null;
+    
+        rows.forEach((row, index) => {
+            // Check if the row is the start of a new merged group
+            const isMergedGroupStart = row.classList.contains("merged-group-start");
+    
+            if (isMergedGroupStart || previousMergedGroup === null) {
+                lastColor = lastColor === "#ffffff" ? "#e6e6e6" : "#ffffff"; // Alternate color only for new groups
+            }
+    
+            // Apply color to the current row
+            row.style.backgroundColor = lastColor;
+    
+            // Extend color to all hidden rows (merged rows)
+            const cells = Array.from(row.cells);
+            cells.forEach(cell => {
+                if (cell.rowSpan > 1) {
+                    let nextRow = row.nextElementSibling;
+                    for (let i = 1; i < cell.rowSpan; i++) {
+                        if (nextRow) {
+                            nextRow.style.backgroundColor = lastColor;
+                            nextRow = nextRow.nextElementSibling;
+                        }
+                    }
+                }
+            });
+    
+            // Track previous merged group
+            previousMergedGroup = isMergedGroupStart ? row : previousMergedGroup;
+    
+        });
+    
+    }
+    
+    
+    
+    
+    
+    // Function to ensure table data is ready before applying colors
+    async function waitForTableDataAndApplyColors(tableSelector, retries = 10) {
+        let attempt = 0;
         let tableReady = false;
     
-        while (retries > 0) {
+        while (attempt < retries) {
+    
             const table = document.querySelector(tableSelector);
             const rows = table ? table.querySelectorAll("tbody tr") : [];
     
-            if (rows.length > 0) {
+            if (rows.length > 0 && rows[rows.length - 1].offsetHeight > 0) {
                 tableReady = true;
                 break;
             }
     
-            await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
-            retries--;
+            await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retrying
+            attempt++;
         }
     
         if (tableReady) {
-            mergeTableCells(tableSelector, columnIndex);
+            mergeTableCells(tableSelector, 2); // Ensure merging is done first
+            applyAlternatingRowColors(tableSelector);
         } else {
-            console.error(`❌ Table data failed to load for ${tableSelector}.`);
+            console.error(`❌ Table ${tableSelector} did not finish rendering in time.`);
         }
     }
     
-    // ✅ Call after fetching all data
+    // Ensure final table is ready before applying colors
     setTimeout(() => {
-        waitForTableData("#airtable-data", 2); // Merge "Field Tech" column in airtable-data
-        waitForTableData("#feild-data", 2);   // Merge "Field Tech" column in feild-data
-    }, 1500);
+        waitForTableDataAndApplyColors("#airtable-data");
+        waitForTableDataAndApplyColors("#feild-data");
+    }, 3500); // Increase timeout if necessary
+    
+    
+    
+    
+    
     
     async function displayData(records, tableSelector, isSecondary = false) {
         const tableElement = document.querySelector(tableSelector); // Select the entire table
@@ -622,7 +665,6 @@ document.querySelectorAll("tbody tr").forEach((row, index) => {
                     jobCell.style.textDecoration = 'underline';
     
                     jobCell.addEventListener('click', () => {
-                        console.log(`🔀 Redirecting NOW to job-details.html?id=${jobId}`);
                         window.location.href = `job-details.html?id=${jobId}`;
                     });
                 }
