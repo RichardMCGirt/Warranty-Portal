@@ -109,6 +109,10 @@ nav a.back-button:hover {
     box-sizing: border-box;
 }
 
+input[type="date"] {
+    width: fit-content;
+}
+
 
 .job-details-container {
     max-width: 800px;
