@@ -548,7 +548,7 @@ async function populatePrimaryFields(job) {
 
         // ✅ Hide unnecessary fields
         ["billable-status", "homeowner-builder", "subcontractor", "materials-needed", "billable-reason", 
-         "field-review-not-needed", "subcontractor-dropdown1-label", "subcontractor-dropdown1", 
+         "field-review-not-needed", "subcontractor-dropdown1-label", "sub-completed-container", "subcontractor-dropdown1", 
          "field-review-needed", "field-tech-reviewed", "subcontractor-dropdown", 
          "additional-fields-container", "message-container"].forEach(hideElementById);
     } else {

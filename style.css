@@ -263,6 +263,8 @@ th, td {
     white-space: normal;
     overflow-wrap: break-word;
     word-break: keep-all;
+    width: fit-content;
+
 }
 
 th {
