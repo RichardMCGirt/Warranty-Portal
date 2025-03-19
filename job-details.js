@@ -112,8 +112,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        // ✅ Populate UI with Primary Fields
-        populatePrimaryFields(primaryData.fields);
+        console.log("📋 Primary Data Structure:", primaryData);
+
+if (!primaryData || !primaryData.fields) {
+    console.error("❌ ERROR: Missing primary data fields.");
+} else {
+    populatePrimaryFields(primaryData.fields);
+}
         await loadImagesForLot(lotName, status).then(() => {
             checkAndHideDeleteButton();
         });
@@ -151,24 +156,28 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
 
         // Function to handle checkbox toggle
-        function toggleSubcontractorField() {
-            console.log("📌 Checkbox State Changed:", subcontractorCheckbox.checked);
+ // Function to handle checkbox toggle
+function toggleSubcontractorField() {
+    console.log("📌 Checkbox State Changed:", subcontractorCheckbox.checked);
 
-            if (subcontractorCheckbox.checked) {
-                subcontractorDropdown.value = "Sub Not Needed";
-                subcontractorDropdown.setAttribute("readonly", "true");
-                subcontractorDropdown.style.pointerEvents = "none"; // Prevent clicks
-                subcontractorDropdown.style.background = "#e9ecef"; // Grey out to indicate read-only
-                console.log("🔒 Dropdown READ-ONLY & set to 'Sub Not Needed'");
-            } else {
-                subcontractorDropdown.value = "";
-                subcontractorDropdown.removeAttribute("readonly");
-                subcontractorDropdown.style.pointerEvents = "auto"; // Enable interaction
-                subcontractorDropdown.style.background = ""; // Reset background
-                console.log("✅ Dropdown ENABLED & value CLEARED");
-            }
-            
+    if (subcontractorCheckbox.checked) {
+        subcontractorDropdown.value = "Sub Not Needed";
+        subcontractorDropdown.setAttribute("readonly", "true");
+        subcontractorDropdown.style.pointerEvents = "none"; // Prevent clicks
+        subcontractorDropdown.style.background = "#e9ecef"; // Grey out to indicate read-only
+        console.log("🔒 Dropdown READ-ONLY & set to 'Sub Not Needed'");
+    } else {
+        // Only clear the value if it was previously set to "Sub Not Needed"
+        if (subcontractorDropdown.value === "Sub Not Needed") {
+            subcontractorDropdown.value = "";
         }
+        subcontractorDropdown.removeAttribute("readonly");
+        subcontractorDropdown.style.pointerEvents = "auto"; // Enable interaction
+        subcontractorDropdown.style.background = ""; // Reset background
+        console.log("✅ Dropdown ENABLED & value PRESERVED");
+    }
+}
+
 
         function checkImagesVisibility() {
             const images = document.querySelectorAll(".image-container img"); // Adjust selector if needed
@@ -334,28 +343,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
     
     // 🔹 Fetch Airtable Record Function
-    async function fetchAirtableRecord(tableName, lotNameOrRecordId) {
-        console.log("📡 Fetching record for:", lotNameOrRecordId);
+    async function fetchAirtableRecord(tableName, recordId) {
+        console.log("📡 Fetching record for:", recordId);
     
-        if (!lotNameOrRecordId) {
-            console.error("❌ Lot Name or Record ID is missing. Cannot fetch record.");
+        if (!recordId) {
+            console.error("❌ Record ID is missing. Cannot fetch record.");
             return null;
         }
     
-        let recordId = lotNameOrRecordId;
-    
-        // ✅ Check if the given `lotNameOrRecordId` is already an Airtable record ID
-        if (!recordId.startsWith("rec")) {
-            console.log("🔍 Searching for Record ID using Lot Name...");
-            recordId = await getRecordIdByLotName(lotNameOrRecordId);
-            
-            if (!recordId) {
-                console.warn(`⚠️ No record found for Lot Name: "${lotNameOrRecordId}"`);
-                return null;
-            }
-        }
-    
-        // ✅ Use Record ID to fetch data
         const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${recordId}`;
         console.log("🔗 Airtable API Request:", url);
     
@@ -370,19 +365,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
     
             const data = await response.json();
-            console.log("✅ Airtable Record Data:", data);
-    
-            if (data.fields && !data.fields["Completed  Pictures"]) {
-                console.warn("⚠️ 'Completed  Pictures' field is missing. Initializing as empty array.");
-                data.fields["Completed  Pictures"] = []; // Prevent undefined errors
-            }
-    
             return data;
         } catch (error) {
             console.error("❌ Error fetching Airtable record:", error);
             return null;
         }
     }
+    
 
     async function getRecordIdByLotName(lotName) {
         if (!lotName) {
@@ -514,6 +503,7 @@ async function populatePrimaryFields(job) {
         return value === undefined || value === null ? "" : value; 
     }
 
+    // ✅ Set Input Values
     setInputValue("job-name", safeValue(job["Lot Number and Community/Neighborhood"]));
     setInputValue("field-tech", safeValue(job["field tech"]));
     setInputValue("address", safeValue(job["Address"]));
@@ -524,14 +514,71 @@ async function populatePrimaryFields(job) {
     setInputValue("materials-needed", safeValue(job["Materials Needed"]));
     setInputValue("field-status", safeValue(job["Status"]));
     setCheckboxValue("sub-not-needed", job["Subcontractor Not Needed"] || false);
-    setInputValue("StartDate", job["StartDate"]);
-    setInputValue("EndDate", job["EndDate"]);
-    setInputValue("subcontractor-payment", job["Subcontractor Payment"]);
+    setInputValue("StartDate", safeValue(job["StartDate"]));
+    setInputValue("EndDate", safeValue(job["EndDate"]));
+    setInputValue("subcontractor-payment", safeValue(job["Subcontractor Payment"]));
+    setInputValue("subcontractor-dropdown", safeValue(job["Subcontractor"]));
 
 
+    // ✅ Fetch subcontractors and wait for dropdown to be populated
+    console.log("📡 Fetching Subcontractors...");
+    console.log("📡 Fetching Subcontractors...");
+    await fetchAndPopulateSubcontractors(job.id);
+
+    // ✅ Set the subcontractor dropdown value to the stored subcontractor
+    const subcontractorDropdown = document.getElementById("subcontractor-dropdown");
+    if (subcontractorDropdown) {
+        subcontractorDropdown.value = safeValue(job["Subcontractor"] || ""); // Set selected value
+        console.log("✅ Subcontractor dropdown value set to:", subcontractorDropdown.value);
+    } else {
+        console.warn("⚠️ Subcontractor dropdown not found in DOM.");
+    }
+
+    console.log("✅ Fields populated successfully.");
+
+
+
+    // ✅ Handle Subcontractor Payment Field
+    const subPayment = job["Subcontractor Payment"];
+    if (subPayment !== undefined && subPayment !== null) {
+        setInputValue("subcontractor-payment", subPayment);
+    } else {
+        console.warn("⚠️ 'Subcontractor Payment' field is missing or empty.");
+        setInputValue("subcontractor-payment", "0.00");
+    }
+
+    // ✅ Ensure Subcontractor Dropdown Exists Before Populating
+    let subLabel = document.getElementById("subcontractor-dropdown1-label");
+    let subDropdown = document.getElementById("subcontractor-dropdown");
+
+    if (!subLabel) {
+        subLabel = document.createElement("label");
+        subLabel.id = "subcontractor-dropdown1-label";
+        subLabel.setAttribute("for", "subcontractor-dropdown");
+        subLabel.textContent = "Select a Subcontractor:";
+        document.body.appendChild(subLabel);
+    }
+
+    if (subDropdown) {
+        subDropdown.value = safeValue(job["Subcontractor"] || ""); // Set selected value
+        console.log("✅ Subcontractor dropdown value set to:", subDropdown.value);
+    } else {
+        console.warn("⚠️ Subcontractor dropdown not found in DOM.");
+    }
     
 
+    if (!subDropdown) {
+        subDropdown = document.createElement("select");
+        subDropdown.id = "subcontractor-dropdown";
+        subDropdown.setAttribute("data-field", "Subcontractor");
 
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "Select a Subcontractor...";
+        subDropdown.appendChild(defaultOption);
+
+        document.body.appendChild(subDropdown);
+    }
 
     console.log("✅ Fields populated successfully.");
 
@@ -539,6 +586,9 @@ async function populatePrimaryFields(job) {
     adjustTextareaSize("description");
     adjustTextareaSize("dow-completed");
     adjustTextareaSize("materials-needed");
+
+
+    await fetchAndPopulateSubcontractors(job.id);
 
     console.log("✅ Images Loaded - Checking Status...");
 
@@ -549,8 +599,8 @@ async function populatePrimaryFields(job) {
 
         // ✅ Hide unnecessary fields
         ["billable-status", "homeowner-builder", "subcontractor", "materials-needed", "billable-reason", 
-         "field-review-not-needed", "subcontractor-dropdown1-label", "sub-completed-container", "subcontractor-dropdown1", 
-         "field-review-needed", "field-tech-reviewed", "subcontractor-dropdown", 
+         "field-review-not-needed", "sub-completed-container",
+         "field-review-needed", "field-tech-reviewed", 
          "additional-fields-container", "message-container"].forEach(hideElementById);
     } else {
         console.log("✅ Status is NOT 'Scheduled- Awaiting Field' - Showing all fields.");
@@ -1455,66 +1505,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function fetchAndPopulateSubcontractors(recordId) {
-        console.log("🚀 Fetching branch `b` for record:", recordId);
+        console.log("🚀 Fetching subcontractors...");
     
-        const airtableBaseId = window.env.AIRTABLE_BASE_ID;
-        const primaryTableId = "tbl6EeKPsNuEvt5yJ"; // Table where `b` is found
-        const subcontractorTableId = "tbl9SgC5wUi2TQuF7"; // Subcontractor Table
-    
-        if (!recordId) {
-            console.error("❌ Record ID is missing.");
-            return;
-        }
+        const apiKey = "patM49mmBDFbP6y2n.545e1307aae93d7bd5fd579bc395039d43fece72fa6df5085bae343817d614ff";
+        const baseId = "appO21PVRA4Qa087I";
+        const tableId = "tbl6EeKPsNuEvt5yJ";
+        const url = `https://api.airtable.com/v0/${baseId}/${tableId}?view=viwMlo3nM8JDCIMyV`;
     
         try {
-            // 1️⃣ Fetch `b` from the primary table
-            const primaryUrl = `https://api.airtable.com/v0/${airtableBaseId}/${primaryTableId}/${recordId}`;
-            console.log(`🔗 Fetching Branch URL: ${primaryUrl}`);
-    
-            const primaryResponse = await fetch(primaryUrl, {
-                headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
-            });
-    
-            if (!primaryResponse.ok) {
-                throw new Error(`❌ Error fetching primary record: ${primaryResponse.statusText}`);
-            }
-    
-            const primaryData = await primaryResponse.json();
-            const branchB = primaryData.fields?.b;
-    
-            if (!branchB) {
-                console.warn("⚠️ No branch `b` found for this record.");
-                return;
-            }
-    
-            console.log(`📌 Found Branch 'b': ${branchB}`);
-    
-            // 2️⃣ Fetch subcontractors based on the branch
-            let allSubcontractors = await fetchAllSubcontractors(airtableBaseId, subcontractorTableId, branchB);
-    
-            // 3️⃣ Populate the dropdown
-            populateSubcontractorDropdown(allSubcontractors);
-    
-        } catch (error) {
-            console.error("❌ Error fetching subcontractors:", error);
-        }
-    }
-    
-    // 🔹 Function to fetch all subcontractors (Handles offsets)
-    async function fetchAllSubcontractors(baseId, tableId, branchB) {
-        let allRecords = [];
-        let offset = null;
-    
-        do {
-            let url = `https://api.airtable.com/v0/${baseId}/${tableId}?filterByFormula=${encodeURIComponent(`{Vanir Branch} = '${branchB}'`)}&fields[]=Subcontractor Company Name&fields[]=Vanir Branch`;
-            if (offset) {
-                url += `&offset=${offset}`;
-            }
-    
-            console.log(`🔗 Fetching Subcontractors URL: ${url}`);
-    
             const response = await fetch(url, {
-                headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
+                headers: {
+                    Authorization: `Bearer ${apiKey}`
+                }
             });
     
             if (!response.ok) {
@@ -1522,19 +1524,82 @@ document.addEventListener("DOMContentLoaded", () => {
             }
     
             const data = await response.json();
-            allRecords.push(...data.records);
+            console.log("✅ Subcontractor Data:", data.records);
     
-            // If Airtable returns an offset, we need to fetch more records
-            offset = data.offset || null;
+            const dropdown = document.getElementById("subcontractor-dropdown");
+            if (!dropdown) {
+                console.error("❌ Subcontractor dropdown element not found.");
+                return;
+            }
     
-        } while (offset);
+            // Preserve currently selected value before clearing
+            const currentSelection = dropdown.getAttribute("data-selected") || dropdown.value;
+            dropdown.innerHTML = `
+                <option value="">Select a Subcontractor...</option>
+                <option value="Sub Not Needed">Subcontractor Not Needed</option>
+            `;
     
-        console.log(`📦 Retrieved ${allRecords.length} total subcontractors from Airtable.`);
+            let foundExisting = false;
     
-        return allRecords.map(record => ({
-            name: record.fields['Subcontractor Company Name'] || 'Unnamed Subcontractor',
-            vanirOffice: record.fields['Vanir Branch'] || 'Unknown Branch'
-        }));
+            data.records.forEach(record => {
+                const subName = record.fields.Subcontractor;
+                if (!subName) return;
+    
+                const option = document.createElement("option");
+                option.value = subName;
+                option.textContent = subName;
+    
+                if (subName === currentSelection) {
+                    option.selected = true;
+                    foundExisting = true;
+                }
+    
+                dropdown.appendChild(option);
+            });
+    
+            // If the current selection isn't found in the fetched options, add it manually
+            if (currentSelection && !foundExisting && currentSelection !== "Sub Not Needed") {
+                console.log(`🔄 Adding previously selected subcontractor: ${currentSelection}`);
+                const existingOption = document.createElement("option");
+                existingOption.value = currentSelection;
+                existingOption.textContent = `${currentSelection} (Previously Selected)`;
+                existingOption.selected = true;
+                dropdown.appendChild(existingOption);
+            }
+    
+            console.log("✅ Subcontractor dropdown populated successfully.");
+        } catch (error) {
+            console.error("❌ Error fetching subcontractors:", error);
+        }
+    }
+    
+    // ✅ Call the function on page load
+    document.addEventListener("DOMContentLoaded", fetchAndPopulateSubcontractors);
+    
+    
+    // 🔹 Function to fetch all subcontractors (Handles offsets)
+    async function fetchSubcontractors(baseId, tableId, apiKey) {
+        try {
+            const url = `https://api.airtable.com/v0/${baseId}/${tableId}`;
+            const response = await fetch(url, {
+                headers: { Authorization: `Bearer ${apiKey}` }
+            });
+    
+            if (!response.ok) {
+                throw new Error(`❌ Error fetching subcontractors from ${tableId}: ${response.statusText}`);
+            }
+    
+            const data = await response.json();
+    
+            return data.records.map(record => ({
+                name: record.fields.Subcontractor, // Ensure this matches the Airtable field name
+                vanirOffice: record.fields.VanirOffice || "Unknown"
+            })).filter(sub => sub.name); // Filter out any empty names
+    
+        } catch (error) {
+            console.error(`❌ Error fetching subcontractors from table ${tableId}:`, error);
+            return [];
+        }
     }
     
     async function getExistingDropboxLink(filePath) {
@@ -1589,10 +1654,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
     
-        // Get current selected value (if any)
+        // Preserve current selection
         const currentSelection = dropdown.getAttribute("data-selected") || dropdown.value;
+        console.log("🔎 Current selection:", currentSelection);
     
-        // Reset dropdown and add hardcoded "Subcontractor Not Needed" option
         dropdown.innerHTML = `
             <option value="">Select a Subcontractor...</option>
             <option value="Sub Not Needed">Subcontractor Not Needed</option>
@@ -1610,7 +1675,6 @@ document.addEventListener("DOMContentLoaded", () => {
             optionElement.value = option.name;
             optionElement.textContent = `${option.name} (${option.vanirOffice})`;
     
-            // If current selection exists in the new list, mark it as selected
             if (option.name === currentSelection) {
                 optionElement.selected = true;
                 existingFound = true;
