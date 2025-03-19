@@ -526,7 +526,8 @@ async function populatePrimaryFields(job) {
     setCheckboxValue("sub-not-needed", job["Subcontractor Not Needed"] || false);
     setInputValue("StartDate", job["StartDate"]);
     setInputValue("EndDate", job["EndDate"]);
-    
+    setInputValue("subcontractor-payment", job["Subcontractor Payment"]);
+
 
     
 
