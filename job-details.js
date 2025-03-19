@@ -599,7 +599,7 @@ async function populatePrimaryFields(job) {
 
         // ✅ Hide unnecessary fields
         ["billable-status", "homeowner-builder", "subcontractor", "materials-needed", "billable-reason", 
-         "field-review-not-needed", "sub-completed-container",
+         "field-review-not-needed",
          "field-review-needed", "field-tech-reviewed", 
          "additional-fields-container", "message-container"].forEach(hideElementById);
     } else {
