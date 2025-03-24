@@ -69,20 +69,18 @@
 
 <label id="subcontractor-dropdown1-label" for="subcontractor-dropdown1">Select a Subcontractor:</label>
 <select id="subcontractor-dropdown" data-field="Subcontractor">
-    <option value=""></option>
+    <option value="">Select a Subcontractor...</option>
 </select>
-
-<div class="sub-completed-container" id="sub-completed-container">
-    <label for="sub-not-needed">Sub not needed:</label>
-    <input type="checkbox" id="sub-not-needed" data-field="Subcontractor Not Needed">
-</div>
-
 <br>
 
     <label for="subcontractor-payment">Subcontractor Payment</label>
     <input type="number" id="subcontractor-payment" name="subcontractor-payment" step="0.01" min="0" placeholder="$0.00" data-field="Subcontractor Payment">
 
-
+<div class="sub-completed-container">
+    <label for="sub-not-needed">Sub not needed:</label>
+    <input type="checkbox" id="sub-not-needed" data-field="Subcontractor Not Needed">
+    
+</div>
 
 
 
@@ -95,10 +93,6 @@
             <option value="Non Billable">Non Billable</option>
         </select>
     </div>
-
- 
-
-
     <div class="form-group">
         <label for="homeowner-builder">Homeowner Builder Pay</label>
 <select id="homeowner-builder" name="homeowner-builder" data-field="Homeowner Builder pay">
