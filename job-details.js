@@ -1543,7 +1543,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
     
             // 4️⃣ Populate dropdown with updated list
-            populateSubcontractorDropdown(allSubcontractors);
+            populateSubcontractorDropdown(allSubcontractors, currentSubcontractor);
     
         } catch (error) {
             console.error("❌ Error fetching subcontractors:", error);
@@ -1631,18 +1631,17 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("📌 Subcontractor Selected:", this.value);
     });
         
-    function populateSubcontractorDropdown(subcontractors, onSelectCallback) {
+    function populateSubcontractorDropdown(subcontractors, currentSelection = "") {
         console.log("📌 Populating the subcontractor dropdown...");
     
         const existing = document.getElementById("subcontractor-dropdown");
-        const currentSelection = existing?.getAttribute("data-selected") || existing?.value || "";
     
         const parent = existing?.parentElement;
         if (!parent) {
             console.error("❌ Subcontractor dropdown element not found.");
             return;
         }
-    
+
         // Create input field
         const input = document.createElement("input");
         input.setAttribute("list", "subcontractor-options");
@@ -1666,35 +1665,35 @@ document.addEventListener("DOMContentLoaded", () => {
             dataList.innerHTML = ""; // clear previous
         }
     
-        // Fill datalist with unique options
+        // Add "Sub Not Needed" at the top
+        const subNotNeeded = document.createElement("option");
+        subNotNeeded.value = "Sub Not Needed";
+        subNotNeeded.label = "Sub Not Needed (Manual Entry)";
+        dataList.appendChild(subNotNeeded);
+    
+        // Sort and fill datalist with unique options
         const added = new Set();
-        subcontractors.forEach(({ name, vanirOffice }) => {
-            if (!name || added.has(name)) return;
+        const sortedSubs = subcontractors
+            .filter(sub => sub.name && sub.name !== "Sub Not Needed")
+            .sort((a, b) => a.name.localeCompare(b.name));
+    
+        sortedSubs.forEach(({ name, vanirOffice }) => {
+            if (added.has(name)) return;
     
             const option = document.createElement("option");
             option.value = name;
-            option.label = `${name} (${vanirOffice})`;
-            if (name === currentSelection) {
-                option.label = `⭐ ${name} (${vanirOffice})`;
-            }
+            option.label = name === currentSelection
+                ? `⭐ ${name} `
+                : `${name} `;
     
             dataList.appendChild(option);
             added.add(name);
         });
     
-        // Hardcoded "Sub Not Needed" - won't show up in dropdown unless user types exactly
-        const hardcoded = document.createElement("option");
-        hardcoded.value = "Sub Not Needed";
-        hardcoded.label = "Sub Not Needed (Manual Entry)";
-        dataList.appendChild(hardcoded);
-    
         // Optional: Call the callback when selection changes
-        if (onSelectCallback) {
-            input.addEventListener("input", (e) => {
-                onSelectCallback(e.target.value);
-            });
-        }
+       
     }
+    
     
     
     
