@@ -1629,48 +1629,59 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
     
-        // Get current selected value (if any)
         const currentSelection = dropdown.getAttribute("data-selected") || dropdown.value;
     
-        // Reset dropdown and add hardcoded "Subcontractor Not Needed" option
-        dropdown.innerHTML = `
-            <option value="">Select a Subcontractor...</option>
-            <option value="Sub Not Needed">Subcontractor Not Needed</option>
-        `;
+        // Replace <select> with <input + datalist> for searchable dropdown
+        const parent = dropdown.parentElement;
+        const input = document.createElement("input");
+        input.setAttribute("list", "subcontractor-options");
+        input.setAttribute("id", "subcontractor-dropdown");
+        input.setAttribute("placeholder", "Select or type subcontractor...");
+        input.style.width = "100%";
+        input.style.padding = "10px";
+        input.style.borderRadius = "5px";
+        input.style.border = "1px solid #ccc";
     
-        if (subcontractors.length === 0) {
-            console.warn("⚠️ No matching subcontractors found.");
-            return;
+        // Replace the <select> with the <input>
+        parent.replaceChild(input, dropdown);
+    
+        // Create the <datalist>
+        let dataList = document.getElementById("subcontractor-options");
+        if (dataList) {
+            dataList.innerHTML = ""; // clear previous entries
+        } else {
+            dataList = document.createElement("datalist");
+            dataList.id = "subcontractor-options";
+            document.body.appendChild(dataList);
         }
     
-        let existingFound = false;
+        // Add options
+        const addedNames = new Set();
     
         subcontractors.forEach(option => {
+            if (!option.name || addedNames.has(option.name)) return;
+    
             const optionElement = document.createElement("option");
             optionElement.value = option.name;
-            optionElement.textContent = `${option.name} (${option.vanirOffice})`;
+            optionElement.label = `${option.name} (${option.vanirOffice})`;
     
-            // If current selection exists in the new list, mark it as selected
+            // Mark previously selected one with 💾 icon or tag
             if (option.name === currentSelection) {
-                optionElement.selected = true;
-                existingFound = true;
+                optionElement.label = `⭐ ${option.name} (${option.vanirOffice})`;
             }
     
-            dropdown.appendChild(optionElement);
+            dataList.appendChild(optionElement);
+            addedNames.add(option.name);
         });
     
-        // If current selection does not exist in new options, append it
-        if (currentSelection && !existingFound && currentSelection !== "Sub Not Needed") {
-            console.log(`🔄 Adding previously selected subcontractor: ${currentSelection}`);
-            const existingOption = document.createElement("option");
-            existingOption.value = currentSelection;
-            existingOption.textContent = `${currentSelection} (Previously Selected)`;
-            existingOption.selected = true;
-            dropdown.appendChild(existingOption);
+        // Set the input value if we have a match
+        if (currentSelection) {
+            input.value = currentSelection;
         }
     
-        console.log("✅ Subcontractor dropdown populated successfully.");
+        console.log("✅ Subcontractor dropdown populated as searchable list.");
     }
+    
     
     // ✅ Call this function when the page loads
     document.addEventListener('DOMContentLoaded', populateSubcontractorDropdown);
