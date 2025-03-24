@@ -573,8 +573,8 @@ async function populatePrimaryFields(job) {
         await deleteImagesByLotName(job["Lot Number and Community/Neighborhood"], [], "Completed  Pictures");
 
         ["billable-status", "homeowner-builder", "subcontractor", "materials-needed", "billable-reason", 
-         "field-review-not-needed", "subcontractor-dropdown1-label", "subcontractor-dropdown1", 
-         "field-review-needed", "field-tech-reviewed", "subcontractor-dropdown", 
+         "field-review-not-needed",
+         "field-review-needed", "field-tech-reviewed", 
          "additional-fields-container", "message-container"].forEach(hideElementById);
     } else {
         console.log("✅ Status is NOT 'Scheduled- Awaiting Field' - Showing all fields.");
@@ -1647,6 +1647,8 @@ document.addEventListener("DOMContentLoaded", () => {
         input.setAttribute("list", "subcontractor-options");
         input.setAttribute("id", "subcontractor-dropdown");
         input.setAttribute("placeholder", "Select or type subcontractor...");
+        input.setAttribute("data-field", "Subcontractor"); // ✅ Add this line
+
         input.style.width = "100%";
         input.style.padding = "10px";
         input.style.borderRadius = "5px";
