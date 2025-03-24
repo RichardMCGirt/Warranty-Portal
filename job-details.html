@@ -67,6 +67,8 @@
           style="width: 100%; max-width: 100%; font-size: 16px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; min-height: 80px; resize: vertical;"
           autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"></textarea>
 
+          <hr>
+
 <label id="subcontractor-dropdown1-label" for="subcontractor-dropdown1">Select a Subcontractor:</label>
 <select id="subcontractor-dropdown" data-field="Subcontractor">
     <option value="">Select a Subcontractor...</option>
@@ -82,6 +84,12 @@
     
 </div>
 
+<div id="previewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
+    background-color:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:1000;">
+  <div id="previewContent" style="background:#fff; padding:20px; border-radius:10px; max-width:90%; max-height:90%; overflow:auto;">
+    <span id="closePreview" style="position:absolute; top:20px; right:30px; font-size:30px; cursor:pointer; color:white;">&times;</span>
+  </div>
+</div>
 
 
 
