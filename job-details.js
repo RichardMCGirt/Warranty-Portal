@@ -1620,19 +1620,19 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("📌 Subcontractor Selected:", this.value);
     });
         
-    function populateSubcontractorDropdown(subcontractors) {
+    function populateSubcontractorDropdown(subcontractors, onSelectCallback) {
         console.log("📌 Populating the subcontractor dropdown...");
     
-        const dropdown = document.getElementById("subcontractor-dropdown");
-        if (!dropdown) {
+        const existing = document.getElementById("subcontractor-dropdown");
+        const currentSelection = existing?.getAttribute("data-selected") || existing?.value || "";
+    
+        const parent = existing?.parentElement;
+        if (!parent) {
             console.error("❌ Subcontractor dropdown element not found.");
             return;
         }
     
-        const currentSelection = dropdown.getAttribute("data-selected") || dropdown.value;
-    
-        // Replace <select> with <input + datalist> for searchable dropdown
-        const parent = dropdown.parentElement;
+        // Create input field
         const input = document.createElement("input");
         input.setAttribute("list", "subcontractor-options");
         input.setAttribute("id", "subcontractor-dropdown");
@@ -1641,46 +1641,51 @@ document.addEventListener("DOMContentLoaded", () => {
         input.style.padding = "10px";
         input.style.borderRadius = "5px";
         input.style.border = "1px solid #ccc";
+        input.value = currentSelection;
     
-        // Replace the <select> with the <input>
-        parent.replaceChild(input, dropdown);
+        parent.replaceChild(input, existing);
     
-        // Create the <datalist>
+        // Create datalist
         let dataList = document.getElementById("subcontractor-options");
-        if (dataList) {
-            dataList.innerHTML = ""; // clear previous entries
-        } else {
+        if (!dataList) {
             dataList = document.createElement("datalist");
             dataList.id = "subcontractor-options";
             document.body.appendChild(dataList);
+        } else {
+            dataList.innerHTML = ""; // clear previous
         }
     
-        // Add options
-        const addedNames = new Set();
+        // Fill datalist with unique options
+        const added = new Set();
+        subcontractors.forEach(({ name, vanirOffice }) => {
+            if (!name || added.has(name)) return;
     
-        subcontractors.forEach(option => {
-            if (!option.name || addedNames.has(option.name)) return;
-    
-            const optionElement = document.createElement("option");
-            optionElement.value = option.name;
-            optionElement.label = `${option.name} (${option.vanirOffice})`;
-    
-            // Mark previously selected one with 💾 icon or tag
-            if (option.name === currentSelection) {
-                optionElement.label = `⭐ ${option.name} (${option.vanirOffice})`;
+            const option = document.createElement("option");
+            option.value = name;
+            option.label = `${name} (${vanirOffice})`;
+            if (name === currentSelection) {
+                option.label = `⭐ ${name} (${vanirOffice})`;
             }
     
-            dataList.appendChild(optionElement);
-            addedNames.add(option.name);
+            dataList.appendChild(option);
+            added.add(name);
         });
     
-        // Set the input value if we have a match
-        if (currentSelection) {
-            input.value = currentSelection;
-        }
+        // Hardcoded "Sub Not Needed" - won't show up in dropdown unless user types exactly
+        const hardcoded = document.createElement("option");
+        hardcoded.value = "Sub Not Needed";
+        hardcoded.label = "Sub Not Needed (Manual Entry)";
+        dataList.appendChild(hardcoded);
     
-        console.log("✅ Subcontractor dropdown populated as searchable list.");
+        // Optional: Call the callback when selection changes
+        if (onSelectCallback) {
+            input.addEventListener("input", (e) => {
+                onSelectCallback(e.target.value);
+            });
+        }
     }
+    
+    
     
     
     // ✅ Call this function when the page loads
