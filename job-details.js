@@ -1342,6 +1342,35 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    function formatDateTimeToISO(value) {
+        if (!value) return "";
+    
+        // value from datetime-local is in format "YYYY-MM-DDTHH:MM"
+        // Don't convert to Date object – just format it to ISO 8601 *with no timezone shift*
+        return value + ":00.000"; // Add seconds and milliseconds
+    }
+    
+    
+    function convertLocalToUTCISOString(value) {
+        if (!value) return "";
+        const localDate = new Date(value);
+        return localDate.toISOString(); // Converts to UTC properly
+    }
+    
+    
+
+    function formatDateTimeForInput(dateStr) {
+        if (!dateStr) return "";
+    
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return "";
+    
+        // Format as "YYYY-MM-DDTHH:MM" for datetime-local input
+        const iso = date.toISOString();
+        return iso.substring(0, 16); // "YYYY-MM-DDTHH:MM"
+    }
+    
+
     function getFormattedDate(value) {
         if (!value) return "";
         const dateObj = new Date(value);
@@ -1350,9 +1379,20 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // When saving data
     const jobData = {
-        "StartDate": getFormattedDate(document.getElementById("StartDate").value),
-        "EndDate": getFormattedDate(document.getElementById("EndDate").value),
-    };
+        "StartDate": convertLocalToUTCISOString(document.getElementById("StartDate").value),
+        "EndDate": convertLocalToUTCISOString(document.getElementById("EndDate").value),
+      };
+      
+      
+      function convertUTCToLocalInput(value) {
+        if (!value) return "";
+    
+        const utcDate = new Date(value);
+        const offsetMs = utcDate.getTimezoneOffset() * 60 * 1000;
+        const localDate = new Date(utcDate.getTime() - offsetMs);
+    
+        return localDate.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
+    }
     
     
     // 🔹 Dropbox Image Upload
@@ -1724,6 +1764,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     
+    function formatDateTimeForInput(value) {
+        if (!value) return "";
+        const date = new Date(value);
+        const offset = date.getTimezoneOffset();
+        const local = new Date(date.getTime() - offset * 60 * 1000);
+        return local.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+    }
     
    
     
@@ -1735,20 +1782,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     
         // Handle date inputs specifically
-        if (element.type === "date" && value) {
-            try {
-                const dateObj = new Date(value);
-                if (!isNaN(dateObj.getTime())) {
-                    value = dateObj.toISOString().split("T")[0]; // Convert to 'YYYY-MM-DD'
-                } else {
-                    console.warn(`⚠️ Invalid date format for '${id}':`, value);
-                    value = ""; // Clear input if invalid
-                }
-            } catch (error) {
-                console.error(`❌ Error processing date value for '${id}':`, value, error);
-                value = "";
-            }
+        if (element.type === "datetime-local" && value) {
+            value = convertUTCToLocalInput(value);
         }
+        
+        
+        
     
         element.value = value || "";
     }
