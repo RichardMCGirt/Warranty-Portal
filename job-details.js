@@ -218,37 +218,50 @@ document.addEventListener("DOMContentLoaded", async function () {
         saveButton.addEventListener("click", function () {
             console.log("💾 Save button clicked!");
         
+            const getRawInput = (inputId) => {
+                const val = document.getElementById(inputId)?.value;
+                return val ? val + ":00" : null; // append seconds to match ISO format
+              };
+              
+        
             let jobData = {
                 "DOW to be Completed": document.getElementById("dow-completed").value,
                 "Subcontractor Not Needed": subcontractorCheckbox.checked,
                 "Subcontractor": document.getElementById("subcontractor-dropdown").value,
-
+        
                 "Billable/ Non Billable": document.getElementById("billable-status").value,
                 "Homeowner Builder pay": document.getElementById("homeowner-builder").value,
                 "Billable Reason (If Billable)": document.getElementById("billable-reason").value,
                 "Field Review Not Needed": document.getElementById("field-review-needed").checked,
                 "Field Review Needed": document.getElementById("field-review-not-needed").checked,
                 "Subcontractor Payment": parseFloat(document.getElementById("subcontractor-payment").value) || 0,
-           //   "StartDate": getFormattedDate(document.getElementById("StartDate").value),
-// "EndDate": getFormattedDate(document.getElementById("EndDate").value),
+        
+                // Convert to UTC ISO format for Airtable
+            "StartDate": getRawInput("StartDate"),
+"EndDate": getRawInput("EndDate"),
 
-
+        
                 "Materials Needed": document.getElementById("materials-needed").value,
                 "Field Tech Reviewed": document.getElementById("field-tech-reviewed").checked,
                 "Job Completed": document.getElementById("job-completed").checked,
             };
         
-            // ✅ **Ensure "Subcontractor" field is always included**
+          
+              
+            // Ensure Subcontractor field is consistent
             if (subcontractorCheckbox.checked) {
-                jobData["Subcontractor"] = "Sub Not Needed"; // If checkbox is checked
+                jobData["Subcontractor"] = "Sub Not Needed";
             } else {
-                jobData["Subcontractor"] = subcontractorDropdown.value.trim() || ""; // Get the selected value
+                jobData["Subcontractor"] = subcontractorDropdown.value.trim() || "";
             }
         
             console.log("🚀 Fields Being Sent:", jobData);
-        
-            // ✅ Call function to save job data
+            console.log("📅 Raw input (local):", document.getElementById("StartDate").value);
+            console.log("📅 Converted to UTC ISO:", new Date(document.getElementById("StartDate").value).toISOString());
+            
+            // 🔁 Your Airtable submission logic goes here
         });
+        
         
     
         // ✅ Apply subcontractor logic on load
@@ -563,6 +576,7 @@ async function populatePrimaryFields(job) {
     }
 
     console.log("✅ Fields populated successfully.");
+    console.log("🕓 Start Date shown in UI:", document.getElementById("StartDate").value);
 
     adjustTextareaSize("description");
     adjustTextareaSize("dow-completed");
@@ -1140,7 +1154,8 @@ document.addEventListener("DOMContentLoaded", () => {
             // ✅ Update Airtable with cleaned values
             await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName, updatedFields);
             console.log("✅ Airtable record updated successfully.");
-    
+            console.log("🕔 UTC Sent to Airtable:", new Date(document.getElementById("StartDate").value).toISOString());
+
             showToast("✅ Job details saved successfully!", "success");
     
             // ✅ Refresh UI after save to reflect correct date format
@@ -1371,28 +1386,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
 
-    function getFormattedDate(value) {
-        if (!value) return "";
-        const dateObj = new Date(value);
-        return !isNaN(dateObj.getTime()) ? dateObj.toISOString().split("T")[0] : "";
-    }
-    
-    // When saving data
-    const jobData = {
-        "StartDate": convertLocalToUTCISOString(document.getElementById("StartDate").value),
-        "EndDate": convertLocalToUTCISOString(document.getElementById("EndDate").value),
-      };
+
       
       
-      function convertUTCToLocalInput(value) {
+    function convertUTCToLocalInput(value) {
         if (!value) return "";
-    
         const utcDate = new Date(value);
-        const offsetMs = utcDate.getTimezoneOffset() * 60 * 1000;
+        const offsetMs = utcDate.getTimezoneOffset() * 60000;
         const localDate = new Date(utcDate.getTime() - offsetMs);
-    
         return localDate.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
     }
+    
     
     
     // 🔹 Dropbox Image Upload
@@ -1764,33 +1768,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     
-    function formatDateTimeForInput(value) {
-        if (!value) return "";
-        const date = new Date(value);
-        const offset = date.getTimezoneOffset();
-        const local = new Date(date.getTime() - offset * 60 * 1000);
-        return local.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
-    }
+ 
     
    
     
     function setInputValue(id, value) {
         const element = document.getElementById(id);
         if (!element) {
-            console.warn(`⚠️ Warning: Element with ID '${id}' not found.`);
+            console.warn(`⚠️ Element with ID '${id}' not found.`);
             return;
         }
     
-        // Handle date inputs specifically
         if (element.type === "datetime-local" && value) {
-            value = convertUTCToLocalInput(value);
+            value = convertUTCToLocalInput(value); // ✅ Converts UTC to local for input
         }
-        
-        
-        
     
         element.value = value || "";
     }
+    
     
     
 
