@@ -229,8 +229,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 "Field Review Not Needed": document.getElementById("field-review-needed").checked,
                 "Field Review Needed": document.getElementById("field-review-not-needed").checked,
                 "Subcontractor Payment": parseFloat(document.getElementById("subcontractor-payment").value) || 0,
-              "StartDate": getFormattedDate(document.getElementById("StartDate").value),
-"EndDate": getFormattedDate(document.getElementById("EndDate").value),
+           //   "StartDate": getFormattedDate(document.getElementById("StartDate").value),
+// "EndDate": getFormattedDate(document.getElementById("EndDate").value),
 
 
                 "Materials Needed": document.getElementById("materials-needed").value,
