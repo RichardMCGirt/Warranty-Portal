@@ -306,10 +306,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 showToast("❌ Error saving job data. Please try again.", "error");
             }
         });
-        
-        
-        
-    
+            
         // ✅ Apply subcontractor logic on load
         toggleSubcontractorField();
     
@@ -520,6 +517,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         const saveButton = document.getElementById("save-job");
         if (saveButton) saveButton.disabled = true;
     
+        // 🚫 Check for internet connectivity before proceeding
+        if (!navigator.onLine) {
+            console.error("❌ No internet connection detected.");
+            showToast("❌ You are offline. Please check your internet connection and try again.", "error");
+            if (saveButton) saveButton.disabled = false;
+            return;
+        }
+    
         try {
             let recordId = lotNameOrRecordId;
     
@@ -530,7 +535,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (!recordId) {
                     console.error("❌ No record ID found for this Lot Name. Cannot update Airtable.");
                     showToast("❌ Error: No record found for this Lot Name.", "error");
-    
                     if (saveButton) saveButton.disabled = false;
                     return;
                 }
@@ -548,15 +552,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                 },
                 body: JSON.stringify({ fields })
             });
-            
+    
             if (!response.ok) {
                 const errorDetails = await response.json(); // Extract error response
                 console.error("❌ Airtable Error:", errorDetails);
+                showToast(`❌ Airtable error: ${errorDetails.error?.message || 'Unknown error'}`, "error");
                 return;
             }
-            
     
             console.log("✅ Airtable record updated successfully:", fields);
+            showToast("✅ Record updated successfully!", "success");
     
         } catch (error) {
             console.error("❌ Error updating Airtable:", error);
@@ -565,6 +570,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (saveButton) saveButton.disabled = false;
         }
     }
+    
     
     document.querySelectorAll(".job-link").forEach(link => {
         link.addEventListener("click", function (event) {
@@ -1435,11 +1441,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return localDate.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
     }
     
-    function convertLocalInputToUTC(inputId) {
-        const val = document.getElementById(inputId)?.value;
-        if (!val) return null;
-        return new Date(val).toISOString(); // Converts local time into full ISO UTC format
-    }
+   
         
     // 🔹 Dropbox Image Upload
     async function uploadToDropbox(files, targetField) {
@@ -1777,37 +1779,13 @@ document.addEventListener("DOMContentLoaded", () => {
             dataList.appendChild(option);
             added.add(name);
         });
-    
-        // Optional: Call the callback when selection changes
-       
+      
     }
-    
-    
-    
-    
-    
+        
     // ✅ Call this function when the page loads
     document.addEventListener('DOMContentLoaded', populateSubcontractorDropdown);
 
-    function convertToISODateTime(dateStr) {
-        console.log("📅 Converting date:", dateStr);
-    
-        if (!dateStr) {
-            console.warn("⚠️ Empty or undefined date string provided.");
-            return "";
-        }
-    
-        const dateObj = new Date(dateStr);
-        if (isNaN(dateObj.getTime())) {
-            console.error("❌ Invalid date format detected:", dateStr);
-            return "";
-        }
-    
-        const isoDate = dateObj.toISOString().split("T")[0]; // Extracts 'YYYY-MM-DD'
-        console.log("✅ Converted to ISO format:", isoDate);
-    
-        return isoDate;
-    }
+  
     
     function setInputValue(id, value) {
         const element = document.getElementById(id);
@@ -1815,9 +1793,6 @@ document.addEventListener("DOMContentLoaded", () => {
             console.warn(`⚠️ Element with ID '${id}' not found.`);
             return;
         }
-    
-     
-          
     
         element.value = value || "";
     }
