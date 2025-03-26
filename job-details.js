@@ -61,6 +61,7 @@ function openMapApp() {
 
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("🚀 Page Loaded: JavaScript execution started!");
+    let primaryData = null; // <-- Declare it globally within this function
 
 
     // ✅ Extract URL Parameters
@@ -97,9 +98,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     try {
         console.log("✅ Fetching Job Details...");
+        primaryData = await fetchAirtableRecord(airtableTableName, recordId); // ✅ Assign it here
 
         // ✅ Fetch Primary Job Details
-        const primaryData = await fetchAirtableRecord(airtableTableName, recordId);
         console.log("📋 Primary Data Fetched:", primaryData);
 
         // ✅ Extract Lot Name
@@ -1165,9 +1166,10 @@ document.addEventListener("DOMContentLoaded", () => {
         
         console.log("🕒 Saving StartDate:", document.getElementById("StartDate").value);
 
-        const originalStartUTC = primaryData.fields["StartDate"]; // from Airtable
-        const originalEndUTC = primaryData.fields["EndDate"];
-        
+        const currentRecord = await fetchAirtableRecord(airtableTableName, recordId);
+        const originalStartUTC = currentRecord?.fields?.["StartDate"];
+        const originalEndUTC = currentRecord?.fields?.["EndDate"];
+                
         const currentStartLocal = document.getElementById("StartDate")?.value;
         const currentEndLocal = document.getElementById("EndDate")?.value;
         
@@ -1175,6 +1177,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const convertedEndUTC = currentEndLocal ? new Date(currentEndLocal).toISOString() : null;
         
         const updatedFields = {}; // begin fresh field collection
+        
+
+        if (!currentRecord || !currentRecord.fields) {
+            alert("❌ Could not load original record data. Try again.");
+            return;
+        }
         
         // ✅ Only add StartDate if it changed
         if (convertedStartUTC !== originalStartUTC) {
