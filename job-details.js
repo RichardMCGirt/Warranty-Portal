@@ -152,23 +152,38 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         // Function to handle checkbox toggle
         function toggleSubcontractorField() {
-            console.log("📌 Checkbox State Changed:", subcontractorCheckbox.checked);
-
-            if (subcontractorCheckbox.checked) {
-                subcontractorDropdown.value = "Sub Not Needed";
-                subcontractorDropdown.setAttribute("readonly", "true");
-                subcontractorDropdown.style.pointerEvents = "none"; // Prevent clicks
-                subcontractorDropdown.style.background = "#e9ecef"; // Grey out to indicate read-only
-                console.log("🔒 Dropdown READ-ONLY & set to 'Sub Not Needed'");
+            const input = document.getElementById("subcontractor-dropdown");
+            const datalist = document.getElementById("subcontractor-options");
+            const checkbox = document.getElementById("sub-not-needed");
+        
+            if (!input || !checkbox || !datalist) return;
+        
+            if (checkbox.checked) {
+                input.value = "Sub Not Needed";
+                input.setAttribute("readonly", "true");
+                input.style.pointerEvents = "none";
+                input.style.background = "#e9ecef";
+        
+                // 🔁 Add "Sub Not Needed" to datalist if missing
+                const exists = Array.from(datalist.options).some(opt => opt.value === "Sub Not Needed");
+                if (!exists) {
+                    const option = document.createElement("option");
+                    option.value = "Sub Not Needed";
+                    option.label = "Sub Not Needed (Manual Entry)";
+                    datalist.appendChild(option);
+                }
+        
             } else {
-                subcontractorDropdown.value = "";
-                subcontractorDropdown.removeAttribute("readonly");
-                subcontractorDropdown.style.pointerEvents = "auto"; // Enable interaction
-                subcontractorDropdown.style.background = ""; // Reset background
-                console.log("✅ Dropdown ENABLED & value CLEARED");
+                input.value = "";
+                input.removeAttribute("readonly");
+                input.style.pointerEvents = "auto";
+                input.style.background = "";
             }
-            
         }
+        
+        
+        
+        
 
         function checkImagesVisibility() {
             const images = document.querySelectorAll(".image-container img"); // Adjust selector if needed

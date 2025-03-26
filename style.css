@@ -7,27 +7,10 @@ body {
     padding: 0;
 }
 
-
-
-
-#checkbox-menu {
-    position: relative;
-    display: inline-block;
-}
-
-
 /* Target the "Lot Number" cells */
 td[data-field="Lot Number and Community/Neighborhood"]:hover {
     transform: scale(1.1);  /* Slightly enlarge the cell */
     transition: transform 0.2s ease-in-out;  /* Smooth transition */
-}
-
-/* Keep only the "Lot Number and Community" column visible in both tables */
-#airtable-data th:nth-child(4), 
-#airtable-data td:nth-child(4),
-#feild-data th:nth-child(4), 
-#feild-data td:nth-child(4) {
-    display: table-cell;
 }
 
 #menu-toggle {
@@ -76,7 +59,6 @@ td[data-field="Lot Number and Community/Neighborhood"]:hover {
     overflow-y: auto;
 }
 
-
 /* Navigation Link Styles */
 .nav-link {
     display: inline-block;
@@ -115,7 +97,6 @@ td[data-field="Lot Number and Community/Neighborhood"]:hover {
     font-size: 16px;
     min-width: 200px;
 }
-
 
 .nav-link:hover {
     background-color: #002244; /* Darker shade for hover effect */
@@ -158,40 +139,8 @@ td {
     height: auto;
 }
 
-#airtable-data th:nth-child(2),
-#airtable-data td:nth-child(2),
-#feild-data td:nth-child(2),
-#feild-data th:nth-child(2),
-#airtable-data th:nth-child(1),
-#airtable-data td:nth-child(1),
-#feild-data td:nth-child(1),
-#feild-data th:nth-child(1)
-
- {
+td:nth-child(1), td:nth-child(2)  {
     display: none;
-}
-
-/* Hide all columns except the specified ones */
-#airtable-data th:not(:nth-child(3)):not(:nth-child(4)),
-#airtable-data td:not(:nth-child(3)):not(:nth-child(4)),
-#feild-data th:not(:nth-child(3)):not(:nth-child(4)),
-#feild-data td:not(:nth-child(3)):not(:nth-child(4)) {
-    display: none;
-}
-
-
-
-
-td:nth-child(7) .delete-button,
-td:nth-child(7) .add-photo-button {
-    width: 100%;
- 
-    border: none;
-    border-radius: 5px;
-    background-color: darkred;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
         /* Add styles to make divs scrollable */
@@ -204,22 +153,6 @@ td:nth-child(7) .add-photo-button {
         }
 
         /* CSS for Dropbox Dropdown or other elements */
-.dropbox-container {
-    position: relative; /* Ensures it's positioned relative to its parent */
-    z-index: 1000; /* Ensures it is above other elements when dropdown is open */
-}
-
-.dropbox-dropdown {
-    position: absolute; /* Absolute within the relative container */
-    top: 100%; /* Position dropdown just below the element */
-    left: 0;
-    background-color: white; /* Adjust based on your UI */
-    border: 1px solid #ccc;
-    z-index: 2000; /* Higher index to ensure it shows above other content */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-   
 
 /* Header Styles */
 .header {
@@ -230,14 +163,6 @@ td:nth-child(7) .add-photo-button {
     cursor: pointer;
     position: fixed;
 }
-
-.logo {
-    height: 80px;
-    margin: 0 auto; /* Centers horizontally */
-    display: block; /* Ensures it takes up full width */
-    transition: opacity 1s ease-in-out;
-}
-
 
 /* Main Content Styles */
 #main-content, #secoundary-content {
@@ -297,8 +222,6 @@ tbody tr:nth-child(even) {
     background-color: #e6e6e6;
 }
 
-
-
 /* Editable Cell Styles */
 td[contenteditable="true"] {
    
@@ -346,195 +269,6 @@ button:hover {
     position: fixed;
 }
 
-#dynamic-submit-button:hover {
-    background-color: #388e3c;
-}
-
-/* Image Styles */
-.image-carousel {
-    position: relative;
-}
-
-.image-carousel img {
-    height: auto;
-    object-fit: cover;
-    border-radius: 5px;
-}
-
-.image-moving {
-    position: absolute;
-    transition: all 0.8s ease-in-out;
-    opacity: 0;
-}
-
-.image-deleted {
-    animation: shrink 0.5s forwards;
-}
-
-@keyframes shrink {
-    from {
-        transform: scale(1);
-        opacity: 1;
-    }
-    to {
-        transform: scale(0);
-        opacity: 0;
-    }
-}
-
-
-
-/* Image Viewer Modal */
-.image-viewer-modal {
-    display: flex;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    justify-content: center;
-    align-items: center;
-    transition: opacity 0.3s ease;
-}
-
-.image-viewer-modal.show {
-    opacity: 1;
-}
-
-.modal-image {
-    max-width: 90vw; /* 90% of the viewport width */
-    max-height: 90vh; /* 90% of the viewport height */
-    width: auto; /* Ensure the image width is automatically adjusted */
-    height: auto; /* Ensure the image height is automatically adjusted */
-    object-fit: contain; /* Ensure the image maintains aspect ratio and fits within bounds */
-    margin: auto;
-    display: block;
-    border-radius: 5px; /* Optional: add rounded corners */
-}
-
-
-.close-modal-button {
-    position: absolute;
-    top: 20px;
-    right: 40px;
-    color: white;
-    font-size: 30px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-/* Carousel Navigation Buttons */
-.carousel-nav-button {
-    width: 10%; /* Adjust width for a better fit */
-    border: none;
-    color: white;
-    font-size: 13px;
-    position: absolute;
-    top: 50%;
-    cursor: pointer;
-    z-index: 2;
-    opacity: 0.7;
-    background: rgba(0, 0, 0, 0.5); /* Optional: adds a semi-transparent background */
-    padding: 8px; /* Increase padding for better clickability */
-    border-radius: 5px;
-}
-
-.carousel-nav-button:hover {
-    opacity: 1;
-}
-
-.carousel-nav-button.prev {
-    width: 15%;
-    left: -3px; /* Moves the button slightly to the left to create space */
-
-}
-
-.carousel-nav-button.next {
-    right: -3px; /* Moves the button slightly to the right to create space */
-    width: 15%;
-
-}
-
-th:nth-child(14) , td:nth-child(14)
-{
-    display: none;
-}
-
-
-/* Custom Checkbox */
-.custom-checkbox {
-    width: 25px;
-    height: 25px;
-    cursor: pointer;
-    appearance: none;
-    background-color: #e0e0e0;
-    border-radius: 5px;
-    border: 2px solid #9e9e9e;
-    transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
-}
-
-.custom-checkbox:checked {
-    background-color: rgb(103, 223, 103);
-    border-color: green;
-    transform: scale(1.1);
-}
-
-.custom-checkbox:checked::after {
-    content: '';
-    position: absolute;
-    left: 7px;
-    width: 6px;
-    height: 14px;
-    border: solid green;
-    border-width: 0 3px 3px 0;
-    transform: rotate(45deg);
-}
-
-/* Styled Select */
-.styled-select {
-    border-radius: 12px;
-    padding: 5px;
-    max-height: 150px; /* Set a max height for the dropdown when it is expanded */
-    overflow-y: auto;  /* Add vertical scroll when options exceed the height */
-
-    border: 1px solid #0e0e0e;
-    background-color: #f9f9f9;
-    transition: background-color 0.2s ease;
-    max-width: 100%;
-    position: relative;
-
-}
-
-.styled-select::-webkit-scrollbar {
-    width: 8px;
-}
-
-.styled-select::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 4px;
-}
-
-.styled-select::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
-}
-
-
-.styled-select:focus {
-    background-color: #e0e0e0;
-}
-
-.styled-select option[value='Billable'] {
-    background-color: #ffeb3b;
-    color: #000;
-}
-
-.styled-select option[value='Non Billable'] {
-    background-color: #03a9f4;
-    color: #fff;
-}
-
 /* Search Input */
 .search-container {
     display: flex;
@@ -553,62 +287,11 @@ th:nth-child(14) , td:nth-child(14)
     margin: 0 auto; /* This centers the element horizontally */
 }
 
-.checkbox-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, auto)); /* Adjust width as needed */
-    gap: 10px; /* Spacing between checkboxes */
-    align-items: center;
-}
-
-
-
-.checkbox-row label {
-    display: flex;
-    align-items: center;
-    gap: 5px;  /* Adds spacing between checkbox and text */
-    cursor: pointer;
-}
-
-
-.checkbox-container {
-    display: flex;
-    flex-wrap: wrap; /* Allows checkboxes to wrap */
-    gap: 10px; /* Reduces unnecessary spacing */
-    align-items: center;
-    justify-content: flex-start; /* Aligns items to the left */
-    width: fit-content; /* Shrinks container width to fit content */
-    max-width: 100%; /* Ensures it doesn’t overflow */
-}
-
-.checkbox-container label {
-    display: flex;
-    align-items: center;
-    gap: 5px; /* Adds space between checkbox and text */
-    white-space: nowrap; /* Prevents text from breaking into new lines */
-}
-
-
-
-
-.checkbox-container input[type="checkbox"] {
-    width: 18px;
-    gap: 55px;  /* Adds spacing between checkboxes */
-    height: 18px;
-    cursor: pointer;
-}
-
-.checkbox-container span {
-    white-space: nowrap; /* Prevent text wrapping */
-    cursor: pointer; /* Optional: Makes text clickable alongside checkbox */
-}
-
 @media (max-width: 768px) {
     .checkbox-container label {
         flex: 1 1 100%; /* Full width on smaller screens */
     }
 }
-
-
 
 /* Toast Notification */
 #toast {
@@ -631,57 +314,6 @@ th:nth-child(14) , td:nth-child(14)
     font-size: 15px;
     opacity: 0;
     transition: opacity 0.5s;
-}
-
-/* Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-}
-
-.modal.show {
-    opacity: 1;
-}
-
-.modal-content {
-    background-color: white;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 650px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    text-align: center;
-    border-radius: 10px;
-    transform: scale(0.9);
-    transition: transform 0.3s ease, background-color 0.3s ease;
-}
-
-.modal-content:hover {
-    background-color: whitesmoke;
-}
-
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: color 0.3s ease, background-color 0.3s ease;
-}
-
-.close:hover, .close:focus {
-    color: black;
-    background-color: #ddd;
-    transform: rotate(90deg);
 }
 
 /* Base adjustments for tablets and mobile devices */
