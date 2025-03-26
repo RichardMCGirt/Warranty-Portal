@@ -230,52 +230,83 @@ document.addEventListener("DOMContentLoaded", async function () {
         console.log("🎯 Subcontractor logic fully integrated!");
 
         /** ✅ Add Event Listener for Save Button **/
-        saveButton.addEventListener("click", function () {
+        saveButton.addEventListener("click", async function () {
             console.log("💾 Save button clicked!");
         
-            const getRawInput = (inputId) => {
-                const val = document.getElementById(inputId)?.value;
-                return val ? val + ":00" : null; // append seconds to match ISO format
-              };
-              
-        
-            let jobData = {
-                "DOW to be Completed": document.getElementById("dow-completed").value,
-                "Subcontractor Not Needed": subcontractorCheckbox.checked,
-                "Subcontractor": document.getElementById("subcontractor-dropdown").value,
-        
-                "Billable/ Non Billable": document.getElementById("billable-status").value,
-                "Homeowner Builder pay": document.getElementById("homeowner-builder").value,
-                "Billable Reason (If Billable)": document.getElementById("billable-reason").value,
-                "Field Review Not Needed": document.getElementById("field-review-needed").checked,
-                "Field Review Needed": document.getElementById("field-review-not-needed").checked,
-                "Subcontractor Payment": parseFloat(document.getElementById("subcontractor-payment").value) || 0,
-        
-                // Convert to UTC ISO format for Airtable
-            "StartDate": getRawInput("StartDate"),
-"EndDate": getRawInput("EndDate"),
-
-        
-                "Materials Needed": document.getElementById("materials-needed").value,
-                "Field Tech Reviewed": document.getElementById("field-tech-reviewed").checked,
-                "Job Completed": document.getElementById("job-completed").checked,
-            };
-        
-          
-              
-            // Ensure Subcontractor field is consistent
-            if (subcontractorCheckbox.checked) {
-                jobData["Subcontractor"] = "Sub Not Needed";
-            } else {
-                jobData["Subcontractor"] = subcontractorDropdown.value.trim() || "";
+            const lotName = document.getElementById("job-name")?.value?.trim();
+            if (!lotName) {
+                alert("❌ Lot Name is missing. Cannot save.");
+                return;
             }
         
-            console.log("🚀 Fields Being Sent:", jobData);
-            console.log("📅 Raw input (local):", document.getElementById("StartDate").value);
-            console.log("📅 Converted to UTC ISO:", new Date(document.getElementById("StartDate").value).toISOString());
-            
-            // 🔁 Your Airtable submission logic goes here
+            try {
+                // 🔄 Get the original record from Airtable to compare datetime values
+                const recordData = await fetchAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName);
+                if (!recordData || !recordData.fields) {
+                    alert("❌ Could not load record data. Try again.");
+                    return;
+                }
+        
+                const originalStartUTC = recordData.fields["StartDate"];
+                const originalEndUTC = recordData.fields["EndDate"];
+                const currentStartLocal = document.getElementById("StartDate")?.value;
+                const currentEndLocal = document.getElementById("EndDate")?.value;
+        
+                const convertedStartUTC = currentStartLocal ? new Date(currentStartLocal).toISOString() : null;
+                const convertedEndUTC = currentEndLocal ? new Date(currentEndLocal).toISOString() : null;
+        
+                let jobData = {
+                    "DOW to be Completed": document.getElementById("dow-completed").value,
+                    "Subcontractor Not Needed": subcontractorCheckbox.checked,
+                    "Billable/ Non Billable": document.getElementById("billable-status").value,
+                    "Homeowner Builder pay": document.getElementById("homeowner-builder").value,
+                    "Billable Reason (If Billable)": document.getElementById("billable-reason").value,
+                    "Field Review Not Needed": document.getElementById("field-review-needed").checked,
+                    "Field Review Needed": document.getElementById("field-review-not-needed").checked,
+                    "Subcontractor Payment": parseFloat(document.getElementById("subcontractor-payment").value) || 0,
+                    "Materials Needed": document.getElementById("materials-needed").value,
+                    "Field Tech Reviewed": document.getElementById("field-tech-reviewed").checked,
+                    "Job Completed": document.getElementById("job-completed").checked
+                };
+        
+                // ✅ Add dates only if they changed
+                if (convertedStartUTC !== originalStartUTC) {
+                    jobData["StartDate"] = convertedStartUTC;
+                    console.log("🕓 Updated StartDate:", convertedStartUTC);
+                } else {
+                    console.log("⏸ No change in StartDate.");
+                }
+        
+                if (convertedEndUTC !== originalEndUTC) {
+                    jobData["EndDate"] = convertedEndUTC;
+                    console.log("🕓 Updated EndDate:", convertedEndUTC);
+                } else {
+                    console.log("⏸ No change in EndDate.");
+                }
+        
+                // ✅ Handle subcontractor logic
+                jobData["Subcontractor"] = subcontractorCheckbox.checked
+                    ? "Sub Not Needed"
+                    : subcontractorDropdown.value.trim() || "";
+        
+                console.log("📤 Sending updated fields to Airtable:", jobData);
+        
+                // ✅ Save to Airtable
+                await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName, jobData);
+        
+                // ✅ Refresh UI with new data
+                const refreshed = await fetchAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName);
+                if (refreshed) {
+                    await populatePrimaryFields(refreshed.fields);
+                    showToast("✅ Job saved successfully!", "success");
+                }
+        
+            } catch (err) {
+                console.error("❌ Error saving job data:", err);
+                showToast("❌ Error saving job data. Please try again.", "error");
+            }
         });
+        
         
         
     
@@ -578,8 +609,11 @@ async function populatePrimaryFields(job) {
     setInputValue("materials-needed", safeValue(job["Materials Needed"]));
     setInputValue("field-status", safeValue(job["Status"]));
     setCheckboxValue("sub-not-needed", job["Subcontractor Not Needed"] || false);
-    setInputValue("StartDate", job["StartDate"]);
-    setInputValue("EndDate", job["EndDate"]);
+    setInputValue("StartDate", convertUTCToLocalInput(job["StartDate"]));
+    setInputValue("EndDate", convertUTCToLocalInput(job["EndDate"]));
+    
+    
+    
 
     // ✅ Set subcontractor field
     setInputValue("subcontractor", safeValue(job["Subcontractor"]));
@@ -1123,9 +1157,29 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         
-    
-        const updatedFields = {};
-        const inputs = document.querySelectorAll("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
+        console.log("🕒 Saving StartDate:", document.getElementById("StartDate").value);
+
+        const originalStartUTC = primaryData.fields["StartDate"]; // from Airtable
+        const originalEndUTC = primaryData.fields["EndDate"];
+        
+        const currentStartLocal = document.getElementById("StartDate")?.value;
+        const currentEndLocal = document.getElementById("EndDate")?.value;
+        
+        const convertedStartUTC = currentStartLocal ? new Date(currentStartLocal).toISOString() : null;
+        const convertedEndUTC = currentEndLocal ? new Date(currentEndLocal).toISOString() : null;
+        
+        const updatedFields = {}; // begin fresh field collection
+        
+        // ✅ Only add StartDate if it changed
+        if (convertedStartUTC !== originalStartUTC) {
+            updatedFields["StartDate"] = convertedStartUTC;
+        }
+        
+        // ✅ Only add EndDate if it changed
+        if (convertedEndUTC !== originalEndUTC) {
+            updatedFields["EndDate"] = convertedEndUTC;
+        }
+                const inputs = document.querySelectorAll("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
     
         inputs.forEach(input => {
             let fieldName = input.getAttribute("data-field");
@@ -1371,49 +1425,22 @@ document.addEventListener("DOMContentLoaded", () => {
             return [];
         }
     }
-
-    function formatDateTimeToISO(value) {
-        if (!value) return "";
-    
-        // value from datetime-local is in format "YYYY-MM-DDTHH:MM"
-        // Don't convert to Date object – just format it to ISO 8601 *with no timezone shift*
-        return value + ":00.000"; // Add seconds and milliseconds
-    }
-    
-    
-    function convertLocalToUTCISOString(value) {
-        if (!value) return "";
-        const localDate = new Date(value);
-        return localDate.toISOString(); // Converts to UTC properly
-    }
-    
-    
-
-    function formatDateTimeForInput(dateStr) {
-        if (!dateStr) return "";
-    
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return "";
-    
-        // Format as "YYYY-MM-DDTHH:MM" for datetime-local input
-        const iso = date.toISOString();
-        return iso.substring(0, 16); // "YYYY-MM-DDTHH:MM"
-    }
-    
-
-
+       
       
-      
-    function convertUTCToLocalInput(value) {
-        if (!value) return "";
-        const utcDate = new Date(value);
+    function convertUTCToLocalInput(utcDateString) {
+        if (!utcDateString) return "";
+        const utcDate = new Date(utcDateString);
         const offsetMs = utcDate.getTimezoneOffset() * 60000;
         const localDate = new Date(utcDate.getTime() - offsetMs);
         return localDate.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
     }
     
-    
-    
+    function convertLocalInputToUTC(inputId) {
+        const val = document.getElementById(inputId)?.value;
+        if (!val) return null;
+        return new Date(val).toISOString(); // Converts local time into full ISO UTC format
+    }
+        
     // 🔹 Dropbox Image Upload
     async function uploadToDropbox(files, targetField) {
         if (!dropboxAccessToken) {
@@ -1782,11 +1809,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return isoDate;
     }
     
-    
- 
-    
-   
-    
     function setInputValue(id, value) {
         const element = document.getElementById(id);
         if (!element) {
@@ -1794,17 +1816,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
     
-        if (element.type === "datetime-local" && value) {
-            value = convertUTCToLocalInput(value); // ✅ Converts UTC to local for input
-        }
+     
+          
     
         element.value = value || "";
     }
     
-    
-    
-
-
     function setCheckboxValue(id, value) {
         const element = document.getElementById(id);
         if (element) {
