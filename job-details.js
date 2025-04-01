@@ -88,7 +88,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         Table_Name: airtableTableName,
     });
     dropboxAccessToken = await fetchDropboxToken();
-
+    console.log("🔐 Dropbox Access Token Retrieved:", dropboxAccessToken);
+    
 
     if (!airtableApiKey || !airtableBaseId || !airtableTableName) {
         console.error("❌ Missing Airtable credentials! Please check your environment variables.");
@@ -326,7 +327,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!dropboxAccessToken) {
             console.log("🔄 Fetching Dropbox token...");
             dropboxAccessToken = await fetchDropboxToken();
-        }
+            console.log("🔐 Dropbox Access Token Retrieved:", dropboxAccessToken);
+                    }
     
         if (!dropboxAccessToken) {
             console.error("❌ Dropbox Access Token could not be retrieved.");
@@ -1302,58 +1304,70 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
     }
      
-    // 🔹 Fetch Dropbox Token from Airtable
-    async function fetchDropboxToken() {
-        try {
-            const url = `https://api.airtable.com/v0/${airtableBaseId}/tbl6EeKPsNuEvt5yJ?maxRecords=1&view=viwMlo3nM8JDCIMyV`;
-    
-            console.log("🔄 Fetching latest Dropbox credentials from Airtable...");
-            const response = await fetch(url, {
-                headers: { Authorization: `Bearer ${airtableApiKey}` }
-            });
-    
-            if (!response.ok) {
-                throw new Error(`❌ Error fetching Dropbox token: ${response.statusText}`);
-            }
-    
-            const data = await response.json();
-            console.log("✅ Dropbox token response:", data);
-    
-            // Extract fields
-            const record = data.records.find(rec => rec.fields["Dropbox Token"]);
-            const refreshToken = data.records.find(rec => rec.fields["Dropbox Refresh Token"]);
-            const appKey = data.records.find(rec => rec.fields["Dropbox App Key"]);
-            const appSecret = data.records.find(rec => rec.fields["Dropbox App Secret"]);
-    
-            if (!appKey || !appSecret) {
-                console.error("❌ Dropbox App Key or Secret is missing in Airtable.");
-                return null;
-            }
-    
-            dropboxAppKey = appKey.fields["Dropbox App Key"];
-            dropboxAppSecret = appSecret.fields["Dropbox App Secret"];
-    
-            if (record && record.fields["Dropbox Token"]) {
-                dropboxAccessToken = record.fields["Dropbox Token"];
-    
-                if (refreshToken && refreshToken.fields["Dropbox Refresh Token"]) {
-                    return await refreshDropboxAccessToken(
-                        refreshToken.fields["Dropbox Refresh Token"], 
-                        dropboxAppKey, 
-                        dropboxAppSecret
-                    );
-                }
-    
-                return dropboxAccessToken;
-            } else {
-                console.warn("⚠️ No Dropbox Token found in Airtable.");
-                return null;
-            }
-        } catch (error) {
-            console.error("❌ Error fetching Dropbox token:", error);
+   // 🔹 Fetch Dropbox Token from Airtable and refresh if needed
+   // 🔹 Fetch Dropbox Token from Airtable
+async function fetchDropboxToken() {
+    try {
+        const url = `https://api.airtable.com/v0/${airtableBaseId}/tbl6EeKPsNuEvt5yJ?maxRecords=1&view=viwMlo3nM8JDCIMyV`;
+
+        console.log("🔄 Fetching latest Dropbox credentials from Airtable...");
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${airtableApiKey}` }
+        });
+
+        if (!response.ok) {
+            throw new Error(`❌ Error fetching Dropbox token: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const record = data.records[0];
+
+        if (!record) {
+            console.error("❌ No record found in Airtable view.");
             return null;
         }
+
+        const fields = record.fields;
+
+        dropboxAppKey = fields["Dropbox App Key"];
+        dropboxAppSecret = fields["Dropbox App Secret"];
+        const token = fields["Dropbox Token"];
+        const refreshToken = fields["Dropbox Refresh Token"];
+
+        console.log("🔑 App Key:", dropboxAppKey);
+        console.log("🔐 App Secret:", dropboxAppSecret);
+        console.log("🪪 Access Token:", token);
+        console.log("♻️ Refresh Token:", refreshToken);
+
+        if (!dropboxAppKey || !dropboxAppSecret) {
+            console.error("❌ Dropbox App Key or Secret is missing.");
+            return null;
+        }
+
+        // 🛠 If access token is present, use it
+        if (token) {
+            dropboxAccessToken = token;
+            return dropboxAccessToken;
+        }
+
+        // 🛠 If no token, try to refresh it
+        if (refreshToken) {
+            console.log("🔄 No access token found, refreshing using refresh token...");
+            return await refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxAppSecret);
+        }
+
+        console.warn("⚠️ No Dropbox token or refresh token found.");
+        return null;
+
+    } catch (error) {
+        console.error("❌ Error fetching Dropbox token:", error);
+        return null;
     }
+}
+
+
+
+    
     
     async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxAppSecret) {
         console.log("🔄 Refreshing Dropbox Access Token...");
@@ -1501,7 +1515,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!dropboxAccessToken) {
             console.error("❌ Dropbox Access Token is missing.");
             dropboxAccessToken = await fetchDropboxToken();
-        }
+            console.log("🔐 Dropbox Access Token Retrieved:", dropboxAccessToken);
+                    }
     
         if (!dropboxAccessToken) {
             console.error("❌ Unable to obtain Dropbox Access Token.");
@@ -1534,7 +1549,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (errorResponse.error?.[".tag"] === "expired_access_token") {
                     console.warn("⚠️ Dropbox token expired. Refreshing...");
                     dropboxAccessToken = await fetchDropboxToken();
-    
+                    console.log("🔐 Dropbox Access Token Retrieved:", dropboxAccessToken);
+                        
                     if (dropboxAccessToken) {
                         console.log("🔄 Retrying file upload...");
                         return await uploadFileToDropbox(file);
