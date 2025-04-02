@@ -8,10 +8,26 @@ body {
 }
 
 /* Target the "Lot Number" cells */
+/* Default for desktop */
 td[data-field="Lot Number and Community/Neighborhood"]:hover {
-    transform: scale(1.1);  /* Slightly enlarge the cell */
-    transition: transform 0.2s ease-in-out;  /* Smooth transition */
+    transform: scale(1.05);
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
 }
+
+/* Make the cell easier to tap on mobile */
+td[data-field="Lot Number and Community/Neighborhood"] {
+    padding: 12px 16px; /* Add enough space for tapping */
+    touch-action: manipulation;
+}
+
+/* Visual feedback on tap (for mobile) */
+td[data-field="Lot Number and Community/Neighborhood"]:active {
+    background-color: #f0f0f0; /* Light highlight */
+    transform: scale(1.05);
+    transition: transform 0.1s ease-in-out;
+}
+
 
 #menu-toggle {
     background-color: #007bff;
