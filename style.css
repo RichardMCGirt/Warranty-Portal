@@ -54,10 +54,11 @@ td[data-field="Lot Number and Community/Neighborhood"]:hover {
 
 .checkbox-row {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     max-height: 200px;
     overflow-y: auto;
 }
+
 
 /* Navigation Link Styles */
 .nav-link {
@@ -324,6 +325,62 @@ button:hover {
         padding: 8px 16px;
     }
 
+    /* Responsive mobile-first styling */
+#checkbox-container {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: nowrap;
+    width: max-content;
+    min-width: 180px;
+    max-width: 90vw; /* Prevent it from overflowing iPhone screens */
+}
+
+/* Show when toggled */
+#checkbox-container.show {
+    display: block;
+}
+
+/* Flex column for stacking checkboxes */
+.checkbox-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Spacing between checkboxes */
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Improve checkbox tap area */
+.checkbox-row label {
+    display: flex;
+    align-items: center;
+    font-size: 16px; /* Bigger text for readability */
+    padding: 10px 8px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.checkbox-row label:hover {
+    background: #f0f0f0;
+}
+
+/* Make checkbox itself bigger */
+.checkbox-row input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
+
     /* Table */
     table {
         width: 100%;
@@ -374,6 +431,62 @@ button:hover {
         text-align: center;
     }
 
+    /* Responsive mobile-first styling */
+#checkbox-container {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: nowrap;
+    width: max-content;
+    min-width: 180px;
+    max-width: 90vw; /* Prevent it from overflowing iPhone screens */
+}
+
+/* Show when toggled */
+#checkbox-container.show {
+    display: block;
+}
+
+/* Flex column for stacking checkboxes */
+.checkbox-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Spacing between checkboxes */
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Improve checkbox tap area */
+.checkbox-row label {
+    display: flex;
+    align-items: center;
+    font-size: 16px; /* Bigger text for readability */
+    padding: 10px 8px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.checkbox-row label:hover {
+    background: #f0f0f0;
+}
+
+/* Make checkbox itself bigger */
+.checkbox-row input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
+
     .logo {
         width: 150px;
         margin: 0 auto;
@@ -412,7 +525,61 @@ button:hover {
     }
 
    
-    
+    /* Responsive mobile-first styling */
+#checkbox-container {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: nowrap;
+    width: max-content;
+    min-width: 180px;
+    max-width: 90vw; /* Prevent it from overflowing iPhone screens */
+}
+
+/* Show when toggled */
+#checkbox-container.show {
+    display: block;
+}
+
+/* Flex column for stacking checkboxes */
+.checkbox-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Spacing between checkboxes */
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Improve checkbox tap area */
+.checkbox-row label {
+    display: flex;
+    align-items: center;
+    font-size: 16px; /* Bigger text for readability */
+    padding: 10px 8px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.checkbox-row label:hover {
+    background: #f0f0f0;
+}
+
+/* Make checkbox itself bigger */
+.checkbox-row input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
 
     th, td {
         font-size: 15px;
@@ -441,6 +608,61 @@ button:hover {
         padding: 10px;
     }
 
+    /* Responsive mobile-first styling */
+#checkbox-container {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    max-height: 600px;
+    overflow-y: auto;
+    white-space: nowrap;
+    width: max-content;
+    min-width: 180px;
+    max-width: 90vw; /* Prevent it from overflowing iPhone screens */
+}
+
+/* Show when toggled */
+#checkbox-container.show {
+    display: block;
+}
+
+/* Flex column for stacking checkboxes */
+.checkbox-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Spacing between checkboxes */
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Improve checkbox tap area */
+.checkbox-row label {
+    display: flex;
+    align-items: center;
+    font-size: 16px; /* Bigger text for readability */
+    padding: 10px 8px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.checkbox-row label:hover {
+    background: #f0f0f0;
+}
+
+/* Make checkbox itself bigger */
+.checkbox-row input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
     .filter-label {
         font-size: 1rem;
     }
@@ -455,6 +677,62 @@ button:hover {
     .checkbox-container label {
         font-size: 0.9rem;
     }
+
+    /* Responsive mobile-first styling */
+#checkbox-container {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    max-height: 600px;
+    overflow-y: auto;
+    white-space: nowrap;
+    width: max-content;
+    min-width: 80px;
+    max-width: 90vw; /* Prevent it from overflowing iPhone screens */
+}
+
+/* Show when toggled */
+#checkbox-container.show {
+    display: block;
+}
+
+/* Flex column for stacking checkboxes */
+.checkbox-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Spacing between checkboxes */
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Improve checkbox tap area */
+.checkbox-row label {
+    display: flex;
+    align-items: center;
+    font-size: 16px; /* Bigger text for readability */
+    padding: 10px 8px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.checkbox-row label:hover {
+    background: #f0f0f0;
+}
+
+/* Make checkbox itself bigger */
+.checkbox-row input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+}
+
 
     #search-input {
         font-size: 0.8rem;
