@@ -1,3 +1,6 @@
+let dropboxRefreshToken = null;
+
+
 function openMapApp() {
     const addressInput = document.getElementById("address");
 
@@ -1333,6 +1336,7 @@ async function fetchDropboxToken() {
         dropboxAppSecret = fields["Dropbox App Secret"];
         const token = fields["Dropbox Token"];
         const refreshToken = fields["Dropbox Refresh Token"];
+        dropboxRefreshToken = fields["Dropbox Refresh Token"]; // ✅ Add this line
 
         console.log("🔑 App Key:", dropboxAppKey);
         console.log("🔐 App Secret:", dropboxAppSecret);
@@ -1369,46 +1373,75 @@ async function fetchDropboxToken() {
 
     
     
-    async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxAppSecret) {
-        console.log("🔄 Refreshing Dropbox Access Token...");
-        const dropboxAuthUrl = "https://api.dropboxapi.com/oauth2/token";
-        
-        if (!dropboxAppKey || !dropboxAppSecret) {
-            console.error("❌ Dropbox App Key or Secret is missing. Cannot refresh token.");
+async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxAppSecret) {
+    console.log("🔄 Refreshing Dropbox Access Token...");
+    const dropboxAuthUrl = "https://api.dropboxapi.com/oauth2/token";
+
+    const params = new URLSearchParams();
+    params.append("grant_type", "refresh_token");
+    params.append("refresh_token", refreshToken);
+    params.append("client_id", dropboxAppKey);
+    params.append("client_secret", dropboxAppSecret);
+
+    try {
+        const response = await fetch(dropboxAuthUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: params
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error(`❌ Error refreshing Dropbox token:`, data);
             return null;
         }
-    
-        const params = new URLSearchParams();
-        params.append("grant_type", "refresh_token");
-        params.append("refresh_token", refreshToken);
-        params.append("client_id", dropboxAppKey);
-        params.append("client_secret", dropboxAppSecret);
-    
-        try {
-            const response = await fetch(dropboxAuthUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: params
-            });
-    
-            if (!response.ok) {
-                const errorResponse = await response.json();
-                console.error(`❌ Error refreshing Dropbox token: ${errorResponse.error_summary}`);
-                return null;
+
+        console.log("✅ New Dropbox Access Token:", data.access_token);
+
+        dropboxAccessToken = data.access_token;
+
+        // ✅ Update Airtable with the new token
+        const tokenUpdateUrl = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl6EeKPsNuEvt5yJ?maxRecords=1&view=viwMlo3nM8JDCIMyV`;
+        const tokenResponse = await fetch(tokenUpdateUrl, {
+            headers: {
+                Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`
             }
-    
-            const data = await response.json();
-    
-            // Store the new access token
-            dropboxAccessToken = data.access_token;
+        });
+
+        const tokenData = await tokenResponse.json();
+        const recordId = tokenData.records?.[0]?.id;
+
+        if (!recordId) {
+            console.warn("⚠️ Could not find Dropbox credentials record ID to update.");
             return dropboxAccessToken;
-        } catch (error) {
-            console.error("❌ Error refreshing Dropbox access token:", error);
-            return null;
         }
+
+        // Update Airtable record with the new token
+        const patchUrl = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl6EeKPsNuEvt5yJ/${recordId}`;
+        await fetch(patchUrl, {
+            method: "PATCH",
+            headers: {
+                Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                fields: {
+                    "Dropbox Token": dropboxAccessToken
+                }
+            })
+        });
+
+        console.log("📡 Updated Airtable with new Dropbox access token.");
+        return dropboxAccessToken;
+
+    } catch (error) {
+        console.error("❌ Error refreshing Dropbox access token:", error);
+        return null;
     }
+}
+
+
     
     async function fetchCurrentImagesFromAirtable(lotName, imageField) {
         console.log("📡 Fetching images for Lot Name:", lotName);
@@ -1486,7 +1519,14 @@ async function fetchDropboxToken() {
     
         for (const file of files) {
             try {
-                const dropboxUrl = await uploadFileToDropbox(file);
+                const creds = {
+                    appKey: dropboxAppKey,
+                    appSecret: dropboxAppSecret,
+                    refreshToken: dropboxRefreshToken
+                };
+        
+                const dropboxUrl = await uploadFileToDropbox(file, dropboxAccessToken, creds);
+        
                 if (dropboxUrl) {
                     uploadedUrls.push({ url: dropboxUrl });
                 }
@@ -1509,64 +1549,72 @@ async function fetchDropboxToken() {
     
     
     
-    // 🔹 Upload File to Dropbox
-    async function uploadFileToDropbox(file) {
-        console.log("🚀 Starting file upload to Dropbox...");
-        if (!dropboxAccessToken) {
-            console.error("❌ Dropbox Access Token is missing.");
-            dropboxAccessToken = await fetchDropboxToken();
-            console.log("🔐 Dropbox Access Token Retrieved:", dropboxAccessToken);
-                    }
-    
-        if (!dropboxAccessToken) {
-            console.error("❌ Unable to obtain Dropbox Access Token.");
-            return null;
-        }
-    
-        const dropboxUploadUrl = "https://content.dropboxapi.com/2/files/upload";
-        const path = `/uploads/${encodeURIComponent(file.name)}`;
-    
-        try {
-            const response = await fetch(dropboxUploadUrl, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${dropboxAccessToken}`,
-                    "Dropbox-API-Arg": JSON.stringify({
-                        path: path,
-                        mode: "add",
-                        autorename: true,
-                        mute: false
-                    }),
-                    "Content-Type": "application/octet-stream"
-                },
-                body: file
-            });
-    
-            if (!response.ok) {
-                const errorResponse = await response.json();
-                console.error("❌ Dropbox Upload Error:", errorResponse);
-    
-                if (errorResponse.error?.[".tag"] === "expired_access_token") {
-                    console.warn("⚠️ Dropbox token expired. Refreshing...");
-                    dropboxAccessToken = await fetchDropboxToken();
-                    console.log("🔐 Dropbox Access Token Retrieved:", dropboxAccessToken);
-                        
-                    if (dropboxAccessToken) {
-                        console.log("🔄 Retrying file upload...");
-                        return await uploadFileToDropbox(file);
-                    }
-                }
-                return null;
-            }
-    
-            const data = await response.json();
-            console.log("✅ File uploaded successfully:", data);
-            return await getDropboxSharedLink(data.path_lower);
-        } catch (error) {
-            console.error("❌ Error during Dropbox upload:", error);
-            return null;
-        }
+   // 🔹 Upload File to Dropbox
+   async function uploadFileToDropbox(file, token = null, creds = {}) {
+    let dropboxAccessToken = token || await fetchDropboxToken();
+
+    if (!dropboxAccessToken) {
+        console.error("❌ Unable to obtain Dropbox Access Token.");
+        return null;
     }
+
+    const dropboxUploadUrl = "https://content.dropboxapi.com/2/files/upload";
+    const path = `/uploads/${encodeURIComponent(file.name)}`;
+
+    try {
+        const response = await fetch(dropboxUploadUrl, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${dropboxAccessToken}`,
+                "Dropbox-API-Arg": JSON.stringify({
+                    path: path,
+                    mode: "add",
+                    autorename: true,
+                    mute: false
+                }),
+                "Content-Type": "application/octet-stream"
+            },
+            body: file
+        });
+
+        if (!response.ok) {
+            const errorResponse = await response.json();
+            console.error("❌ Dropbox Upload Error:", errorResponse);
+
+            const tag = errorResponse?.error?.[".tag"];
+
+            if (tag === "expired_access_token" || errorResponse?.error_summary?.startsWith("expired_access_token")) {
+                console.warn("⚠️ Dropbox token expired. Refreshing...");
+
+                // 🔁 Refresh the access token using passed-in credentials
+                await refreshDropboxAccessToken(creds.refreshToken, creds.appKey, creds.appSecret);
+
+                // 🔄 Fetch new access token
+                const newToken = await fetchDropboxToken();
+                console.log("🔐 Refreshed Dropbox Access Token:", newToken);
+
+                // 🔁 Retry with new token and same credentials
+                if (newToken) {
+                    console.log("🔄 Retrying file upload...");
+                    return await uploadFileToDropbox(file, newToken, creds);
+                }
+            }
+
+            return null;
+        }
+
+        const data = await response.json();
+        console.log("✅ File uploaded successfully:", data);
+        return await getDropboxSharedLink(data.path_lower);
+
+    } catch (error) {
+        console.error("❌ Error during Dropbox upload:", error);
+        return null;
+    }
+}
+
+
+    
     
     
     // 🔹 Get Dropbox Shared Link
