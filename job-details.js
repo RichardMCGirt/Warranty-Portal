@@ -1550,11 +1550,9 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
     
     
    // 🔹 Upload File to Dropbox
-   async function uploadFileToDropbox(file, token = null, creds = {}) {
-    let dropboxAccessToken = token || await fetchDropboxToken();
-
-    if (!dropboxAccessToken) {
-        console.error("❌ Unable to obtain Dropbox Access Token.");
+   async function uploadFileToDropbox(file, token, creds = {}) {
+    if (!token) {
+        console.error("❌ No Dropbox token provided.");
         return null;
     }
 
@@ -1565,7 +1563,7 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
         const response = await fetch(dropboxUploadUrl, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${dropboxAccessToken}`,
+                "Authorization": `Bearer ${token}`,
                 "Dropbox-API-Arg": JSON.stringify({
                     path: path,
                     mode: "add",
@@ -1582,21 +1580,16 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
             console.error("❌ Dropbox Upload Error:", errorResponse);
 
             const tag = errorResponse?.error?.[".tag"];
-
             if (tag === "expired_access_token" || errorResponse?.error_summary?.startsWith("expired_access_token")) {
                 console.warn("⚠️ Dropbox token expired. Refreshing...");
 
-                // 🔁 Refresh the access token using passed-in credentials
+                // Refresh the token
                 await refreshDropboxAccessToken(creds.refreshToken, creds.appKey, creds.appSecret);
-
-                // 🔄 Fetch new access token
                 const newToken = await fetchDropboxToken();
-                console.log("🔐 Refreshed Dropbox Access Token:", newToken);
 
-                // 🔁 Retry with new token and same credentials
                 if (newToken) {
-                    console.log("🔄 Retrying file upload...");
-                    return await uploadFileToDropbox(file, newToken, creds);
+                    console.log("🔄 Retrying file upload with refreshed token...");
+                    return await uploadFileToDropbox(file, newToken, creds); // ✅ Recursive retry
                 }
             }
 
@@ -1612,6 +1605,7 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
         return null;
     }
 }
+
 
 
     
