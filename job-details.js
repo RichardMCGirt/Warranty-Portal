@@ -90,7 +90,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         Table_Name: airtableTableName,
     });
     dropboxAccessToken = await fetchDropboxToken();
-    console.log("🔐 Dropbox Access Token Retrieved:", dropboxAccessToken);
     
 
     if (!airtableApiKey || !airtableBaseId || !airtableTableName) {
@@ -1392,10 +1391,7 @@ async function fetchDropboxToken() {
         const refreshToken = fields["Dropbox Refresh Token"];
         dropboxRefreshToken = fields["Dropbox Refresh Token"]; // ✅ Add this line
 
-        console.log("🔑 App Key:", dropboxAppKey);
-        console.log("🔐 App Secret:", dropboxAppSecret);
-        console.log("🪪 Access Token:", token);
-        console.log("♻️ Refresh Token:", refreshToken);
+        
 
         if (!dropboxAppKey || !dropboxAppSecret) {
             console.error("❌ Dropbox App Key or Secret is missing.");
