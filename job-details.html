@@ -95,21 +95,24 @@
 
 
 
-<div id="additional-fields-container">
+<div id="additional-fields-container" style="padding: 16px;">
     <div class="form-group">
-        <label for="billable-status">Billable Status</label>
-        <div id="billable-status-container">
-            <label>
-              <input type="radio" name="billable-status" value="Billable" data-field="Billable/ Non Billable" />
-              Billable
-            </label>
-            <label>
-              <input type="radio" name="billable-status" value="Non Billable" data-field="Billable/ Non Billable" />
-              Non-Billable
-            </label>
-          </div>
-          
+      <label for="billable-status" style="font-size: 18px; font-weight: 600; display: block; margin-bottom: 8px;">
+        Billable Status
+      </label>
+      <div id="billable-status-container" style="display: flex; flex-direction: column; gap: 12px;">
+        <label style="font-size: 16px; padding: 12px; border: 1px solid #ccc; border-radius: 10px; background-color: #f9f9f9;">
+          <input type="radio" name="billable-status" value="Billable" data-field="Billable/ Non Billable" style="margin-right: 10px;" />
+          Billable
+        </label>
+        <label style="font-size: 16px; padding: 12px; border: 1px solid #ccc; border-radius: 10px; background-color: #f9f9f9;">
+          <input type="radio" name="billable-status" value="Non Billable" data-field="Billable/ Non Billable" style="margin-right: 10px;" />
+          Non-Billable
+        </label>
+      </div>
     </div>
+ 
+  
     <div class="form-group">
         <label for="homeowner-builder">Homeowner Builder Pay</label>
 <select id="homeowner-builder" name="homeowner-builder" data-field="Homeowner Builder pay">

@@ -553,8 +553,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     
             const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${recordId}`;
             console.log("📡 Sending API Request to Airtable:", url);
-            console.log("📋 Fields Being Sent:", JSON.stringify(fields, null, 2));
-    
+            console.log("🔎 Verifying field values before sending...");
+            for (const [key, value] of Object.entries(fields)) {
+                console.log(`• ${key}:`, value, `(${typeof value})`);
+            }
+                
             const response = await fetch(url, {
                 method: "PATCH",
                 headers: {
@@ -566,7 +569,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     
             if (!response.ok) {
                 const errorDetails = await response.json(); // Extract error response
-                console.error("❌ Airtable Error:", errorDetails);
                 showToast(`❌ Airtable error: ${errorDetails.error?.message || 'Unknown error'}`, "error");
                 return;
             }
@@ -1222,7 +1224,8 @@ if (billableRadio) {
                         value = input.checked;
                     } else if (input.tagName === "SELECT") {
                         value = value === "" ? null : value;
-                    } else if (input.type === "number") {
+                    }
+                     else if (input.type === "number") {
                         value = value === "" ? null : parseFloat(value);
                     } else if (input.type === "date") {
                         value = formatDateToISO(value);
@@ -1235,11 +1238,25 @@ if (billableRadio) {
                 
 
         // Clean empty strings to nulls (avoid Airtable errors)
-for (let key in updatedFields) {
-    if (updatedFields[key] === "") {
-        updatedFields[key] = null;
-    }
-}
+        for (let key in updatedFields) {
+            const value = updatedFields[key];
+        
+            // Convert empty string to null
+            if (value === "") {
+                updatedFields[key] = null;
+            }
+        
+            // Optional: Prevent sending "undefined"
+            if (typeof value === "undefined") {
+                delete updatedFields[key];
+            }
+        
+            // Prevent NaN
+            if (typeof value === "number" && isNaN(value)) {
+                delete updatedFields[key];
+            }
+        }
+        
 
     
         console.log("📌 Final Fields to be Updated:", JSON.stringify(updatedFields, null, 2));
