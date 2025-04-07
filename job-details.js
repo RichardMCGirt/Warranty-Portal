@@ -402,6 +402,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             showToast("❌ Failed to authenticate Dropbox!", "error"); // Show error toast
         }
     });
+
+    const labels = document.querySelectorAll('.billable-label');
+
+    labels.forEach(label => {
+      label.addEventListener('click', () => {
+        labels.forEach(l => l.classList.remove('selected'));
+        label.classList.add('selected');
+        label.querySelector('input').checked = true;
+      });
+    });
     
     // 🔹 Fetch Airtable Record Function
     async function fetchAirtableRecord(tableName, lotNameOrRecordId) {

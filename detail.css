@@ -492,6 +492,31 @@ input[type="file"] {
     display: block !important;
 }
 
+.billable-label {
+    font-size: 16px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .billable-label input[type="radio"] {
+    display: none;
+  }
+
+  .billable-label.selected {
+    background-color: #d0f0d0; /* light green for selected */
+    border-color: #4caf50;
+  }
+
+  #billable-status-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
 
 /* "Marked for Deletion" Overlay */
 .marked-for-deletion {

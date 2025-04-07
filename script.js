@@ -585,7 +585,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3500); // Increase timeout if necessary
     
     
-    
+    const labels = document.querySelectorAll('.billable-option');
+
+    labels.forEach(label => {
+      label.addEventListener('click', () => {
+        labels.forEach(l => l.classList.remove('selected'));
+        label.classList.add('selected');
+        label.querySelector('input').checked = true;
+      });
+    });
     
     
     
