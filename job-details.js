@@ -254,7 +254,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const selectedBillable = document.querySelector('input[name="billable-status"]:checked');
                 if (!selectedBillable) {
-                    alert("⚠️ Please select if the job is Billable or Non Billable.");
+                    alert("⚠️ Please select if the job is Billable or Non Billable. Ignore if clearing value");
                     return;
                 }
                 
@@ -404,14 +404,36 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     const labels = document.querySelectorAll('.billable-label');
-
+    let lastSelectedBillable = null;
+    
     labels.forEach(label => {
-      label.addEventListener('click', () => {
-        labels.forEach(l => l.classList.remove('selected'));
-        label.classList.add('selected');
-        label.querySelector('input').checked = true;
-      });
+        const input = label.querySelector('input');
+    
+        label.addEventListener('click', (e) => {
+            e.preventDefault(); // prevent default radio behavior
+    
+            const isSelected = label.classList.contains('selected');
+    
+            // Deselect all
+            labels.forEach(l => {
+                l.classList.remove('selected');
+                l.querySelector('input').checked = false;
+            });
+    
+            if (isSelected) {
+                // Toggle off
+                lastSelectedBillable = null;
+                console.log("🚫 Billable selection cleared.");
+            } else {
+                // Set new selection
+                label.classList.add('selected');
+                input.checked = true;
+                lastSelectedBillable = input.value;
+                console.log("✅ Billable selected:", input.value);
+            }
+        });
     });
+    
     
     // 🔹 Fetch Airtable Record Function
     async function fetchAirtableRecord(tableName, lotNameOrRecordId) {
@@ -1203,16 +1225,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // ✅ Manually handle radio buttons for Billable/Non Billable
-const billableRadio = document.querySelector('input[name="billable-status"]:checked');
-if (billableRadio) {
-    const billableFieldName = billableRadio.getAttribute("data-field");
-    const billableValue = billableRadio.value.trim();
-
-    if (billableFieldName) {
-        updatedFields[billableFieldName] = billableValue;
-        console.log(`✅ Billable radio selected: ${billableFieldName} = ${billableValue}`);
-    }
-}
+        const selectedRadio = document.querySelector('input[name="billable-status"]:checked');
+        const billableField = selectedRadio?.getAttribute("data-field") || "Billable/ Non Billable";
+        
+        // Handle toggle-off logic
+        updatedFields[billableField] = selectedRadio ? selectedRadio.value.trim() : ""; // send empty string to Airtable
+        console.log("📤 Billable Field Value:", updatedFields[billableField]);
+        
 
         
         // ✅ Only add EndDate if it changed
