@@ -1,6 +1,5 @@
 let dropboxRefreshToken = null;
 
-
 function openMapApp() {
     const addressInput = document.getElementById("address");
 
@@ -123,7 +122,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             checkAndHideDeleteButton();
         });
         
-
         // ✅ Fetch Subcontractors Based on `b` Value and Populate Dropdown
         console.log("✅ Fetching subcontractors based on branch `b`...");
         await fetchAndPopulateSubcontractors(recordId);
@@ -186,10 +184,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
         
-        
-        
-        
-
         function checkImagesVisibility() {
             const images = document.querySelectorAll(".image-container img"); // Adjust selector if needed
             if (images.length > 0) {
@@ -208,9 +202,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             document.querySelectorAll(".image-container img.selected").forEach(img => img.remove());
             checkImagesVisibility(); // Re-check visibility after deletion
         });
-
-
-        
 
         // Initialize subcontractor checkbox and dropdown state from job data
         function setInputValue(fieldId, value) {
@@ -259,11 +250,25 @@ document.addEventListener("DOMContentLoaded", async function () {
         
                 const convertedStartUTC = currentStartLocal ? new Date(currentStartLocal).toISOString() : null;
                 const convertedEndUTC = currentEndLocal ? new Date(currentEndLocal).toISOString() : null;
-        
-                let jobData = {
+                const updatedFields = {}; // add this above all field assignments
+
+                const selectedBillable = document.querySelector('input[name="billable-status"]:checked');
+                if (!selectedBillable) {
+                    alert("⚠️ Please select if the job is Billable or Non Billable.");
+                    return;
+                }
+                
+                const value = selectedBillable?.value?.trim();
+                
+                if (value === "Billable" || value === "Non Billable") {
+                    updatedFields["Billable/ Non Billable"] = value.trim();
+                } else {
+                    console.warn("⚠️ Invalid Billable value. Not updating field:", value);
+                }
+                                let jobData = {
                     "DOW to be Completed": document.getElementById("dow-completed").value,
                     "Subcontractor Not Needed": subcontractorCheckbox.checked,
-                    "Billable/ Non Billable": document.getElementById("billable-status").value,
+"Billable/ Non Billable": selectedBillable ? selectedBillable.value : undefined,
                     "Homeowner Builder pay": document.getElementById("homeowner-builder").value,
                     "Billable Reason (If Billable)": document.getElementById("billable-reason").value,
                     "Field Review Not Needed": document.getElementById("field-review-needed").checked,
@@ -295,7 +300,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     : subcontractorDropdown.value.trim() || "";
         
                 console.log("📤 Sending updated fields to Airtable:", jobData);
-        
+                console.log("🔎 Sending Billable value:", updatedFields["Billable/ Non Billable"]);
+
                 // ✅ Save to Airtable
                 await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName, jobData);
         
@@ -516,7 +522,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
     
-    
     async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
         console.log("📡 Updating Airtable record for:", lotNameOrRecordId);
     
@@ -577,7 +582,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
     
-    
     document.querySelectorAll(".job-link").forEach(link => {
         link.addEventListener("click", function (event) {
             event.preventDefault();
@@ -623,11 +627,6 @@ async function populatePrimaryFields(job) {
     setCheckboxValue("sub-not-needed", job["Subcontractor Not Needed"] || false);
     setInputValue("StartDate", convertUTCToLocalInput(job["StartDate"]));
     setInputValue("EndDate", convertUTCToLocalInput(job["EndDate"]));
-    
-    
-    
-
-    // ✅ Set subcontractor field
     setInputValue("subcontractor", safeValue(job["Subcontractor"]));
 
     // ✅ Set dropdown's data-selected attribute for use in dropdown population
@@ -657,8 +656,11 @@ async function populatePrimaryFields(job) {
         showElement("job-completed");
         showElement("job-completed-label");
 
-        setInputValue("billable-status", safeValue(job["Billable/ Non Billable"]));
-        setInputValue("homeowner-builder", safeValue(job["Homeowner Builder pay"]));
+        const billableValue = safeValue(job["Billable/ Non Billable"]);
+        document.querySelectorAll('input[name="billable-status"]').forEach(radio => {
+            radio.checked = radio.value === billableValue;
+        });
+                setInputValue("homeowner-builder", safeValue(job["Homeowner Builder pay"]));
         setInputValue("billable-reason", safeValue(job["Billable Reason (If Billable)"]));
         setInputValue("subcontractor-payment", safeValue(job["Subcontractor Payment"]));
         setCheckboxValue("field-tech-reviewed", job["Field Tech Reviewed"]);
@@ -677,9 +679,6 @@ async function populatePrimaryFields(job) {
 
     showElement("save-job");
 }
-
-
-
 
 // Function to hide an element safely
 function hideElementById(elementId) {
@@ -888,7 +887,6 @@ function checkAndHideDeleteButton() {
     }
 }
 
-
 document.getElementById("delete-images-btn").addEventListener("click", async function (event) {
     event.preventDefault(); // ✅ Prevents page refresh
     console.log("🗑️ Delete Images button clicked! ✅");
@@ -964,6 +962,7 @@ async function deleteImagesByLotName(lotName, imageIdsToDelete, imageField) {
         }
 
         console.log(`📩 Sending updated image list to Airtable for '${imageField}':`, updatedImages);
+        console.log("🚀 Final value for 'Billable/ Non Billable':", selectedBillable?.value);
 
         // Update Airtable record
         await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName, {
@@ -979,8 +978,6 @@ async function deleteImagesByLotName(lotName, imageIdsToDelete, imageField) {
         console.error(`❌ Error deleting images from '${imageField}' in Airtable:`, error);
     }
 }
-
-
 
 async function fetchImagesByLotName(lotName, imageField) {
     console.log(`📡 Fetching images for lot: ${lotName}, field: ${imageField}`);
@@ -1019,7 +1016,6 @@ async function fetchImagesByLotName(lotName, imageField) {
         return [];
     }
 }
-
 
 async function loadImagesForLot(lotName) {
     console.log("📡 Loading images for lot:", lotName);
@@ -1084,8 +1080,6 @@ async function loadImagesForLot(lotName) {
     }
 }
 
-
-
     async function testFetchImages() {
         try {
             const recordData = await fetchAirtableRecord(airtableTableName, recordId);
@@ -1132,7 +1126,6 @@ document.addEventListener("DOMContentLoaded", () => {
     saveRecordIdToLocal(recordId); 
 });
 
-
     document.addEventListener("DOMContentLoaded", function () {
         console.log("✅ Job Details Page Loaded.");
     
@@ -1152,6 +1145,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("save-job").addEventListener("click", async function () {
         console.log("🔄 Save button clicked. Collecting all field values...");
+
+
+
     
         let lotName = document.getElementById("job-name")?.value?.trim();
         if (!lotName) {
@@ -1193,6 +1189,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if (convertedStartUTC !== originalStartUTC) {
             updatedFields["StartDate"] = convertedStartUTC;
         }
+
+        // ✅ Manually handle radio buttons for Billable/Non Billable
+const billableRadio = document.querySelector('input[name="billable-status"]:checked');
+if (billableRadio) {
+    const billableFieldName = billableRadio.getAttribute("data-field");
+    const billableValue = billableRadio.value.trim();
+
+    if (billableFieldName) {
+        updatedFields[billableFieldName] = billableValue;
+        console.log(`✅ Billable radio selected: ${billableFieldName} = ${billableValue}`);
+    }
+}
+
         
         // ✅ Only add EndDate if it changed
         if (convertedEndUTC !== originalEndUTC) {
@@ -1200,35 +1209,38 @@ document.addEventListener("DOMContentLoaded", () => {
         }
                 const inputs = document.querySelectorAll("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
     
-        inputs.forEach(input => {
-            let fieldName = input.getAttribute("data-field");
-            if (fieldName) {
-                let value = input.value.trim();
-    
-                // ✅ Handle checkboxes
-                if (input.type === "checkbox") {
-                    value = input.checked;
-                } 
-                // ✅ Handle dropdowns (ensure empty selections are `null`)
-                else if (input.tagName === "SELECT") {
-                    value = value === "" ? null : value;
-                } 
-                // ✅ Handle numbers (ensure empty values are `null`)
-                else if (input.type === "number") {
-                    value = value === "" ? null : parseFloat(value);
-                } 
-                // ✅ Handle date fields (convert to YYYY-MM-DD)
-                else if (input.type === "date") {
-                    value = formatDateToISO(value);
-                } 
-                // ✅ Handle text fields & textareas (ensure empty text is `null`)
-                else {
-                    value = value === "" ? null : value;
-                }
-    
-                updatedFields[fieldName] = value;
-            }
-        });
+                inputs.forEach(input => {
+                    const fieldName = input.getAttribute("data-field");
+                    if (!fieldName) return;
+                
+                    // ✅ Skip Billable radio buttons — already handled above
+                    if (input.name === "billable-status") return;
+                
+                    let value = input.value.trim();
+                
+                    if (input.type === "checkbox") {
+                        value = input.checked;
+                    } else if (input.tagName === "SELECT") {
+                        value = value === "" ? null : value;
+                    } else if (input.type === "number") {
+                        value = value === "" ? null : parseFloat(value);
+                    } else if (input.type === "date") {
+                        value = formatDateToISO(value);
+                    } else {
+                        value = value === "" ? null : value;
+                    }
+                
+                    updatedFields[fieldName] = value;
+                });
+                
+
+        // Clean empty strings to nulls (avoid Airtable errors)
+for (let key in updatedFields) {
+    if (updatedFields[key] === "") {
+        updatedFields[key] = null;
+    }
+}
+
     
         console.log("📌 Final Fields to be Updated:", JSON.stringify(updatedFields, null, 2));
     
@@ -1281,9 +1293,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return dateObj.toISOString().split("T")[0]; // Convert to 'YYYY-MM-DD'
     }
     
-    
-    
-    
     function showToast(message, type = "success") {
         let toast = document.getElementById("toast-message");
     
@@ -1307,7 +1316,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
     }
      
-   // 🔹 Fetch Dropbox Token from Airtable and refresh if needed
    // 🔹 Fetch Dropbox Token from Airtable
 async function fetchDropboxToken() {
     try {
@@ -1368,11 +1376,7 @@ async function fetchDropboxToken() {
         return null;
     }
 }
-
-
-
-    
-    
+ 
 async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxAppSecret) {
     console.log("🔄 Refreshing Dropbox Access Token...");
     const dropboxAuthUrl = "https://api.dropboxapi.com/oauth2/token";
@@ -1441,8 +1445,6 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
     }
 }
 
-
-    
     async function fetchCurrentImagesFromAirtable(lotName, imageField) {
         console.log("📡 Fetching images for Lot Name:", lotName);
     
@@ -1487,7 +1489,6 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
         }
     }
        
-      
     function convertUTCToLocalInput(utcDateString) {
         if (!utcDateString) return "";
         const utcDate = new Date(utcDateString);
@@ -1495,9 +1496,7 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
         const localDate = new Date(utcDate.getTime() - offsetMs);
         return localDate.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
     }
-    
-   
-        
+       
     // 🔹 Dropbox Image Upload
     async function uploadToDropbox(files, targetField) {
         if (!dropboxAccessToken) {
@@ -1546,8 +1545,6 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
             setTimeout(checkAndHideDeleteButton, 500); // ✅ Ensure delete button appears after upload
         }
     }
-    
-    
     
    // 🔹 Upload File to Dropbox
    async function uploadFileToDropbox(file, token, creds = {}) {
@@ -1605,12 +1602,7 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
         return null;
     }
 }
-
-
-
-    
-    
-    
+ 
     // 🔹 Get Dropbox Shared Link
     async function getDropboxSharedLink(filePath) {
         const url = "https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings";
@@ -1703,7 +1695,6 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
             console.error("❌ Error fetching subcontractors:", error);
         }
     }
-    
     
     // 🔹 Function to fetch all subcontractors (Handles offsets)
     async function fetchAllSubcontractors(baseId, tableId, branchB) {
@@ -1851,8 +1842,6 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
     // ✅ Call this function when the page loads
     document.addEventListener('DOMContentLoaded', populateSubcontractorDropdown);
 
-  
-    
     function setInputValue(id, value) {
         const element = document.getElementById(id);
         if (!element) {
