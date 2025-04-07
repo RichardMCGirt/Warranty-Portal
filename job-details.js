@@ -995,7 +995,6 @@ async function deleteImagesByLotName(lotName, imageIdsToDelete, imageField) {
         }
 
         console.log(`📩 Sending updated image list to Airtable for '${imageField}':`, updatedImages);
-        console.log("🚀 Final value for 'Billable/ Non Billable':", selectedBillable?.value);
 
         // Update Airtable record
         await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName, {
