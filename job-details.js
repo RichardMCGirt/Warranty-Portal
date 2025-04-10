@@ -253,7 +253,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const selectedBillable = document.querySelector('input[name="billable-status"]:checked');
                 if (!selectedBillable) {
-                    alert("⚠️ Please select if the job is Billable or Non Billable. Ignore if clearing value");
                     return;
                 }
                 
@@ -267,7 +266,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                                 let jobData = {
                     "DOW to be Completed": document.getElementById("dow-completed").value,
                     "Subcontractor Not Needed": subcontractorCheckbox.checked,
-"Billable/ Non Billable": selectedBillable ? selectedBillable.value : undefined,
+                    "Billable/ Non Billable": selectedBillable ? selectedBillable.value : undefined,
                     "Homeowner Builder pay": document.getElementById("homeowner-builder").value,
                     "Billable Reason (If Billable)": document.getElementById("billable-reason").value,
                     "Field Review Not Needed": document.getElementById("field-review-needed").checked,
@@ -1284,8 +1283,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
         
-
-    
         console.log("📌 Final Fields to be Updated:", JSON.stringify(updatedFields, null, 2));
     
         if (Object.keys(updatedFields).length === 0) {
@@ -1312,9 +1309,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     await populatePrimaryFields(updatedData.fields); // Make sure it's awaited if it's async
                 }
             
-                showToast("✅ UI updated with latest saved data!", "success");
             
-                // Only reload if necessary
                 // location.reload(); 
             }, 1000);
             
@@ -1388,9 +1383,7 @@ async function fetchDropboxToken() {
         dropboxAppSecret = fields["Dropbox App Secret"];
         const token = fields["Dropbox Token"];
         const refreshToken = fields["Dropbox Refresh Token"];
-        dropboxRefreshToken = fields["Dropbox Refresh Token"]; // ✅ Add this line
-
-        
+        dropboxRefreshToken = fields["Dropbox Refresh Token"]; 
 
         if (!dropboxAppKey || !dropboxAppSecret) {
             console.error("❌ Dropbox App Key or Secret is missing.");
@@ -1877,7 +1870,6 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
             dataList.appendChild(option);
             added.add(name);
         });
-      
     }
         
     // ✅ Call this function when the page loads

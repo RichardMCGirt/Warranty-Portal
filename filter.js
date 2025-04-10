@@ -256,7 +256,6 @@ function waitForTableData(callback) {
             clearInterval(tableCheckInterval);
             callback();
         } else {
-            console.warn("⏳ Waiting for table data...");
         }
     }, 300); // ✅ Check every 300ms until table has rows
 }
