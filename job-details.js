@@ -61,6 +61,9 @@ function openMapApp() {
     });
 }
 
+
+
+
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("🚀 Page Loaded: JavaScript execution started!");
     let primaryData = null; // <-- Declare it globally within this function
@@ -133,9 +136,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const saveButton = document.querySelector("#save-job");
  // Ensure the delete button exists before referencing it
  const deleteButton = document.getElementById("delete-images-btn");
- if (deleteButton) {
-     deleteButton.style.display = "block"; // Force visibility
- }
+
  
  if (!deleteButton) {
      console.warn("⚠️ Warning: Delete button not found in the DOM. Skipping event listener setup.");
@@ -371,7 +372,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     document.addEventListener("change", function (event) {
         if (event.target.classList.contains("image-checkbox")) {
             console.log(`📌 Checkbox changed: ${event.target.dataset.imageId} | Checked: ${event.target.checked}`);
-            updateDeleteButtonLabel();
+            checkAndHideDeleteButton();
         }
     });
     
@@ -676,7 +677,6 @@ async function populatePrimaryFields(job) {
 
     if (job["Status"] === "Scheduled- Awaiting Field") {
         console.log("🚨 Job is 'Scheduled - Awaiting Field' - Deleting completed images...");
-        await deleteImagesByLotName(job["Lot Number and Community/Neighborhood"], [], "Completed  Pictures");
 
         ["billable-status", "homeowner-builder", "subcontractor", "materials-needed", "billable-reason", 
          "field-review-not-needed",
@@ -721,6 +721,33 @@ document.querySelectorAll('label.billable-label').forEach(label => {
 
     showElement("save-job");
 }
+
+function checkAndHideDeleteButton() {
+    const deleteButton = document.getElementById("delete-images-btn");
+    const issueContainer = document.getElementById("issue-pictures");
+    const completedContainer = document.getElementById("completed-pictures");
+
+    if (!deleteButton || !issueContainer || !completedContainer) return;
+
+    const issueImages = issueContainer.querySelectorAll("img").length;
+    const completedImages = completedContainer.querySelectorAll("img").length;
+    const selectedCheckboxes = document.querySelectorAll(".image-checkbox:checked").length;
+
+    console.log(`🔍 Issue Images: ${issueImages}, Completed Images: ${completedImages}, Checked Boxes: ${selectedCheckboxes}`);
+
+    if (issueImages > 0 || completedImages > 0 || selectedCheckboxes > 0) {
+        console.log("✅ Show delete button");
+        deleteButton.style.setProperty("display", "block", "important");
+    } else {
+        console.log("🚫 Hide delete button");
+        deleteButton.style.setProperty("display", "none", "important");
+    }
+}
+
+
+
+
+
 
 // Function to hide an element safely
 function hideElementById(elementId) {
@@ -1004,6 +1031,7 @@ async function deleteImagesByLotName(lotName, imageIdsToDelete, imageField) {
         }
 
         console.log(`📩 Sending updated image list to Airtable for '${imageField}':`, updatedImages);
+        checkAndHideDeleteButton();
 
         // Update Airtable record
         await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName, {
@@ -1113,6 +1141,8 @@ async function loadImagesForLot(lotName) {
 
         // Ensure delete button updates correctly after image load
         setTimeout(checkAndHideDeleteButton, 500);
+        checkAndHideDeleteButton();
+
 
     } catch (error) {
         console.error("❌ Error loading images for lot:", lotName, error);
@@ -1165,6 +1195,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("🆔 Using saved Record ID:", recordId);
     saveRecordIdToLocal(recordId); 
+    setTimeout(checkAndHideDeleteButton, 500); // slight delay if images render async
+
 });
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -1584,7 +1616,8 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
             await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName, { [targetField]: uploadedUrls });
     
             await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-    
+            checkAndHideDeleteButton();
+
             await loadImagesForLot(lotName, document.getElementById("field-status")?.value);
             setTimeout(checkAndHideDeleteButton, 500); // ✅ Ensure delete button appears after upload
         }
