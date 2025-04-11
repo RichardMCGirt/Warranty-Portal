@@ -689,9 +689,19 @@ async function populatePrimaryFields(job) {
         showElement("job-completed-label");
 
         const billableValue = safeValue(job["Billable/ Non Billable"]);
-        document.querySelectorAll('input[name="billable-status"]').forEach(radio => {
-            radio.checked = radio.value === billableValue;
-        });
+document.querySelectorAll('label.billable-label').forEach(label => {
+    const radio = label.querySelector('input[name="billable-status"]');
+    if (!radio) return;
+
+    if (radio.value === billableValue) {
+        radio.checked = true;
+        label.classList.add("selected");
+    } else {
+        label.classList.remove("selected");
+        radio.checked = false;
+    }
+});
+
                 setInputValue("homeowner-builder", safeValue(job["Homeowner Builder pay"]));
         setInputValue("billable-reason", safeValue(job["Billable Reason (If Billable)"]));
         setInputValue("subcontractor-payment", safeValue(job["Subcontractor Payment"]));
