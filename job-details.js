@@ -127,16 +127,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         // ✅ Fetch Subcontractors Based on `b` Value and Populate Dropdown
         let resolvedRecordId = recordId;
 
-        if (!recordId.startsWith("rec")) {
-            resolvedRecordId = await getRecordIdByLotName(recordId);
-            if (!resolvedRecordId) {
-                console.error("❌ Could not resolve Record ID for:", recordId);
-                return;
-            }
-        }
-        
-        // ✅ Call with resolved actual record ID
-        await fetchAndPopulateSubcontractors(resolvedRecordId);
+if (!recordId.startsWith("rec")) {
+    resolvedRecordId = await getRecordIdByLotName(recordId);
+    if (!resolvedRecordId) {
+        console.error("❌ Could not resolve Record ID for:", recordId);
+        return;
+    }
+}
+
+await fetchAndPopulateSubcontractors(resolvedRecordId);
+
         /** ✅ Subcontractor Handling Logic **/
         console.log("✅ Setting up subcontractor logic...");
 
@@ -334,7 +334,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         console.log("🎯 Subcontractor logic fully integrated!");
     
         // ✅ Fetch and Populate Subcontractor Dropdown
-        await fetchAndPopulateSubcontractors(recordId);
+        await fetchAndPopulateSubcontractors(resolvedRecordId);
         
     } catch (error) {
         console.error("❌ Error occurred:", error);
@@ -1724,21 +1724,21 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
         }
     }
 
-    async function fetchAndPopulateSubcontractors(recordId) {
-        console.log("🚀 Fetching branch `b` and 'Subcontractor' for record:", recordId);
+    async function fetchAndPopulateSubcontractors(resolvedRecordId) {
+        console.log("🚀 Fetching branch `b` and 'Subcontractor' for record:", resolvedRecordId);
     
         const airtableBaseId = window.env.AIRTABLE_BASE_ID;
         const primaryTableId = "tbl6EeKPsNuEvt5yJ"; // Table where `b` and `Subcontractor` are stored
         const subcontractorTableId = "tbl9SgC5wUi2TQuF7"; // Subcontractor Table
     
-        if (!recordId) {
+        if (!resolvedRecordId) {
             console.error("❌ Record ID is missing.");
             return;
         }
     
         try {
             // 1️⃣ Fetch primary record
-            const primaryUrl = `https://api.airtable.com/v0/${airtableBaseId}/${primaryTableId}/${recordId}`;
+            const primaryUrl = `https://api.airtable.com/v0/${airtableBaseId}/${primaryTableId}/${resolvedRecordId}`;
             console.log(`🔗 Fetching Primary Record URL: ${primaryUrl}`);
     
             const primaryResponse = await fetch(primaryUrl, {
