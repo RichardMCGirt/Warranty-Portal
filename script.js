@@ -43,8 +43,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Wait for data to be populated before applying column hiding
     setTimeout(() => {
-        hideColumnsExcept("airtable-data", 3); // 4th column (0-based index)
-        hideColumnsExcept("feild-data", 3);
+        hideColumnsExcept("airtable-data", 6); // 4th column (0-based index)
+        hideColumnsExcept("feild-data", 6);
     }, 1000); // Adjust timeout based on data load speed
 });
 
@@ -235,8 +235,8 @@ document.addEventListener("DOMContentLoaded", function () {
             ]);
     
             setTimeout(() => {
-                mergeTableCells("#airtable-data", 2);
-                mergeTableCells("#feild-data", 2);
+                mergeTableCells("#airtable-data", 0);
+                mergeTableCells("#feild-data", 0);
                 adjustTableWidth();
                 syncTableWidths();
             }, 300);
@@ -624,27 +624,26 @@ document.addEventListener('DOMContentLoaded', () => {
         records.forEach(record => {
             const fields = record.fields;
             const row = document.createElement('tr');
-            const cell = document.createElement('td');
-            row.appendChild(cell);
+       
     
             const fieldConfigs = isSecondary ? [
-                { field: 'b', value: fields['b'] || 'N/A', link: true },
-                { field: 'field tech', value: fields['field tech'] || '', editable: false },
-                { 
-                    field: 'Lot Number and Community/Neighborhood', 
-                    value: fields['Lot Number and Community/Neighborhood'] || 'N/A', 
-                    jobDetailsLink: true  
-                }
+                { field: 'field tech', value: fields['field tech'] || '' },
+                {
+                    field: 'Lot Number and Community/Neighborhood',
+                    value: fields['Lot Number and Community/Neighborhood'] || 'N/A',
+                    jobDetailsLink: true
+                },
+                { field: 'b', value: fields['b'] || '', hidden: true } // 👈 Add this
             ] : [
-                { field: 'b', value: fields['b'] || 'N/A', link: true },
-                { field: 'field tech', value: fields['field tech'] || '', editable: false },
-                { 
-                    field: 'Lot Number and Community/Neighborhood', 
-                    value: fields['Lot Number and Community/Neighborhood'] || 'N/A', 
-                    jobDetailsLink: true  
-                }
+                { field: 'field tech', value: fields['field tech'] || '' },
+                {
+                    field: 'Lot Number and Community/Neighborhood',
+                    value: fields['Lot Number and Community/Neighborhood'] || 'N/A',
+                    jobDetailsLink: true
+                },
+                { field: 'b', value: fields['b'] || '', hidden: true } // 👈 Add this
             ];
-    
+            
             fieldConfigs.forEach(config => {
                 const { field, value } = config;
                 const cell = document.createElement('td');
@@ -653,7 +652,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.style.wordWrap = 'break-word';
                 cell.style.maxWidth = '200px';
                 cell.style.position = 'relative';
-    
+                if (config.hidden) {
+                    cell.style.display = 'none'; // 👻 make it invisible in the table
+                }
+                
                 cell.textContent = value;
         
                 row.appendChild(cell);
@@ -661,40 +663,41 @@ document.addEventListener('DOMContentLoaded', () => {
     
             // Handle Job Details Link
             const jobCell = row.querySelector(`td[data-field="Lot Number and Community/Neighborhood"]`);
-            const jobIdCell = row.querySelector('td[data-field="b"]');
-    
-            if (jobCell && jobIdCell) {
-                const jobId = jobIdCell.getAttribute("data-id");
-    
-                if (jobId) {
-                    localStorage.setItem("selectedJobId", jobId);
-                    jobCell.style.cursor = 'pointer';
-                    jobCell.style.color = 'blue';
-                    jobCell.style.textDecoration = 'underline';
-    
-                    jobCell.addEventListener('click', () => {
-                        window.location.href = `job-details.html?id=${jobId}`;
-                    });
-                }
-            }
-    
-            tbody.appendChild(row);
-        });
-    }
-    
-  
-    document.getElementById('search-input').addEventListener('input', function () {
-        const searchValue = this.value.toLowerCase();
+if (jobCell) {
+  jobCell.dataset.jobId = fields['b'] || ''; // 🧠 store job ID right on that cell
+  jobCell.style.cursor = 'pointer';
+  jobCell.style.color = 'blue';
+  jobCell.style.textDecoration = 'underline';
 
-        ['#airtable-data', '#feild-data'].forEach(tableSelector => {
-            const rows = document.querySelectorAll(`${tableSelector} tbody tr`);
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                const match = Array.from(cells).some(cell => cell.textContent.toLowerCase().includes(searchValue));
-                row.style.display = match ? '' : 'none';
-            });
+  jobCell.addEventListener('click', () => {
+    const jobId = jobCell.dataset.jobId;
+    if (jobId) {
+      localStorage.setItem("selectedJobId", jobId);
+      window.location.href = `job-details.html?id=${jobId}`;
+    }
+  });
+}
+        tbody.appendChild(row);
+    }); // end records.forEach
+} // ✅ END of displayData
+
+// ✅ Now your search listener starts outside the function
+document.getElementById('search-input').addEventListener('input', function () {
+    const searchValue = this.value.toLowerCase();
+
+    ['#airtable-data', '#feild-data'].forEach(tableSelector => {
+        const rows = document.querySelectorAll(`${tableSelector} tbody tr`);
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const match = Array.from(cells).some(cell =>
+                cell.textContent.toLowerCase().includes(searchValue)
+            );
+            row.style.display = match ? '' : 'none';
         });
     });
-
-    fetchAllData();
 });
+
+fetchAllData();
+
+  
+}); // 👈 this closes the top-level DOMContentLoaded
