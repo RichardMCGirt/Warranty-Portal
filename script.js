@@ -664,8 +664,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Handle Job Details Link
             const jobCell = row.querySelector(`td[data-field="Lot Number and Community/Neighborhood"]`);
 if (jobCell) {
-  jobCell.dataset.jobId = fields['b'] || ''; // 🧠 store job ID right on that cell
-  jobCell.style.cursor = 'pointer';
+    jobCell.dataset.jobId = record.id; // ✅ store actual Airtable record ID
+    jobCell.style.cursor = 'pointer';
   jobCell.style.color = 'blue';
   jobCell.style.textDecoration = 'underline';
 
