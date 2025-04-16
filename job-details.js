@@ -125,9 +125,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
         
         // ✅ Fetch Subcontractors Based on `b` Value and Populate Dropdown
-        console.log("✅ Fetching subcontractors based on branch `b`...");
-        await fetchAndPopulateSubcontractors(recordId);
+        let resolvedRecordId = recordId;
 
+        if (!recordId.startsWith("rec")) {
+            resolvedRecordId = await getRecordIdByLotName(recordId);
+            if (!resolvedRecordId) {
+                console.error("❌ Could not resolve Record ID for:", recordId);
+                return;
+            }
+        }
+        
+        // ✅ Call with resolved actual record ID
+        await fetchAndPopulateSubcontractors(resolvedRecordId);
         /** ✅ Subcontractor Handling Logic **/
         console.log("✅ Setting up subcontractor logic...");
 
@@ -509,7 +518,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const apiKey = window.env.AIRTABLE_API_KEY;
     
         // Step 1️⃣ Try exact match
-        let filterFormula = `{Lot Number and Community/Neighborhood} = "${lotName}"`;
+        filterFormula = `FIND(LOWER("${lotName}"), LOWER({Lot Number and Community/Neighborhood}))`;
         let url = `https://api.airtable.com/v0/${baseId}/${tableName}?filterByFormula=${encodeURIComponent(filterFormula)}`;
     
         try {

@@ -700,4 +700,4 @@ document.getElementById('search-input').addEventListener('input', function () {
 fetchAllData();
 
   
-}); // 👈 this closes the top-level DOMContentLoaded
+  }); // 👈 this closes the top-level DOMContentLoaded
