@@ -281,23 +281,49 @@ document.addEventListener("DOMContentLoaded", function () {
     
 
     document.addEventListener("DOMContentLoaded", function () {
-        document.getElementById("filter-branch").addEventListener("change", function () {
-            applyFilters();
-        });
+        const filterBranch = document.getElementById("filter-branch");
+        if (filterBranch) {
+            filterBranch.addEventListener("change", function () {
+                console.log("🧪 Filter branch changed");
+                applyFilters();
+            });
+        } else {
+            console.warn("⚠️ filter-branch element not found.");
+        }
     });
     
     function applyFilters() {
         const selectedTechs = Array.from(document.querySelectorAll(".filter-checkbox:checked"))
-            .map(checkbox => checkbox.value);
+            .map(cb => cb.value.replace(/\s+/g, ' ').trim());
     
-        document.querySelectorAll("#airtable-data tbody tr, #feild-data tbody tr").forEach(row => {
-            const techCell = row.cells[1]; // Assuming the "Field Tech" column is index 1
-            if (techCell) {
-                const tech = techCell.textContent.trim();
-                row.style.display = selectedTechs.length === 0 || selectedTechs.includes(tech) ? "" : "none";
+        console.log("🧪 Selected Techs:", selectedTechs);
+    
+        const rows = document.querySelectorAll("#airtable-data tbody tr, #feild-data tbody tr");
+    
+        rows.forEach((row, index) => {
+            const techCell = row.querySelector('td[data-field="field tech"]');
+    
+            if (!techCell) {
+                console.warn(`⚠️ Row ${index + 1}: Missing field tech cell`);
+                return;
             }
+    
+            const tech = techCell.textContent.replace(/\s+/g, ' ').trim();
+    
+            const match = selectedTechs.length === 0 || selectedTechs.includes(tech);
+            row.style.display = match ? "" : "none";
+    
+            console.log(`🔍 Row ${index + 1}: "${tech}" | Show: ${match}`);
         });
+    
+        const visibleA = document.querySelectorAll('#airtable-data tbody tr:not([style*="display: none"])').length;
+        const visibleF = document.querySelectorAll('#feild-data tbody tr:not([style*="display: none"])').length;
+        console.log(`🧮 #airtable-data visible: ${visibleA}`);
+        console.log(`🧮 #feild-data visible: ${visibleF}`);
     }
+    
+    
+    
        
     async function fetchFieldManagerNames() {
         const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tblHdf9KskO1auw3l`; 

@@ -264,7 +264,7 @@ function getFieldTechsFromTable() {
         rows.forEach(row => {
             if (row.style.display === "none") return; // ✅ Ignore hidden rows
 
-            const fieldTechColumn = row.querySelector('td:nth-child(3)'); // Ensure correct column
+            const fieldTechColumn = row.querySelector('td:nth-child(1)'); // Ensure correct column
             if (fieldTechColumn && fieldTechColumn.textContent.trim() !== '') {
                 fieldTechColumn.textContent
                     .split(',')
@@ -323,7 +323,7 @@ function applyFilters() {
         let visibleCount = 0;
 
         rows.forEach(row => {
-            const techCell = row.cells[1]; // No more normalizeRowCells
+            const techCell = row.cells[0]; // ✅ Column 1 (Field Tech)
             const rawText = techCell ? techCell.textContent.trim() : '';
             const normalized = rawText.replace(/\s+/g, ' ');
             const techNames = normalized.split(',').map(name => name.trim());
