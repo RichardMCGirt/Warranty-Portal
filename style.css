@@ -719,6 +719,14 @@ button:hover {
     display: block;
 }
 
+/* Permanently hide column 3 in both tables */
+#airtable-data td:nth-child(3),
+#airtable-data th:nth-child(3),
+#feild-data td:nth-child(3),
+#feild-data th:nth-child(3) {
+    display: none;
+}
+
 /* Flex column for stacking checkboxes */
 .checkbox-row {
     display: flex;
