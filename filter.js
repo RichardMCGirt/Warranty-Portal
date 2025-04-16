@@ -22,20 +22,66 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+function resetTableMerges(tableSelector) {
+    const rows = document.querySelectorAll(`${tableSelector} tbody tr`);
+    rows.forEach(row => {
+        Array.from(row.cells).forEach(cell => {
+            cell.removeAttribute('rowspan');
+            cell.style.display = ''; // make sure no cell is hidden
+        });
+    });
+}
 
 
 document.getElementById('search-input').addEventListener('input', function () {
     const searchValue = this.value.toLowerCase();
 
     ['#airtable-data', '#feild-data'].forEach(tableSelector => {
-        const rows = document.querySelectorAll(`${tableSelector} tbody tr`);
+        resetTableMerges(tableSelector);
+
+        const table = document.querySelector(tableSelector);
+        const rows = table.querySelectorAll('tbody tr');
+        const thead = table.querySelector('thead');
+        const h2 = table.closest('.scrollable-div')?.previousElementSibling;
+
+        let visibleCount = 0;
+
         rows.forEach(row => {
             const column2 = row.querySelector('td:nth-child(2)');
+            const column3 = row.querySelector('td:nth-child(3)');
             const match = column2 && column2.textContent.toLowerCase().includes(searchValue);
+
             row.style.display = match ? '' : 'none';
+
+            // 🔧 Hide column 3 if searching
+            if (column3) {
+                column3.style.display = searchValue ? 'none' : '';
+            }
+
+            if (match) visibleCount++;
         });
+
+        // 🔍 Hide column 3 header too
+        const th3 = thead?.querySelector('th:nth-child(3)');
+        if (th3) {
+            th3.style.display = searchValue ? 'none' : '';
+        }
+
+        // 🔍 Hide or show section based on visible row count
+        if (visibleCount === 0) {
+            table.style.display = 'none';
+            if (thead) thead.style.display = 'none';
+            if (h2) h2.style.display = 'none';
+        } else {
+            table.style.display = 'table';
+            if (thead) thead.style.display = 'table-header-group';
+            if (h2) h2.style.display = 'block';
+        }
     });
 });
+
+
+
 
 
 
