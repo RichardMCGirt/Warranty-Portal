@@ -13,41 +13,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     console.log('🚀 DOM Loaded: waiting for table to populate...');
-// 🧠 Force filter to logged-in tech if saved
-const storedFiltersRaw = localStorage.getItem("selectedFilters");
-const savedUser = localStorage.getItem("userName")?.replace(/\s+/g, ' ').trim();
 
-let storedFilters;
+    const savedUser = localStorage.getItem("userName")?.replace(/\s+/g, ' ').trim();
+    const storedFiltersRaw = localStorage.getItem("selectedFilters");
+    let storedFilters;
 
-try {
-    storedFilters = JSON.parse(storedFiltersRaw);
-} catch {
-    storedFilters = [];
-}
+    try {
+        storedFilters = JSON.parse(storedFiltersRaw);
+    } catch {
+        storedFilters = [];
+    }
 
-// If nothing is stored or stored value is empty, fall back to userName
-if ((!storedFilters || storedFilters.length === 0) && savedUser) {
-    localStorage.setItem("selectedFilters", JSON.stringify([savedUser]));
-    console.log(`🔐 No filters found — defaulting selectedFilters to saved userName: "${savedUser}"`);
-} else {
-    console.log("📦 Found stored selectedFilters:", storedFilters);
-}
-
-
-
-
+    if ((!storedFilters || storedFilters.length === 0) && savedUser) {
+        localStorage.setItem("selectedFilters", JSON.stringify([savedUser]));
+        console.log(`🔐 No filters found — defaulting selectedFilters to saved userName: "${savedUser}"`);
+    } else {
+        console.log("📦 Found stored selectedFilters:", storedFilters);
+    }
 
     waitForTableData(() => {
         const techs = extractFieldTechsFromTable();
         console.log('🧑‍🔧 Field Techs Extracted:', techs);
-        generateCheckboxes(techs); // this also applies filters
-    });
-    waitForTableData(() => {
+        generateCheckboxes(techs);
+
+        // ✅ Add observers after checkboxes + table are ready
+        observeTableData('#airtable-data tbody');
+        observeTableData('#feild-data tbody');
+
+        // ♻️ Apply filters one last time after initial table load
         console.log("♻️ Reapplying filters after table is fully populated...");
         applyFilters();
     });
-    
 });
+
 
 
 function resetTableMerges(tableSelector) {
@@ -144,17 +142,23 @@ function observeTableData(selector) {
         return;
     }
 
-    const observer = new MutationObserver((mutationsList, observer) => {
-        for (const mutation of mutationsList) {
-            if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-                console.log('👀 New rows detected, skipping checkbox regeneration to preserve filter state');
-                observer.disconnect(); // ✅ Stop after first population
-            }
+    let timeoutId = null;
+
+    const observer = new MutationObserver((mutationsList) => {
+        if (mutationsList.some(mutation => mutation.addedNodes.length > 0)) {
+            clearTimeout(timeoutId); // Reset timer on each mutation
+
+            timeoutId = setTimeout(() => {
+                console.log("🔁 Reapplying filters after table update...");
+                applyFilters();
+            }, 200); // Wait 200ms after last row added
         }
     });
 
     observer.observe(targetNode, { childList: true });
 }
+
+
 
 
 // ✅ Generate Checkboxes only when menu is clicked
