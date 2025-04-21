@@ -13,12 +13,40 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     console.log('🚀 DOM Loaded: waiting for table to populate...');
+// 🧠 Force filter to logged-in tech if saved
+const storedFiltersRaw = localStorage.getItem("selectedFilters");
+const savedUser = localStorage.getItem("userName")?.replace(/\s+/g, ' ').trim();
+
+let storedFilters;
+
+try {
+    storedFilters = JSON.parse(storedFiltersRaw);
+} catch {
+    storedFilters = [];
+}
+
+// If nothing is stored or stored value is empty, fall back to userName
+if ((!storedFilters || storedFilters.length === 0) && savedUser) {
+    localStorage.setItem("selectedFilters", JSON.stringify([savedUser]));
+    console.log(`🔐 No filters found — defaulting selectedFilters to saved userName: "${savedUser}"`);
+} else {
+    console.log("📦 Found stored selectedFilters:", storedFilters);
+}
+
+
+
+
 
     waitForTableData(() => {
         const techs = extractFieldTechsFromTable();
         console.log('🧑‍🔧 Field Techs Extracted:', techs);
         generateCheckboxes(techs); // this also applies filters
     });
+    waitForTableData(() => {
+        console.log("♻️ Reapplying filters after table is fully populated...");
+        applyFilters();
+    });
+    
 });
 
 
@@ -93,8 +121,9 @@ function extractFieldTechsFromTable() {
         rows.forEach(row => {
             const cell = row.cells[0]; // ✅ Field Tech is the first column
             if (cell) {
-                const names = cell.textContent.split(',').map(name => name.trim());
-                names.forEach(name => {
+                const names = cell.textContent.split(',')
+                .map(name => name.replace(/\s+/g, ' ').trim());
+                            names.forEach(name => {
                     if (name) techs.add(name);
                 });
             }
@@ -302,15 +331,37 @@ function saveFiltersToLocalStorage() {
 
 // ✅ Load selected checkboxes from `localStorage`
 function loadFiltersFromLocalStorage() {
-    const stored = JSON.parse(localStorage.getItem('selectedFilters') || '[]');
+    const storedRaw = localStorage.getItem('selectedFilters') || '[]';
+    let stored;
+
+    try {
+        stored = JSON.parse(storedRaw);
+    } catch (e) {
+        console.error("❌ Failed to parse selectedFilters from localStorage:", storedRaw);
+        stored = [];
+    }
+
+    console.log("📦 Loaded selectedFilters from localStorage:", stored);
+
     const checkboxes = document.querySelectorAll('.filter-checkbox');
 
     checkboxes.forEach(cb => {
-        cb.checked = stored.includes(cb.value);
+        const normalizedCbValue = cb.value.replace(/\s+/g, ' ').trim();
+        const isChecked = stored.includes(normalizedCbValue);
+
+        cb.checked = isChecked;
+
+        console.log(`🔘 Checkbox "${cb.value}" normalized to "${normalizedCbValue}" → checked: ${isChecked}`);
     });
 
-    applyFilters();
+    // ⏳ Defer filtering until table rows are ready
+    waitForTableData(() => {
+        console.log("⏳ Tables now loaded — applying filters...");
+        applyFilters();
+    });
 }
+
+
 
 function applyFilters() {
     const selectedTechs = Array.from(document.querySelectorAll('.filter-checkbox:checked'))
@@ -321,21 +372,29 @@ function applyFilters() {
     ['#airtable-data', '#feild-data'].forEach(selector => {
         const rows = document.querySelectorAll(`${selector} tbody tr`);
         let visibleCount = 0;
-
+    
         rows.forEach(row => {
             const techCell = row.cells[0]; // ✅ Column 1 (Field Tech)
             const rawText = techCell ? techCell.textContent.trim() : '';
             const normalized = rawText.replace(/\s+/g, ' ');
             const techNames = normalized.split(',').map(name => name.trim());
-        
+    
             const isVisible = isAll || selectedTechs.some(name => techNames.includes(name));
             row.style.display = isVisible ? '' : 'none';
             if (isVisible) visibleCount++;
         });
-        
-
+    
+        const table = document.querySelector(selector);
+        const thead = table.querySelector('thead');
+        const h2 = table.closest('.scrollable-div')?.previousElementSibling;
+    
+        table.style.display = visibleCount > 0 ? 'table' : 'none';
+        if (thead) thead.style.display = visibleCount > 0 ? 'table-header-group' : 'none';
+        if (h2) h2.style.display = visibleCount > 0 ? 'block' : 'none';
+    
         console.log(`🧮 ${visibleCount} rows visible in ${selector}`);
     });
+    
 }
 
 
@@ -375,7 +434,24 @@ function attachCheckboxListeners() {
 
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
+            console.log(`🧩 Checkbox changed: "${checkbox.value}" → ${checkbox.checked}`);
+
+            const selected = Array.from(checkboxes)
+                .filter(cb => cb.checked && cb.value !== "All")
+                .map(cb => cb.value.replace(/\s+/g, ' ').trim());
+
+            console.log("🔍 Currently selected (excluding All):", selected);
+
+            if (selected.length > 0) {
+                const normalized = selected[0];
+                localStorage.setItem("userName", normalized);
+                console.log(`💾 Saved userName to localStorage: "${normalized}"`);
+            } else {
+                console.log("🗑️ No tech selected, userName not saved.");
+            }
+
             if (checkbox.value === "All" && checkbox.checked) {
+                console.log("🧼 'All' selected — deselecting others...");
                 checkboxes.forEach(cb => {
                     if (cb !== allCheckbox) cb.checked = false;
                 });
@@ -384,10 +460,16 @@ function attachCheckboxListeners() {
             }
 
             saveFiltersToLocalStorage();
-            applyFilters(); // ✅ Will immediately reflect changes
+            console.log("📦 Saved selected filters to localStorage.");
+            
+            applyFilters();
+            console.log("🎯 Applied filters to the table.");
         });
     });
+
+    console.log("✅ Checkbox listeners attached.");
 }
+
 
 document.querySelectorAll('table tbody tr').forEach((row, index) => {
     if (row.cells.length !== 2) {

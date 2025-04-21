@@ -17,11 +17,8 @@
             <label for="field-status">Status</label>
             <input type="text" id="field-status" name="field-status" disabled>
 
-
             <input type="text" id="job-name" disabled>
        
-
-
             <label>Field Technician:</label>
             <input type="text" id="field-tech" disabled>
             
@@ -34,8 +31,6 @@
             <label for="EndDate">End Date</label>
             <input type="datetime-local" id="EndDate" name="EndDate" data-field="EndDate" >
             
-            
-
             <label>Address:</label>
             <div style="display: flex; align-items: center; justify-content: left; gap: 10px;">
                 <input type="text" id="address" readonly 
@@ -67,8 +62,6 @@
 
 <label>Description:</label>
 <textarea id="description" data-field="Description of Issue" disabled ></textarea>
-
-
 
 <label>DOW to be Completed:</label>
 <textarea id="dow-completed" data-field="DOW to be Completed" 
@@ -118,8 +111,6 @@
       </div>
     </div>
  
-  
-  
         <div class="form-group" id="homeowner-builder-container" style="display: none;">
             <label for="homeowner-builder">Homeowner/Builder Pay</label>
             <select id="homeowner-builder" name="homeowner-builder" data-field="Homeowner Builder pay">
@@ -151,8 +142,6 @@
         <input type="checkbox" id="field-review-not-needed" data-field="Field Review Needed">
     </div>
     
-  
-    
     <div class="form-group">
         <label for="materials-needed">Materials Needed</label>
         <textarea id="materials-needed" name="materials-needed" data-field="Materials Needed"
@@ -175,12 +164,8 @@
     <input type="checkbox" id="field-tech-reviewed" data-field="Field Tech Reviewed">
 </div>
 
-
-    
-
     <!-- Preview area for uploaded images -->
     <div id="file-preview" class="file-preview"></div>
-
 
 </div>
 
@@ -190,14 +175,9 @@
     <div id="file-list"></div>
 </div>
 
-
-
 <!-- Preview area for uploaded images -->
 <h3 id="completed-pictures-heading">Completed Pictures:</h3>
 <div id="completed-pictures" class="file-preview" style="display: none;"></div>
-
-
-
 
 <button id="delete-images-btn" 
     style="background:red; color:white; padding:10px; border:none; cursor:pointer; display: none;">
@@ -208,8 +188,6 @@
     <label id="job-completed" for="job-completed">Job Completed:</label>
     <input type="checkbox" id="job-completed-check" data-field="Job Completed">
 </div>
-
-
 
 </div>
 
@@ -232,8 +210,6 @@
     
     <script src="job-details.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
-
-        
 
 </body>
 </html>

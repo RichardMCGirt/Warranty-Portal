@@ -347,8 +347,6 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
     console.error("❌ Warranty ID is missing.");
     return;
 }
-
-
                 // ✅ Save to Airtable
                 await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, jobData);
         
@@ -484,8 +482,6 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
         }
     });
 
-
-    
     const labels = document.querySelectorAll('.billable-label');
     let lastSelectedBillable = null;
     
