@@ -484,6 +484,8 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
         }
     });
 
+
+    
     const labels = document.querySelectorAll('.billable-label');
     let lastSelectedBillable = null;
     
@@ -501,19 +503,39 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                 l.querySelector('input').checked = false;
             });
     
+            const billableReasonDiv = document.getElementById("billable-reason-container");
+            const homeownerBuilderSelect = document.getElementById("homeowner-builder");
+            const homeownerBuilderContainer = homeownerBuilderSelect?.parentElement;
+    
             if (isSelected) {
                 // Toggle off
                 lastSelectedBillable = null;
                 console.log("🚫 Billable selection cleared.");
+                if (billableReasonDiv) billableReasonDiv.style.display = "none";
+                if (homeownerBuilderContainer) homeownerBuilderContainer.style.display = "none";
             } else {
                 // Set new selection
                 label.classList.add('selected');
                 input.checked = true;
                 lastSelectedBillable = input.value;
                 console.log("✅ Billable selected:", input.value);
+    
+                const showExtra = input.value === "Billable";
+    
+                if (billableReasonDiv) {
+                    billableReasonDiv.style.display = showExtra ? "block" : "none";
+                    console.log(`${showExtra ? "📄 Showing" : "🙈 Hiding"} Billable Reason dropdown.`);
+                }
+    
+                if (homeownerBuilderContainer) {
+                    homeownerBuilderContainer.style.display = showExtra ? "block" : "none";
+                    console.log(`${showExtra ? "👷 Showing" : "🙈 Hiding"} Homeowner/Builder select.`);
+                }
             }
         });
     });
+    
+    
     
     
     // 🔹 Fetch Airtable Record Function
@@ -742,18 +764,29 @@ async function populatePrimaryFields(job) {
         showElement("job-completed-label");
 
         const billableValue = safeValue(job["Billable/ Non Billable"]);
-document.querySelectorAll('label.billable-label').forEach(label => {
-    const radio = label.querySelector('input[name="billable-status"]');
-    if (!radio) return;
-
-    if (radio.value === billableValue) {
-        radio.checked = true;
-        label.classList.add("selected");
-    } else {
-        label.classList.remove("selected");
-        radio.checked = false;
-    }
-});
+        document.querySelectorAll('label.billable-label').forEach(label => {
+            const radio = label.querySelector('input[name="billable-status"]');
+            if (!radio) return;
+        
+            if (radio.value === billableValue) {
+                radio.checked = true;
+                label.classList.add("selected");
+            } else {
+                label.classList.remove("selected");
+                radio.checked = false;
+            }
+        
+            // 🔄 Show or hide the Billable Reason dropdown
+            const billableReasonDiv = document.getElementById("billable-reason-container");
+            if (radio.checked && radio.value === "Billable") {
+                billableReasonDiv.style.display = "block";
+                console.log("📄 Showing Billable Reason dropdown.");
+            } else if (billableReasonDiv) {
+                billableReasonDiv.style.display = "none";
+                console.log("🙈 Hiding Billable Reason dropdown.");
+            }
+        });
+        
 
                 setInputValue("homeowner-builder", safeValue(job["Homeowner Builder pay"]));
         setInputValue("billable-reason", safeValue(job["Billable Reason (If Billable)"]));

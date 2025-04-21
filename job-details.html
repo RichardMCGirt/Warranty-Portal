@@ -119,23 +119,27 @@
     </div>
  
   
-    <div class="form-group">
-        <label for="homeowner-builder">Homeowner Builder Pay</label>
-<select id="homeowner-builder" name="homeowner-builder" data-field="Homeowner Builder pay">
-    <option value="Homeowner">Homeowner</option>
-    <option value="Subcontractor">Subcontractor</option>
-    <option value="Builder">Builder</option>
-</select>
+  
+        <div class="form-group" id="homeowner-builder-container" style="display: none;">
+            <label for="homeowner-builder">Homeowner/Builder Pay</label>
+            <select id="homeowner-builder" name="homeowner-builder" data-field="Homeowner Builder pay">
+                <option value="Homeowner">Homeowner</option>
+                <option value="Subcontractor">Subcontractor</option>
+                <option value="Builder">Builder</option>
+            </select>
+        </div>
+        
 </div>
-    <div class="form-group">
-        <label for="billable-reason">Billable Reason (If Billable)</label>
-        <select id="billable-reason" name="billable-reason" data-field="Billable Reason (If Billable)">
-            <option value="Another Trade Damaged Work">Another Trade Damaged Work</option>
-            <option value="Homeowner Damage">Homeowner Damage</option>
-            <option value="Framing Issue">Framing Issue</option>
-            <option value="Weather">Weather</option>
-        </select>
-    </div>
+<div class="form-group" id="billable-reason-container" style="display: none;">
+    <label for="billable-reason">Billable Reason (If Billable)</label>
+    <select id="billable-reason" name="billable-reason" data-field="Billable Reason (If Billable)">
+        <option value="Another Trade Damaged Work">Another Trade Damaged Work</option>
+        <option value="Homeowner Damage">Homeowner Damage</option>
+        <option value="Framing Issue">Framing Issue</option>
+        <option value="Weather">Weather</option>
+    </select>
+</div>
+
     <div id="message-container"></div>
     <div class="form-group" style="display: none;">
         <label>Field Review Not Needed:</label>
