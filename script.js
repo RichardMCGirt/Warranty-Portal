@@ -689,20 +689,24 @@ document.addEventListener('DOMContentLoaded', () => {
     
             // Handle Job Details Link
             const jobCell = row.querySelector(`td[data-field="Lot Number and Community/Neighborhood"]`);
-if (jobCell) {
-    jobCell.dataset.jobId = record.id; // ✅ store actual Airtable record ID
-    jobCell.style.cursor = 'pointer';
-  jobCell.style.color = 'blue';
-  jobCell.style.textDecoration = 'underline';
-
-  jobCell.addEventListener('click', () => {
-    const jobId = jobCell.dataset.jobId;
-    if (jobId) {
-      localStorage.setItem("selectedJobId", jobId);
-      window.location.href = `job-details.html?id=${jobId}`;
-    }
-  });
-}
+            if (jobCell) {
+                const warrantyRecordId = fields['Warranty Record ID'];
+                if (!warrantyRecordId) {
+                    console.warn(`⚠️ Warranty Record ID missing for record ${record.id}`);
+                    return;
+                }
+            
+                jobCell.style.cursor = 'pointer';
+                jobCell.style.color = 'blue';
+                jobCell.style.textDecoration = 'underline';
+            
+                jobCell.addEventListener('click', () => {
+                    localStorage.setItem("selectedJobId", warrantyRecordId); // store Warranty Record ID
+                    window.location.href = `job-details.html?id=${warrantyRecordId}`; // redirect using it
+                });
+            }
+            
+            
         tbody.appendChild(row);
     }); // end records.forEach
 } // ✅ END of displayData

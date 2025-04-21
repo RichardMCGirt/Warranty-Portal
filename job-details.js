@@ -108,27 +108,23 @@ document.addEventListener("DOMContentLoaded", async function () {
         // ✅ Fetch Primary Job Details
         console.log("📋 Primary Data Fetched:", primaryData);
 
-        // ✅ Extract Lot Name
-        let lotName = primaryData.fields["Lot Number and Community/Neighborhood"];
-        console.log("🏠 Extracted Lot Name:", lotName);
-
-        if (!lotName) {
-            console.error("❌ ERROR: Lot Name not found in Airtable record.");
-            alert("Error: Lot Name is missing for this job.");
-            return;
-        }
+     
 
         // ✅ Populate UI with Primary Fields
         populatePrimaryFields(primaryData.fields);
-        await loadImagesForLot(lotName, status).then(() => {
-            checkAndHideDeleteButton();
+        const lotName = primaryData.fields["Lot Number and Community/Neighborhood"];
+        const status = primaryData.fields["Status"];
+        const warrantyId = primaryData.fields["Warranty Record ID"];
+
+        await loadImagesForLot(warrantyId, status).then(() => {
+                    checkAndHideDeleteButton();
         });
         
         // ✅ Fetch Subcontractors Based on `b` Value and Populate Dropdown
         let resolvedRecordId = recordId;
 
 if (!recordId.startsWith("rec")) {
-    resolvedRecordId = await getRecordIdByLotName(recordId);
+    resolvedRecordId = await getRecordIdByWarrantyId(recordId);
     if (!resolvedRecordId) {
         console.error("❌ Could not resolve Record ID for:", recordId);
         return;
@@ -231,22 +227,59 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
         toggleSubcontractorField();
 
         // Event listener for subcontractor checkbox
-        subcontractorCheckbox.addEventListener("change", toggleSubcontractorField);
+        subcontractorCheckbox.addEventListener("change", () => {
+            toggleSubcontractorField();
+        
+            const status = document.getElementById("field-status")?.value || "";
+            const normalizedStatus = status.toLowerCase().trim();
+        
+            console.log("📦 Subcontractor checkbox changed");
+            console.log("🔍 Raw status:", status);
+            console.log("🔍 Normalized status:", normalizedStatus);
+        
+            if (
+                normalizedStatus === "scheduled- awaiting field" ||
+                normalizedStatus === "scheduled awaiting field"
+            ) {
+                console.log("🚫 Status requires hiding completed fields. Hiding now...");
+        
+                [
+                    "completed-pictures",
+                    "upload-completed-picture",
+                    "completed-pictures-heading",
+                    "job-completed-container",
+                    "job-completed",
+                    "job-completed-check"
+                ].forEach(id => {
+                    console.log(`🔒 Hiding element with ID: ${id}`);
+                    hideElementById(id);
+                });
+            } else {
+                console.log("✅ Status does not require hiding completed fields.");
+            }
+        });
+        
+        
         console.log("🎯 Subcontractor logic fully integrated!");
-
+        
         /** ✅ Add Event Listener for Save Button **/
         saveButton.addEventListener("click", async function () {
             console.log("💾 Save button clicked!");
-        
+            const warrantyId = getWarrantyId(); // <-- ensure this is defined BELOW getWarrantyId()
+            if (!warrantyId) {
+                alert("Warranty ID missing!");
+                return;
+              }
             const lotName = document.getElementById("job-name")?.value?.trim();
             if (!lotName) {
-                alert("❌ Lot Name is missing. Cannot save.");
                 return;
             }
         
             try {
+
                 // 🔄 Get the original record from Airtable to compare datetime values
-                const recordData = await fetchAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName);
+                const recordData = await fetchAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId);
+
                 if (!recordData || !recordData.fields) {
                     alert("❌ Could not load record data. Try again.");
                     return;
@@ -310,11 +343,18 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                 console.log("📤 Sending updated fields to Airtable:", jobData);
                 console.log("🔎 Sending Billable value:", updatedFields["Billable/ Non Billable"]);
 
+                if (!warrantyId) {
+    console.error("❌ Warranty ID is missing.");
+    return;
+}
+
+
                 // ✅ Save to Airtable
-                await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName, jobData);
+                await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, jobData);
         
                 // ✅ Refresh UI with new data
-                const refreshed = await fetchAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName);
+                const refreshed = await fetchAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId);
+
                 if (refreshed) {
                     await populatePrimaryFields(refreshed.fields);
                     showToast("✅ Job saved successfully!", "success");
@@ -330,8 +370,41 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
         toggleSubcontractorField();
     
         // ✅ Event listener for checkbox
-        subcontractorCheckbox.addEventListener("change", toggleSubcontractorField);
+        subcontractorCheckbox.addEventListener("change", () => {
+            toggleSubcontractorField();
+        
+            const status = document.getElementById("field-status")?.value || "";
+            const normalizedStatus = status.toLowerCase().trim();
+        
+            console.log("📦 Subcontractor checkbox changed");
+            console.log("🔍 Raw status:", status);
+            console.log("🔍 Normalized status:", normalizedStatus);
+        
+            if (
+                normalizedStatus === "scheduled- awaiting field" ||
+                normalizedStatus === "scheduled awaiting field"
+            ) {
+                console.log("🚫 Status requires hiding completed fields. Hiding now...");
+        
+                [
+                    "completed-pictures",
+                    "upload-completed-picture",
+                    "completed-pictures-heading",
+                    "job-completed-container",
+                    "job-completed",
+                    "job-completed-check"
+                ].forEach(id => {
+                    console.log(`🔒 Hiding element with ID: ${id}`);
+                    hideElementById(id);
+                });
+            } else {
+                console.log("✅ Status does not require hiding completed fields.");
+            }
+        });
+        
+        
         console.log("🎯 Subcontractor logic fully integrated!");
+        
     
         // ✅ Fetch and Populate Subcontractor Dropdown
         await fetchAndPopulateSubcontractors(resolvedRecordId);
@@ -457,7 +530,7 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
         // ✅ Check if the given `lotNameOrRecordId` is already an Airtable record ID
         if (!recordId.startsWith("rec")) {
             console.log("🔍 Searching for Record ID using Lot Name...");
-            recordId = await getRecordIdByLotName(lotNameOrRecordId);
+            recordId = await getRecordIdByWarrantyId(recordId);
             
             if (!recordId) {
                 console.warn(`⚠️ No record found for Lot Name: "${lotNameOrRecordId}"`);
@@ -494,73 +567,31 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
         }
     }
 
-    async function getRecordIdByLotName(lotName) {
-        if (!lotName) {
-            console.error("❌ Lot Name is missing. Cannot fetch record ID.");
-            return null;
-        }
-    
-        // ✅ If already a Record ID, return it immediately
-        if (lotName.startsWith("rec")) {
-            console.log("✅ Given value is already a Record ID:", lotName);
-            return lotName;
-        }
-    
-        // ✅ Check cache first
-        const cachedId = localStorage.getItem(`recordId:${lotName}`);
-        if (cachedId) {
-            console.log(`🧠 Using cached Record ID for '${lotName}':`, cachedId);
-            return cachedId;
-        }
-    
-        const baseId = window.env.AIRTABLE_BASE_ID;
-        const tableName = window.env.AIRTABLE_TABLE_NAME;
-        const apiKey = window.env.AIRTABLE_API_KEY;
-    
+    async function getRecordIdByWarrantyId(warrantyId) {
+        
         // Step 1️⃣ Try exact match
-        filterFormula = `FIND(LOWER("${lotName}"), LOWER({Lot Number and Community/Neighborhood}))`;
-        let url = `https://api.airtable.com/v0/${baseId}/${tableName}?filterByFormula=${encodeURIComponent(filterFormula)}`;
-    
-        try {
-            let response = await fetch(url, {
-                headers: { Authorization: `Bearer ${apiKey}` }
-            });
-    
-            let data = await response.json();
-    
-            if (data.records?.length > 0) {
-                const recordId = data.records[0].id;
-                localStorage.setItem(`recordId:${lotName}`, recordId);
-                console.log("✅ Found Record ID (exact match):", recordId);
-                return recordId;
-            }
-    
-            // Step 2️⃣ Try partial match
-            console.warn("⚠️ No exact match found. Trying partial match with FIND()...");
-    
-            filterFormula = `FIND("${lotName}", {Lot Number and Community/Neighborhood})`;
-            url = `https://api.airtable.com/v0/${baseId}/${tableName}?filterByFormula=${encodeURIComponent(filterFormula)}`;
-    
-            response = await fetch(url, {
-                headers: { Authorization: `Bearer ${apiKey}` }
-            });
-    
-            data = await response.json();
-    
-            if (data.records?.length > 0) {
-                const recordId = data.records[0].id;
-                localStorage.setItem(`recordId:${lotName}`, recordId);
-                console.log("✅ Found Record ID (partial match):", recordId);
-                return recordId;
-            }
-    
-            console.warn(`❌ No matching record found for Lot Name (even partial): "${lotName}"`);
-            return null;
-        } catch (error) {
-            console.error("❌ Error fetching record ID by Lot Name:", error);
-            return null;
+        const filterFormula = `{Warranty Record ID} = "${warrantyId}"`;
+    const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=1`;
+
+    try {
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
+        });
+
+        const data = await response.json();
+
+        if (data.records?.length > 0) {
+            console.log("✅ Found record ID by Warranty Record ID:", data.records[0].id);
+            return data.records[0].id;
         }
+
+        console.warn("❌ No record found with Warranty Record ID:", warrantyId);
+        return null;
+    } catch (error) {
+        console.error("❌ Error fetching by Warranty Record ID:", error);
+        return null;
     }
+}
     
     async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
         console.log("📡 Updating Airtable record for:", lotNameOrRecordId);
@@ -581,8 +612,8 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
     
             // ✅ If not a record ID, find the corresponding record ID
             if (!recordId.startsWith("rec")) {
-                console.log("🔍 Searching for Record ID using Lot Name...");
-                recordId = await getRecordIdByLotName(lotNameOrRecordId);
+                console.log("🔍 Searching for Record ID using Warranty Record ID...");
+                recordId = await getRecordIdByWarrantyId(lotNameOrRecordId);
                 if (!recordId) {
                     console.error("❌ No record ID found for this Lot Name. Cannot update Airtable.");
                     showToast("❌ Error: No record found for this Lot Name.", "error");
@@ -598,14 +629,26 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                 console.log(`• ${key}:`, value, `(${typeof value})`);
             }
                 
-            const response = await fetch(url, {
-                method: "PATCH",
-                headers: {
-                    Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ fields })
-            });
+            // ⛔️ Remove computed fields before sending to Airtable
+const sanitizedFields = Object.fromEntries(
+    Object.entries(fields).filter(([key]) => key !== "Warranty Record ID")
+  );
+  
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ fields: sanitizedFields })
+  });
+  
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error("❌ Airtable update error:", error);
+            }
+            
     
             if (!response.ok) {
                 const errorDetails = await response.json(); // Extract error response
@@ -618,7 +661,6 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
     
         } catch (error) {
             console.error("❌ Error updating Airtable:", error);
-            showToast(`❌ Error saving job details: ${error.message}`, "error");
         } finally {
             if (saveButton) saveButton.disabled = false;
         }
@@ -651,11 +693,13 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
     
 // 🔹 Populate Primary Fields
 async function populatePrimaryFields(job) {
-    console.log("🛠 Populating UI with Record ID:", job["id"]);
+    console.log("🧪 Populating UI with fields:", job);
+    console.log("🔎 Status at page load:", job["Status"]);
 
     function safeValue(value) {
         return value === undefined || value === null ? "" : value;
     }
+    setInputValue("warranty-id", job["Warranty Record ID"]);
 
     setInputValue("job-name", safeValue(job["Lot Number and Community/Neighborhood"]));
     setInputValue("field-tech", safeValue(job["field tech"]));
@@ -721,9 +765,17 @@ document.querySelectorAll('label.billable-label').forEach(label => {
 
     if (job["Status"] === "Field Tech Review Needed") {
         console.log("🚨 Field Tech Review Needed - Hiding completed job elements.");
-        ["completed-pictures", "upload-completed-picture", "completed-pictures-heading", 
-         "file-input-container", "job-completed-container", "job-completed", "job-completed-check"]
-         .forEach(hideElementById);
+    
+        // Hide specified elements
+        [
+            "completed-pictures",
+            "upload-completed-picture",
+            "completed-pictures-heading",
+            "file-input-container",
+            "job-completed-container",
+            "job-completed",
+            "job-completed-check"
+        ].forEach(hideElementById);
     } else {
         showElement("job-completed-container");
     }
@@ -762,11 +814,13 @@ function checkAndHideDeleteButton() {
 function hideElementById(elementId) {
     const element = document.getElementById(elementId);
     if (!element) {
-        console.warn(`⚠️ Element not found: ${elementId}`);
-        return; // Skip if the element does not exist
+        console.warn(`⚠️ Cannot hide — Element not found: ${elementId}`);
+        return;
     }
+    console.log(`✅ Hiding element: ${elementId}`);
     element.style.display = "none";
 }
+
 
 // Function to resize any textarea dynamically
 function adjustTextareaSize(id) {
@@ -968,6 +1022,7 @@ function checkAndHideDeleteButton() {
 document.getElementById("delete-images-btn").addEventListener("click", async function (event) {
     event.preventDefault(); // ✅ Prevents page refresh
     console.log("🗑️ Delete Images button clicked! ✅");
+    const warrantyId = getWarrantyId();
 
     const checkboxes = document.querySelectorAll(".image-checkbox:checked");
     if (checkboxes.length === 0) {
@@ -976,12 +1031,7 @@ document.getElementById("delete-images-btn").addEventListener("click", async fun
         return;
     }
 
-    const lotName = document.getElementById("job-name")?.value?.trim();
-    if (!lotName) {
-        console.error("❌ ERROR: Lot Name not found.");
-        alert("Error: Lot Name not found. Please try again.");
-        return;
-    }
+ 
 
     // 🔹 Extract selected image IDs
     const imageIdsToDelete = Array.from(checkboxes).map(cb => cb.dataset.imageId).filter(id => id);
@@ -993,21 +1043,21 @@ document.getElementById("delete-images-btn").addEventListener("click", async fun
     }
 
     // 🔹 Delete from both "Picture(s) of Issue" and "Completed Pictures"
-    await deleteImagesByLotName(lotName, imageIdsToDelete, "Picture(s) of Issue");
-    await deleteImagesByLotName(lotName, imageIdsToDelete, "Completed  Pictures");
+    await deleteImagesByLotName(warrantyId, imageIdsToDelete, "Picture(s) of Issue");
+    await deleteImagesByLotName(warrantyId, imageIdsToDelete, "Completed  Pictures");
 
     console.log("✅ Images deleted successfully from both fields!");
 
     // ✅ Refresh UI to reflect changes
-    await loadImagesForLot(lotName, document.getElementById("field-status")?.value);
+    await loadImagesForLot(warrantyId, document.getElementById("field-status")?.value);
 });
 
 /** ✅ Function to remove images from Airtable */
-async function deleteImagesByLotName(lotName, imageIdsToDelete, imageField) {
-    console.log(`🗑️ Attempting to delete images from '${imageField}' for Lot Name:`, lotName);
+async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
+    console.log(`🗑️ Attempting to delete images from '${imageField}' for Lot Name:`, warrantyId);
 
     // Validate input parameters
-    if (!lotName) {
+    if (!warrantyId) {
         console.error("❌ Lot Name is missing. Cannot delete images.");
         return;
     }
@@ -1019,8 +1069,12 @@ async function deleteImagesByLotName(lotName, imageIdsToDelete, imageField) {
 
     try {
         // Fetch existing images
-        let existingImages = await fetchImagesByLotName(lotName, imageField);
-
+        if (!warrantyId) {
+            console.error("❌ Warranty ID is missing.");
+            return;
+        }
+        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField);
+        
         if (!existingImages || existingImages.length === 0) {
             console.warn(`⚠️ No images found in '${imageField}'. Nothing to delete.`);
             return;
@@ -1043,32 +1097,30 @@ async function deleteImagesByLotName(lotName, imageIdsToDelete, imageField) {
         checkAndHideDeleteButton();
 
         // Update Airtable record
-        await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName, {
+        await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, {
             [imageField]: updatedImages.length > 0 ? updatedImages : []
         });
 
         console.log(`✅ Successfully deleted selected images from '${imageField}' for Lot: ${lotName}`);
 
         // ✅ **Refresh UI by reloading images dynamically**
-        await loadImagesForLot(lotName);  // 🔄 Refresh UI after update
+        await loadImagesForLot(warrantyId);
 
     } catch (error) {
         console.error(`❌ Error deleting images from '${imageField}' in Airtable:`, error);
     }
 }
 
-async function fetchImagesByLotName(lotName, imageField) {
-    console.log(`📡 Fetching images for lot: ${lotName}, field: ${imageField}`);
+async function fetchImagesByLotName(warrantyId, imageField) {
+    console.log(`📡 Fetching images for Warranty ID: ${warrantyId}, field: ${imageField}`);
 
-    if (!lotName) {
-        console.error("❌ Lot Name is missing. Cannot fetch images.");
+    if (!warrantyId) {
+        console.error("❌ Warranty ID is missing. Cannot fetch images.");
         return [];
     }
 
-    const filterFormula = `AND({Lot Number and Community/Neighborhood}="${lotName}")`;
+    const filterFormula = `{Warranty Record ID} = "${warrantyId}"`;
     const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(filterFormula)}&fields[]=${encodeURIComponent(imageField)}`;
-
-    console.log("🔗 Airtable API Request:", url);
 
     try {
         const response = await fetch(url, {
@@ -1081,22 +1133,16 @@ async function fetchImagesByLotName(lotName, imageField) {
         }
 
         const data = await response.json();
-        console.log("📸 API Response Data:", data);
-
-        if (data.records.length === 0) {
-            console.warn(`⚠️ No records found for Lot Name: ${lotName}`);
-            return [];
-        }
-
-        return data.records[0].fields[imageField] || [];
+        return data.records[0]?.fields?.[imageField] || [];
     } catch (error) {
-        console.error("❌ Error fetching images by Lot Name:", error);
+        console.error("❌ Error fetching images:", error);
         return [];
     }
 }
 
-async function loadImagesForLot(lotName) {
-    console.log("📡 Loading images for lot:", lotName);
+
+async function loadImagesForLot(warrantyId, status) {
+    console.log("📡 Loading images for warrantyId:", warrantyId);
 
     // Get elements and ensure they exist before accessing them
     const issuePicturesSection = document.getElementById("issue-pictures");
@@ -1115,8 +1161,9 @@ async function loadImagesForLot(lotName) {
 
     try {
         // Fetch both sets of images
-        const issueImages = await fetchImagesByLotName(lotName, "Picture(s) of Issue");
-        const completedImages = await fetchImagesByLotName(lotName, "Completed  Pictures");
+        const issueImages = await fetchImagesByLotName(warrantyId, "Picture(s) of Issue");
+
+        const completedImages = await fetchImagesByLotName(warrantyId, "Completed  Pictures");
 
         console.log("🖼️ Loaded Images - Issue:", issueImages);
         console.log("🖼️ Loaded Images - Completed:", completedImages);
@@ -1191,6 +1238,15 @@ function saveRecordIdToLocal(recordId) {
 function getSavedRecordId() {
     return localStorage.getItem("currentRecordId");
 }
+function getWarrantyId() {
+    const id = document.getElementById("warranty-id")?.value?.trim();
+    if (!id) {
+        console.warn("⚠️ Warranty ID is missing or empty.");
+        return null;
+    }
+    return id;
+}
+
 
 // ✅ Set the record ID on page load
 document.addEventListener("DOMContentLoaded", () => {
@@ -1227,23 +1283,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("save-job").addEventListener("click", async function () {
         console.log("🔄 Save button clicked. Collecting all field values...");
-
-
-
     
-        let lotName = document.getElementById("job-name")?.value?.trim();
-        if (!lotName) {
-            const jobNameElement = document.getElementById("job-name");
-            const rawJobName = jobNameElement ? jobNameElement.value : undefined;
-        
-            console.error("❌ Lot Name is missing. Cannot update Airtable.");
+        const warrantyId = getWarrantyId();
+    
+        if (!warrantyId) {
+            const warrantyElement = document.getElementById("warranty-id");
+            const rawWarrantyId = warrantyElement ? warrantyElement.value : undefined;
+    
+            console.error("❌ Warranty ID is missing. Cannot update Airtable.");
             console.warn("🕵️ Debug Info:");
-            console.warn("• DOM Element with ID 'job-name':", jobNameElement);
-            console.warn("• Raw Value from 'job-name' input:", rawJobName);
-            console.warn("• Trimmed Value (used as Lot Name):", rawJobName ? rawJobName.trim() : "❌ No value to trim");
-        
-            showToast("❌ Error: Lot Name is missing or empty. Please check the job name field.", "error");
-            alert("⚠️ Cannot save because the 'Job Name' (Lot Name) is missing or invalid. Please ensure the field is filled in.");
+            console.warn("• DOM Element with ID 'warranty-id':", warrantyElement);
+            console.warn("• Raw Value from 'warranty-id' input:", rawWarrantyId);
+            console.warn("• Trimmed Value (used as Warranty ID):", rawWarrantyId ? rawWarrantyId.trim() : "❌ No value to trim");
+    
+            showToast("❌ Error: Warranty ID is missing or empty. Please check the field.", "error");
+            alert("⚠️ Cannot save because the 'Warranty ID' is missing or invalid. Please ensure the field is filled in.");
             return;
         }
         
@@ -1318,21 +1372,18 @@ document.addEventListener("DOMContentLoaded", () => {
         for (let key in updatedFields) {
             const value = updatedFields[key];
         
-            // Convert empty string to null
-            if (value === "") {
-                updatedFields[key] = null;
-            }
+            if (value === "") updatedFields[key] = null;
+            if (typeof value === "undefined") delete updatedFields[key];
+            if (typeof value === "number" && isNaN(value)) delete updatedFields[key];
         
-            // Optional: Prevent sending "undefined"
-            if (typeof value === "undefined") {
-                delete updatedFields[key];
-            }
-        
-            // Prevent NaN
-            if (typeof value === "number" && isNaN(value)) {
-                delete updatedFields[key];
+            // ✅ NEW FIX — Remove `null` values for number fields
+            if (value === null) {
+                if (["Subcontractor Payment"].includes(key)) {
+                    delete updatedFields[key];
+                }
             }
         }
+        
         
         console.log("📌 Final Fields to be Updated:", JSON.stringify(updatedFields, null, 2));
     
@@ -1344,27 +1395,38 @@ document.addEventListener("DOMContentLoaded", () => {
     
         try {
             // ✅ Update Airtable with cleaned values
-            await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName, updatedFields);
+            await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFields);
             console.log("✅ Airtable record updated successfully.");
             console.log("🕔 UTC Sent to Airtable:", new Date(document.getElementById("StartDate").value).toISOString());
 
             showToast("✅ Job details saved successfully!", "success");
     
-            // ✅ Refresh UI after save to reflect correct date format
-            setTimeout(async () => {
-                console.log("🔄 Fetching updated data from Airtable...");
-                const updatedData = await fetchAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName);
-            
-                if (updatedData && updatedData.fields) {
-                    console.log("📩 Reloading checkboxes with updated Airtable data:", updatedData);
-                    await populatePrimaryFields(updatedData.fields); // Make sure it's awaited if it's async
-                }
-            
-            
-                // location.reload(); 
-            }, 1000);
-            
-    
+           // ✅ Refresh UI after save to reflect correct date format
+           await new Promise(resolve => setTimeout(resolve, 3000)); // ⏳ wait 3 seconds for automation
+
+           console.log("🔄 Fetching updated data from Airtable...");
+           const updatedData = await fetchAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId);
+           
+           if (updatedData && updatedData.fields) {
+               console.log("📩 Reloading checkboxes with updated Airtable data:", updatedData);
+               await populatePrimaryFields(updatedData.fields);
+           
+               const status = updatedData.fields["Status"];
+               const lotName = updatedData.fields["Lot Number and Community/Neighborhood"] || "This job";
+           
+               if (status === "Material Purchase Needed") {
+                   console.log("🔁 Status changed to 'Material Purchase Needed'. Redirecting...");
+                   
+                   // ✅ Show toast before redirect
+                   showToast(`📦 ${lotName} has moved to 'Material Purchase Needed' status. Redirecting...`, "success");
+           
+                   // Add a short delay so the user sees the toast
+                   setTimeout(() => {
+                       window.location.href = "index.html";
+                   }, 2000); // 2 second delay
+                   return;
+               }
+           }
         } catch (error) {
             console.error("❌ Error updating Airtable:", error);
             showToast("❌ Error saving job details. Please try again.", "error");
@@ -1530,16 +1592,16 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
     }
 }
 
-    async function fetchCurrentImagesFromAirtable(lotName, imageField) {
-        console.log("📡 Fetching images for Lot Name:", lotName);
+async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
+    console.log("📡 Fetching images for Lot Name:", warrantyId);
     
-        if (!lotName) {
-            console.error("❌ Lot Name is missing. Cannot fetch images.");
+        if (!warrantyId) {
+            console.error("❌ Warranty ID is missing. Cannot fetch images.");
             return [];
         }
     
         // Use filterByFormula to get the correct record using Lot Name
-        const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(`{Lot Number and Community/Neighborhood} = '${lotName}'`)}&fields[]=${imageField}`;
+        const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(`{Warranty Record ID} = '${warrantyId}'`)}&fields[]=${imageField}`;
     
         try {
             const response = await fetch(url, {
@@ -1591,15 +1653,10 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
     
         console.log(`📂 Uploading ${files.length} file(s) to Dropbox for field: ${targetField}`);
     
-        let lotName = document.getElementById("job-name")?.value;
-        if (!lotName) {
-            console.error("❌ ERROR: Lot Name is missing. Cannot upload files.");
-            alert("Error: Lot Name not found.");
-            return;
-        }
-    
-        let existingImages = await fetchCurrentImagesFromAirtable(lotName, targetField) || [];
-        const uploadedUrls = [...existingImages];
+        const warrantyId = getWarrantyId();
+
+        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField);
+                const uploadedUrls = [...existingImages];
     
         for (const file of files) {
             try {
@@ -1622,12 +1679,12 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
         console.log("✅ Final file list to save in Airtable:", uploadedUrls);
     
         if (uploadedUrls.length > 0) {
-            await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, lotName, { [targetField]: uploadedUrls });
+            await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, { [targetField]: uploadedUrls });
     
             await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
             checkAndHideDeleteButton();
 
-            await loadImagesForLot(lotName, document.getElementById("field-status")?.value);
+            await loadImagesForLot(warrantyId, document.getElementById("field-status")?.value);
             setTimeout(checkAndHideDeleteButton, 500); // ✅ Ensure delete button appears after upload
         }
     }

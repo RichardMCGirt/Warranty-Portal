@@ -17,15 +17,21 @@
             <label for="field-status">Status</label>
             <input type="text" id="field-status" name="field-status" disabled>
 
+
             <input type="text" id="job-name" disabled>
+       
+
 
             <label>Field Technician:</label>
             <input type="text" id="field-tech" disabled>
+            
+            <label for="warranty-id">Warranty ID</label>
+            <input type="text" id="warranty-id" disabled>
 
-            <label for="StartDate">Start Date & Time</label>
+            <label for="StartDate">Start Date</label>
             <input type="datetime-local" id="StartDate" name="StartDate" data-field="StartDate" >
             
-            <label for="EndDate">End Date & Time</label>
+            <label for="EndDate">End Date</label>
             <input type="datetime-local" id="EndDate" name="EndDate" data-field="EndDate" >
             
             
@@ -160,10 +166,12 @@
         <div id="issue-pictures" style="display: none;"></div>
 <br>
 
-    <div class="form-group">
-        <label>Field Tech Reviewed:</label>
-        <input type="checkbox" id="field-tech-reviewed" data-field="Field Tech Reviewed">
-    </div>
+<div class="form-group centered-checkbox">
+    <label for="field-tech-reviewed">Field Tech Reviewed:</label>
+    <input type="checkbox" id="field-tech-reviewed" data-field="Field Tech Reviewed">
+</div>
+
+
     
 
     <!-- Preview area for uploaded images -->
@@ -216,7 +224,7 @@
            AIRTABLE_SUBCONTRACTOR_TABLE_NAME: 'tbl9SgC5wUi2TQuF7' // ✅ Added this for subcontractors
         };
     </script>
-    
+   
     
     <script src="job-details.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
