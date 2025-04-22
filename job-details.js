@@ -750,9 +750,13 @@ async function populatePrimaryFields(job) {
         console.log("🚨 Job is 'Scheduled - Awaiting Field' - Deleting completed images...");
 
         ["billable-status", "homeowner-builder", "subcontractor", "materials-needed", "billable-reason", 
-         "field-review-not-needed",
-         "field-review-needed", "field-tech-reviewed", 
-         "additional-fields-container", "message-container"].forEach(hideElementById);
+            "field-review-not-needed", "field-review-needed", "field-tech-reviewed", 
+            "additional-fields-container", "message-container", 
+            "materials-needed-label", // previously fixed
+            "upload-issue-picture-label" // 👈 now added
+           ]
+           .forEach(hideElementById);
+           
     } else {
         console.log("✅ Status is NOT 'Scheduled- Awaiting Field' - Showing all fields.");
 

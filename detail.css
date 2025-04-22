@@ -99,7 +99,7 @@ nav a.back-button:hover {
 }
 .scrollable-content {
     margin-top: 10px; /* Adjust for fixed nav */
-    height: calc(100vh - 20px); /* Adjust for viewport height */
+    height: calc(100vh - 10px); /* Adjust for viewport height */
     overflow-y: auto;
     padding: 10px;
     box-sizing: border-box;

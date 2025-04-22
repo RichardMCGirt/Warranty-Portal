@@ -143,7 +143,7 @@
     </div>
     
     <div class="form-group">
-        <label for="materials-needed">Materials Needed</label>
+        <label for="materials-needed" id="materials-needed-label">Materials Needed</label>
         <textarea id="materials-needed" name="materials-needed" data-field="Materials Needed"
         style="width: 100%; max-width: 100%; font-size: 16px; padding: 10px; 
                box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; 
@@ -151,8 +151,10 @@
         autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
         </div>
         <div class="file-input-container">
-            <label class="custom-file-label" for="upload-issue-picture">Upload Issue Pictures</label>
-            <input type="file" id="upload-issue-picture" multiple accept="image/*" style="display: none;">
+            <label id="upload-issue-picture-label" class="custom-file-label" for="upload-issue-picture">
+                Upload Issue Pictures
+              </label>
+                          <input type="file" id="upload-issue-picture" multiple accept="image/*" style="display: none;">
             <div id="issue-file-list"></div>
         </div>
 
@@ -167,7 +169,6 @@
     <!-- Preview area for uploaded images -->
     <div id="file-preview" class="file-preview"></div>
 
-</div>
 
 <div id="file-input-container">
     <label class="custom-file-label" for="upload-completed-picture">Upload Completed Pictures</label>
@@ -176,7 +177,6 @@
 </div>
 
 <!-- Preview area for uploaded images -->
-<h3 id="completed-pictures-heading">Completed Pictures:</h3>
 <div id="completed-pictures" class="file-preview" style="display: none;"></div>
 
 <button id="delete-images-btn" 
@@ -188,6 +188,7 @@
     <label id="job-completed" for="job-completed">Job Completed:</label>
     <input type="checkbox" id="job-completed-check" data-field="Job Completed">
 </div>
+<div id="file-preview" class="file-preview"></div>
 
 </div>
 
