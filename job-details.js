@@ -1125,7 +1125,7 @@ async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
             console.error("❌ Warranty ID is missing.");
             return;
         }
-        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, imageField);
+        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField);
         
         if (!existingImages || existingImages.length === 0) {
             console.warn(`⚠️ No images found in '${imageField}'. Nothing to delete.`);
@@ -1706,7 +1706,7 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
     
         const warrantyId = getWarrantyId();
 
-        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, imageField);
+        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField);
         const uploadedUrls = [...existingImages];
     
         for (const file of files) {
