@@ -749,14 +749,16 @@ async function populatePrimaryFields(job) {
     if (job["Status"] === "Scheduled- Awaiting Field") {
         console.log("🚨 Job is 'Scheduled - Awaiting Field' - Deleting completed images...");
 
-        ["billable-status", "homeowner-builder", "subcontractor", "materials-needed", "billable-reason", 
-            "field-review-not-needed", "field-review-needed", "field-tech-reviewed", 
-            "additional-fields-container", "message-container", 
-            "materials-needed-label", // previously fixed
-            "upload-issue-picture-label" // 👈 now added
-           ]
-           .forEach(hideElementById);
-           
+        [
+            "billable-status", "homeowner-builder", "subcontractor", "materials-needed", 
+            "billable-reason", "field-review-not-needed", "field-review-needed", 
+            "field-tech-reviewed", "additional-fields-container", "message-container", 
+            "materials-needed-label", "upload-issue-picture-label", 
+            "field-tech-reviewed-label" // 👈 Add this
+          ].forEach(hideElementById);
+          
+          hideParentFormGroup("field-tech-reviewed");
+
     } else {
         console.log("✅ Status is NOT 'Scheduled- Awaiting Field' - Showing all fields.");
 
@@ -809,6 +811,9 @@ async function populatePrimaryFields(job) {
             "job-completed",
             "job-completed-check"
         ].forEach(hideElementById);
+
+        hideParentFormGroup("field-tech-reviewed");
+
     } else {
         showElement("job-completed-container");
     }
@@ -839,6 +844,12 @@ function checkAndHideDeleteButton() {
 }
 
 
+function hideParentFormGroup(elementId) {
+    const el = document.getElementById(elementId);
+    if (el && el.closest(".form-group")) {
+        el.closest(".form-group").style.display = "none";
+    }
+}
 
 
 
@@ -852,7 +863,11 @@ function hideElementById(elementId) {
     }
     console.log(`✅ Hiding element: ${elementId}`);
     element.style.display = "none";
+    element.style.margin = "0";     // reset margin
+    element.style.padding = "0";    // reset padding
+    element.style.height = "0";     // if it's a block element that may take height
 }
+
 
 
 // Function to resize any textarea dynamically
