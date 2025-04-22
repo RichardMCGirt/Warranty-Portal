@@ -757,8 +757,10 @@ async function populatePrimaryFields(job) {
             "field-tech-reviewed-label" // 👈 Add this
           ].forEach(hideElementById);
           
-          hideParentFormGroup("field-tech-reviewed");
-
+          if (job["Status"] !== "Field Tech Review Needed") {
+            hideParentFormGroup("field-tech-reviewed");
+        }
+        
     } else {
         console.log("✅ Status is NOT 'Scheduled- Awaiting Field' - Showing all fields.");
 
@@ -812,8 +814,10 @@ async function populatePrimaryFields(job) {
             "job-completed-check"
         ].forEach(hideElementById);
 
-        hideParentFormGroup("field-tech-reviewed");
-
+        if (job["Status"] !== "Field Tech Review Needed") {
+            hideParentFormGroup("field-tech-reviewed");
+        }
+        
     } else {
         showElement("job-completed-container");
     }
