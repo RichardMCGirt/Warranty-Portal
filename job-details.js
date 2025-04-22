@@ -1102,7 +1102,7 @@ async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
             console.error("❌ Warranty ID is missing.");
             return;
         }
-        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField);
+        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, imageField);
         
         if (!existingImages || existingImages.length === 0) {
             console.warn(`⚠️ No images found in '${imageField}'. Nothing to delete.`);
@@ -1500,7 +1500,7 @@ document.addEventListener("DOMContentLoaded", () => {
    // 🔹 Fetch Dropbox Token from Airtable
 async function fetchDropboxToken() {
     try {
-        const url = `https://api.airtable.com/v0/${airtableBaseId}/tbl6EeKPsNuEvt5yJ?maxRecords=1&view=viwMlo3nM8JDCIMyV`;
+        const url = `https://api.airtable.com/v0/${airtableBaseId}/tbl6EeKPsNuEvt5yJ?maxRecords=1`;
 
         console.log("🔄 Fetching latest Dropbox credentials from Airtable...");
         const response = await fetch(url, {
@@ -1582,7 +1582,7 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
         dropboxAccessToken = data.access_token;
 
         // ✅ Update Airtable with the new token
-        const tokenUpdateUrl = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl6EeKPsNuEvt5yJ?maxRecords=1&view=viwMlo3nM8JDCIMyV`;
+        const tokenUpdateUrl = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl6EeKPsNuEvt5yJ?maxRecords=1`;
         const tokenResponse = await fetch(tokenUpdateUrl, {
             headers: {
                 Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`
@@ -1622,48 +1622,47 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
 }
 
 async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
-    console.log("📡 Fetching images for Lot Name:", warrantyId);
+    console.log("📡 Fetching images for Warranty ID:", warrantyId);
     
-        if (!warrantyId) {
-            console.error("❌ Warranty ID is missing. Cannot fetch images.");
-            return [];
-        }
-    
-        // Use filterByFormula to get the correct record using Lot Name
-        const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(`{Warranty Record ID} = '${warrantyId}'`)}&fields[]=${imageField}`;
-    
-        try {
-            const response = await fetch(url, {
-                headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
-            });
-    
-            if (!response.ok) {
-                console.error("❌ Error fetching record:", response.status, response.statusText);
-                return [];
-            }
-    
-            const data = await response.json();
-    
-            if (data.records.length === 0) {
-                console.warn(`⚠️ No records found for Lot Name: ${lotName}`);
-                return [];
-            }
-    
-            // Assuming only one record per lot name exists
-            const record = data.records[0];
-    
-            if (record.fields && record.fields[imageField]) {
-                console.log(`✅ Images found for '${lotName}' in field '${imageField}':`, record.fields[imageField]);
-                return record.fields[imageField];
-            } else {
-                console.warn(`⚠️ No images found in field '${imageField}' for '${lotName}'`);
-                return [];
-            }
-        } catch (error) {
-            console.error("❌ Error fetching images by Lot Name:", error);
-            return [];
-        }
+    if (!warrantyId) {
+        console.error("❌ Warranty ID is missing. Cannot fetch images.");
+        return [];
     }
+
+    const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(`{Warranty Record ID} = '${warrantyId}'`)}&fields[]=${imageField}`;
+
+    try {
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
+        });
+
+        if (!response.ok) {
+            console.error("❌ Error fetching record:", response.status, response.statusText);
+            return [];
+        }
+
+        const data = await response.json();
+
+        if (data.records.length === 0) {
+            console.warn(`⚠️ No records found for Warranty ID: ${warrantyId}`);
+            return [];
+        }
+
+        const record = data.records[0];
+
+        if (record.fields && record.fields[imageField]) {
+            console.log(`✅ Images found for '${warrantyId}' in field '${imageField}':`, record.fields[imageField]);
+            return record.fields[imageField];
+        } else {
+            console.warn(`⚠️ No images found in field '${imageField}' for '${warrantyId}'`);
+            return [];
+        }
+    } catch (error) {
+        console.error("❌ Error fetching images by Warranty ID:", error);
+        return [];
+    }
+}
+
        
     function convertUTCToLocalInput(utcDateString) {
         if (!utcDateString) return "";
@@ -1684,8 +1683,8 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
     
         const warrantyId = getWarrantyId();
 
-        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField);
-                const uploadedUrls = [...existingImages];
+        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, imageField);
+        const uploadedUrls = [...existingImages];
     
         for (const file of files) {
             try {
