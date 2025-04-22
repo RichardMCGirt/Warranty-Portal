@@ -1,5 +1,6 @@
 let dropboxRefreshToken = null;
 
+
 function openMapApp() {
     const addressInput = document.getElementById("address");
 
@@ -1331,6 +1332,17 @@ document.addEventListener("DOMContentLoaded", () => {
         function handleInputChange(element) {
             console.log(`📝 Field changed: ${element.id}, New Value:`, element.type === "checkbox" ? element.checked : element.value);
         }
+          // ✅ 💡 Add this right here:
+          setTimeout(() => {
+            const input = document.getElementById("upload-completed-picture");
+            const label = document.querySelector("label[for='upload-completed-picture']");
+            const container = document.getElementById("file-input-container");
+        
+            if (input) input.style.setProperty("display", "none", "important");
+            if (label) label.style.setProperty("display", "none", "important");
+            if (container) container.style.setProperty("display", "none", "important");
+        }, 500);
+        
     });
 
     document.getElementById("save-job").addEventListener("click", async function () {
@@ -1686,7 +1698,8 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
     }
 }
 
-       
+
+
     function convertUTCToLocalInput(utcDateString) {
         if (!utcDateString) return "";
         const utcDate = new Date(utcDateString);

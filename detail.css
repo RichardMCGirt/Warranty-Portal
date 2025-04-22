@@ -467,7 +467,7 @@ input[type="file"] {
 }
 
 #upload-completed-picture {
-    display: none; /* Hide the default file input */
+    display: none !important; /* Hide the default file input */
 }
 
 #file-list {
