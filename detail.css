@@ -177,10 +177,10 @@ textarea {
     
 }
 
-input[disabled],
-textarea[disabled] {
+input[readonly],
+textarea[readonly] {
     cursor: not-allowed;
-    color: #555 !important; 
+    color: #008080 !important; 
     background-color: transparent !important;
     border: none;               /* darker text for readability */
 }
@@ -228,7 +228,7 @@ select {
 }
 
 #subcontractor-dropdown {
-    width: 100%;
+    width: auto !important;
     font-size: 16px;
     padding: 12px;
     margin-bottom: 15px; /* Adds spacing below the dropdown */
@@ -268,7 +268,7 @@ input[type="checkbox"] {
 /* File Input Styling */
 /* ============================= */
 .file-input-container {
-    margin-top: 15px;
+    margin-top: 5px;
 }
 
 .file-wrapper {
@@ -572,7 +572,7 @@ input[type="file"] {
     flex-direction: column; /* Places items in a vertical stack */
     align-items: center; /* Centers items horizontally */
     text-align: center; /* Ensures text is centered */
-    margin: 20px auto; /* Centers the container horizontally */
+    margin: 10px auto; /* Centers the container horizontally */
     gap:10px;
 }
 
@@ -626,7 +626,7 @@ button:hover {
     }
   
     #save-job {
-        bottom: 10px; /* Move the save button closer to the bottom */
+        bottom: 10px; 
         padding: 12px 16px;
         font-size: 16px;
     }
@@ -643,9 +643,11 @@ button:hover {
     }
   }
   @media (max-width: 480px) {
-    input[disabled],
-    textarea[disabled] {
+    input[readonly],
+    textarea[readonly] {
         font-size: 1rem; /* adjust as needed */
         padding: 0.75em;
+        color: #008080 !important; 
+
     }
 }

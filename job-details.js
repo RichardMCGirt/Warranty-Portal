@@ -318,7 +318,9 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                     "Subcontractor Payment": parseFloat(document.getElementById("subcontractor-payment").value) || 0,
                     "Materials Needed": document.getElementById("materials-needed").value,
                     "Field Tech Reviewed": document.getElementById("field-tech-reviewed").checked,
-                    "Job Completed": document.getElementById("job-completed").checked
+                    "Job Completed": document.getElementById("job-completed").checked,
+             //       "Material Not Needed": document.getElementById("material-not-needed").checked,
+
                 };
         
                 // ✅ Add dates only if they changed
@@ -411,6 +413,20 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
     } catch (error) {
         console.error("❌ Error occurred:", error);
     }
+
+   // document.getElementById("material-not-needed").addEventListener("change", function () {
+     //   const materialsInput = document.getElementById("materials-needed");
+     //   if (this.checked) {
+       //     materialsInput.value = "Material Not Needed";
+        //    materialsInput.setAttribute("readonly", true);
+       //     materialsInput.style.backgroundColor = "#e9ecef";
+      //  } else {
+      //      materialsInput.value = "";
+      //      materialsInput.removeAttribute("readonly");
+     //       materialsInput.style.backgroundColor = "";
+    //    }
+ //   });
+    
     
     async function ensureDropboxToken() {
         if (!dropboxAccessToken) {
@@ -464,24 +480,29 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
     });
     
     document.getElementById("upload-issue-picture").addEventListener("change", async function (event) {
-        if (await ensureDropboxToken()) {
-            showToast("📤 Uploading image...", "info"); // Show upload start toast
+        if (event.target.files.length > 0) {
+          if (await ensureDropboxToken()) {
+            showToast("📤 Uploading issue photo...", "info");
             await uploadToDropbox(event.target.files, "Picture(s) of Issue");
-            showToast("✅ Image uploaded successfully!", "success"); // Show success toast
-        } else {
-            showToast("❌ Failed to authenticate Dropbox!", "error"); // Show error toast
+            showToast("✅ Photo uploaded successfully!", "success");
+          } else {
+            showToast("❌ Dropbox authentication failed!", "error");
+          }
         }
-    });
-    
-    document.getElementById("upload-completed-picture").addEventListener("change", async function (event) {
-        if (await ensureDropboxToken()) {
-            showToast("📤 Uploading image...", "info"); // Show upload start toast
+      });
+      
+      document.getElementById("upload-completed-picture").addEventListener("change", async function (event) {
+        if (event.target.files.length > 0) {
+          if (await ensureDropboxToken()) {
+            showToast("📤 Uploading completed photo...", "info");
             await uploadToDropbox(event.target.files, "Completed  Pictures");
-            showToast("✅ Image uploaded successfully!", "success"); // Show success toast
-        } else {
-            showToast("❌ Failed to authenticate Dropbox!", "error"); // Show error toast
+            showToast("✅ Photo uploaded successfully!", "success");
+          } else {
+            showToast("❌ Dropbox authentication failed!", "error");
+          }
         }
-    });
+      });
+      
 
     const labels = document.querySelectorAll('.billable-label');
     let lastSelectedBillable = null;
@@ -591,7 +612,9 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
         // Step 1️⃣ Try exact match
         const filterFormula = `{Warranty Record ID} = "${warrantyId}"`;
     const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=1`;
-
+    console.log("🔎 Airtable Filter Formula:", filterFormula);
+    console.log("🌐 Request URL:", url);
+    
     try {
         const response = await fetch(url, {
             headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
@@ -631,15 +654,15 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
     
             // ✅ If not a record ID, find the corresponding record ID
             if (!recordId.startsWith("rec")) {
-                console.log("🔍 Searching for Record ID using Warranty Record ID...");
-                recordId = await getRecordIdByWarrantyId(lotNameOrRecordId);
-                if (!recordId) {
-                    console.error("❌ No record ID found for this Lot Name. Cannot update Airtable.");
-                    showToast("❌ Error: No record found for this Lot Name.", "error");
-                    if (saveButton) saveButton.disabled = false;
+                const resolvedId = await getRecordIdByWarrantyId(recordId);
+                if (!resolvedId) {
+                    alert(`No record found with Warranty Record ID: ${recordId}`);
+                    console.warn("❌ No record found for Warranty Record ID:", recordId);
                     return;
                 }
+                recordId = resolvedId;
             }
+            
     
             const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${recordId}`;
             console.log("📡 Sending API Request to Airtable:", url);
@@ -733,6 +756,54 @@ async function populatePrimaryFields(job) {
     setInputValue("StartDate", convertUTCToLocalInput(job["StartDate"]));
     setInputValue("EndDate", convertUTCToLocalInput(job["EndDate"]));
     setInputValue("subcontractor", safeValue(job["Subcontractor"]));
+  //  setCheckboxValue("material-not-needed", job["Material Not Needed"] || false);
+  setTimeout(() => {
+    const materialsTextarea = document.getElementById("materials-needed");
+    const materialSelect = document.getElementById("material-needed-select");
+
+    if (materialsTextarea && materialsTextarea.value.trim() !== "") {
+        let exists = Array.from(materialSelect.options).some(opt => opt.value === "Needs Materials");
+        if (!exists) {
+            const option = document.createElement("option");
+            option.value = "Needs Materials";
+            option.textContent = "Needs Materials";
+            materialSelect.appendChild(option);
+        }
+        materialSelect.value = "Needs Materials";
+    }
+
+    updateMaterialsTextareaVisibility(); // ← ✅ toggle visibility after value is set
+}, 50); // slight delay to ensure dropdown is in DOM
+
+  // 🔄 Auto-set dropdown to "Needs Materials" if textarea has content
+const materialsTextarea = document.getElementById("materials-needed");
+const materialSelect = document.getElementById("material-needed-select");
+const textareaContainer = document.getElementById("materials-needed-container");
+const homeownerBuilderSelect = document.getElementById("homeowner-builder");
+const homeownerBuilderContainer = homeownerBuilderSelect?.parentElement;
+
+if (materialsTextarea && materialSelect && textareaContainer) {
+    const value = materialsTextarea.value.trim();
+    console.log("📦 Materials Needed value:", value);
+
+    if (value !== "") {
+        // Ensure "Needs Materials" option exists
+        let hasNeedsMaterials = Array.from(materialSelect.options).some(opt => opt.value === "Needs Materials");
+        if (!hasNeedsMaterials) {
+            const option = document.createElement("option");
+            option.value = "Needs Materials";
+            option.textContent = "Needs Materials";
+            materialSelect.appendChild(option);
+            console.log("➕ Added 'Needs Materials' option to dropdown.");
+        }
+
+        materialSelect.value = "Needs Materials";
+        textareaContainer.style.display = "block";
+        console.log("✅ Set dropdown to 'Needs Materials' and showed textarea.");
+    } else {
+        console.log("📭 Textarea is empty, leaving dropdown as is.");
+    }
+}
 
     // ✅ Set dropdown's data-selected attribute for use in dropdown population
     const subDropdown = document.getElementById("subcontractor-dropdown");
@@ -751,12 +822,24 @@ async function populatePrimaryFields(job) {
         console.log("🚨 Job is 'Scheduled - Awaiting Field' - Deleting completed images...");
 
         [
-            "billable-status", "homeowner-builder", "subcontractor", "materials-needed", 
-            "billable-reason", "field-review-not-needed", "field-review-needed", 
-            "field-tech-reviewed", "additional-fields-container", "message-container", 
-            "materials-needed-label", "upload-issue-picture-label", 
-            "field-tech-reviewed-label" // 👈 Add this
+            "billable-status",
+            "homeowner-builder",
+            "subcontractor",
+            "materials-needed",
+            "billable-reason",
+            "field-review-not-needed",
+            "field-review-needed",
+            "field-tech-reviewed",
+            "additional-fields-container",
+            "message-container",
+            "materials-needed-label",
+            "upload-issue-picture-label",
+            "field-tech-reviewed-label",
+            "materials-needed-container",
+            "material-needed-container" // 👈 added this
           ].forEach(hideElementById);
+          
+          
           
           if (job["Status"] !== "Field Tech Review Needed") {
             hideParentFormGroup("field-tech-reviewed");
@@ -783,13 +866,18 @@ async function populatePrimaryFields(job) {
         
             // 🔄 Show or hide the Billable Reason dropdown
             const billableReasonDiv = document.getElementById("billable-reason-container");
-            if (radio.checked && radio.value === "Billable") {
-                billableReasonDiv.style.display = "block";
-                console.log("📄 Showing Billable Reason dropdown.");
-            } else if (billableReasonDiv) {
-                billableReasonDiv.style.display = "none";
-                console.log("🙈 Hiding Billable Reason dropdown.");
+            if (radio.checked) {
+                if (radio.value === "Billable") {
+                    billableReasonDiv.style.display = "block";
+                    homeownerBuilderContainer.style.display = "block";
+                    console.log("📄 Showing Billable Reason and Homeowner/Builder dropdowns.");
+                } else {
+                    billableReasonDiv.style.display = "none";
+                    homeownerBuilderContainer.style.display = "none";
+                    console.log("🙈 Hiding Billable Reason and Homeowner/Builder dropdowns.");
+                }
             }
+            
         });
         
 
@@ -848,7 +936,6 @@ function checkAndHideDeleteButton() {
     }
 }
 
-
 function hideParentFormGroup(elementId) {
     const el = document.getElementById(elementId);
     if (el && el.closest(".form-group")) {
@@ -856,8 +943,20 @@ function hideParentFormGroup(elementId) {
     }
 }
 
+function updateMaterialsTextareaVisibility() {
+    const materialSelect = document.getElementById("material-needed-select");
+    const textareaContainer = document.getElementById("materials-needed-container");
 
+    if (!materialSelect || !textareaContainer) return;
 
+    if (materialSelect.value === "Needs Materials") {
+        console.log("📂 Showing materials-needed textarea based on dropdown");
+        textareaContainer.style.display = "block";
+    } else {
+        console.log("📁 Hiding materials-needed textarea based on dropdown");
+        textareaContainer.style.display = "none";
+    }
+}
 
 // Function to hide an element safely
 function hideElementById(elementId) {
@@ -872,8 +971,6 @@ function hideElementById(elementId) {
     element.style.padding = "0";    // reset padding
     element.style.height = "0";     // if it's a block element that may take height
 }
-
-
 
 // Function to resize any textarea dynamically
 function adjustTextareaSize(id) {
@@ -1084,8 +1181,6 @@ document.getElementById("delete-images-btn").addEventListener("click", async fun
         return;
     }
 
- 
-
     // 🔹 Extract selected image IDs
     const imageIdsToDelete = Array.from(checkboxes).map(cb => cb.dataset.imageId).filter(id => id);
     console.log("📌 Selected Image IDs to Delete:", imageIdsToDelete);
@@ -1126,7 +1221,7 @@ async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
             console.error("❌ Warranty ID is missing.");
             return;
         }
-        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField);
+        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, imageField);
         
         if (!existingImages || existingImages.length === 0) {
             console.warn(`⚠️ No images found in '${imageField}'. Nothing to delete.`);
@@ -1314,6 +1409,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("🆔 Using saved Record ID:", recordId);
     saveRecordIdToLocal(recordId); 
     setTimeout(checkAndHideDeleteButton, 500); // slight delay if images render async
+    document.getElementById("material-needed-select").addEventListener("change", updateMaterialsTextareaVisibility);
 
 });
 
@@ -1404,32 +1500,37 @@ document.addEventListener("DOMContentLoaded", () => {
         if (convertedEndUTC !== originalEndUTC) {
             updatedFields["EndDate"] = convertedEndUTC;
         }
-                const inputs = document.querySelectorAll("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
-    
-                inputs.forEach(input => {
-                    const fieldName = input.getAttribute("data-field");
-                    if (!fieldName) return;
-                
-                    // ✅ Skip Billable radio buttons — already handled above
-                    if (input.name === "billable-status") return;
-                
-                    let value = input.value.trim();
-                
-                    if (input.type === "checkbox") {
-                        value = input.checked;
-                    } else if (input.tagName === "SELECT") {
-                        value = value === "" ? null : value;
-                    }
-                     else if (input.type === "number") {
-                        value = value === "" ? null : parseFloat(value);
-                    } else if (input.type === "date") {
-                        value = formatDateToISO(value);
-                    } else {
-                        value = value === "" ? null : value;
-                    }
-                
-                    updatedFields[fieldName] = value;
-                });
+        const inputs = document.querySelectorAll("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
+
+        inputs.forEach(input => {
+            const fieldName = input.getAttribute("data-field");
+            if (!fieldName) return;
+        
+            if (input.name === "billable-status") return;
+        
+            let value = input.value.trim();
+        
+            if (input.type === "checkbox") {
+                value = input.checked;
+            } else if (input.tagName === "SELECT") {
+                value = value === "" ? null : value;
+            } else if (input.type === "number") {
+                if (value === "" || isNaN(value)) {
+                    value = null; // ✅ this will explicitly send null
+                } else {
+                    value = parseFloat(value);
+                }
+            } else if (input.type === "date") {
+                value = formatDateToISO(value);
+            } else {
+                value = value === "" ? null : value;
+            }
+        
+            updatedFields[fieldName] = value;
+        });
+        
+        
+        
                 
 
         // Clean empty strings to nulls (avoid Airtable errors)
@@ -1440,12 +1541,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (typeof value === "undefined") delete updatedFields[key];
             if (typeof value === "number" && isNaN(value)) delete updatedFields[key];
         
-            // ✅ NEW FIX — Remove `null` values for number fields
-            if (value === null) {
-                if (["Subcontractor Payment"].includes(key)) {
-                    delete updatedFields[key];
-                }
-            }
+
         }
         
         
@@ -1719,7 +1815,7 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
     
         const warrantyId = getWarrantyId();
 
-        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField);
+        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField); // ✅
         const uploadedUrls = [...existingImages];
     
         for (const file of files) {

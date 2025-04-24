@@ -15,15 +15,15 @@
     <div class="job-details-container">
         <form id="job-form">
             <label for="field-status">Status</label>
-            <input type="text" id="field-status" name="field-status" disabled>
+            <input type="text" id="field-status" name="field-status" readonly>
 
-            <input type="text" id="job-name" disabled>
+            <input type="text" id="job-name" readonly>
        
             <label>Field Technician:</label>
-            <input type="text" id="field-tech" disabled>
+            <input type="text" id="field-tech" readonly>
             
             <label for="warranty-id">Warranty ID</label>
-            <input type="text" id="warranty-id" disabled>
+            <input type="text" id="warranty-id" readonly>
 
             <label for="StartDate">Start Date</label>
             <input type="datetime-local" id="StartDate" name="StartDate" data-field="StartDate" >
@@ -55,18 +55,21 @@
                     placeholder="Click for Directions">
             </div>
             <label>Homeowner Name:</label>
-            <input type="text" id="homeowner-name" disabled>
+            <input type="text" id="homeowner-name" readonly>
 
             <label>Contact Email:</label>
-<input type="email" id="contact-email" data-field="Contact Email" disabled>
+<input type="email" id="contact-email" data-field="Contact Email" readonly>
 
 <label>Description:</label>
-<textarea id="description" data-field="Description of Issue" disabled ></textarea>
+<textarea id="description" data-field="Description of Issue" readonly ></textarea>
 
 <label>DOW to be Completed:</label>
-<textarea id="dow-completed" data-field="DOW to be Completed" 
-          style="width: 100%; max-width: 100%; font-size: 16px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; min-height: 80px; resize: vertical;"
-          autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"></textarea>
+<textarea id="dow-completed" data-field="DOW to be Completed"
+    style="width: 100%; font-size: 16px; padding: 10px;
+           box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;
+           min-height: 80px; resize: vertical; display: block;"
+    autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"></textarea>
+
 
           <hr>
 
@@ -117,12 +120,13 @@
             <label for="homeowner-builder">Homeowner/Builder Pay</label>
             <select id="homeowner-builder" name="homeowner-builder" data-field="Homeowner Builder pay">
                 <option value="Homeowner">Homeowner</option>
-                <option value="Subcontractor">Subcontractor</option>
                 <option value="Builder">Builder</option>
             </select>
         </div>
         
 </div>
+
+
 <div class="form-group" id="billable-reason-container" style="display: none;">
     <label for="billable-reason">Billable Reason</label>
     <select id="billable-reason" name="billable-reason" data-field="Billable Reason (If Billable)">
@@ -143,21 +147,47 @@
         <label>Field Review Needed:</label>
         <input type="checkbox" id="field-review-not-needed" data-field="Field Review Needed">
     </div>
-    
-    <div class="form-group">
+
+    <div id="material-needed-container" class="material-needed-container"
+    style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px 0;">
+
+
+    <select id="material-needed-select" 
+        style="width: fit-content; font-size: 20px; padding: 5px 10px; border-radius: 5px; box-sizing: border-box;">
+        <option value="" disabled selected>Select if materials are needed</option>
+        <option value="Do Not Need Materials">Do Not Need Materials</option>
+        <option value="Needs Materials">Needs Materials</option>
+    </select>
+
+    <div class="form-group" id="materials-needed-container">
         <label for="materials-needed" id="materials-needed-label">Materials Needed</label>
         <textarea id="materials-needed" name="materials-needed" data-field="Materials Needed"
-        style="width: 100%; max-width: 100%; font-size: 16px; padding: 10px; 
-               box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; 
-               min-height: 100px; resize: vertical;"
+        style="width: 100%; font-size: 20px; padding: 10px;
+               box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;
+               min-height: 80px; resize: vertical; display: block;"
         autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
-        </div>
+    
+    </div>
+</div>
+
+   
+
         <div class="file-input-container">
-            <label id="upload-issue-picture-label" class="custom-file-label" for="upload-issue-picture">
+         <!--   <label id="upload-issue-picture-label" class="custom-file-label" for="upload-issue-picture">
                 Upload Issue Pictures
-              </label>
-                          <input type="file" id="upload-issue-picture" multiple accept="image/*" style="display: none;">
-            <div id="issue-file-list"></div>
+              </label> -->
+              <input
+              type="file"
+              id="upload-issue-picture"
+              multiple
+              accept="image/*"
+              capture="environment"
+              style="display: none;"
+            >
+            <button id="trigger-issue-upload" type="button" style="margin: 10px; padding: 10px 15px; font-size: 16px;">
+              📷 Take Photo / Upload Issue Image
+            </button>       
+                 <div id="issue-file-list"></div>
         </div>
 
         <div id="issue-pictures" style="display: none;"></div>
@@ -173,9 +203,19 @@
 
 
     <div id="file-input-container">
-        <label class="custom-file-label" for="upload-completed-picture">Upload Completed Pictures</label>
-        <input type="file" id="upload-completed-picture" multiple accept="image/*" style="display: none;">
-        <div id="file-list"></div>
+      <!--  <label class="custom-file-label" for="upload-completed-picture">Upload Completed Pictures</label> -->
+        <input
+        type="file"
+        id="upload-completed-picture"
+        multiple
+        accept="image/*"
+        capture="environment"
+        style="display: none;"
+      >
+      <button id="trigger-completed-upload" type="button" style="margin: 10px; padding: 10px 15px; font-size: 16px;">
+        📷 Take Photo / Upload Completed Image
+      </button>        
+      <div id="file-list"></div>
     </div>
     
 
@@ -207,10 +247,58 @@
            AIRTABLE_TABLE_NAME: 'tbl6EeKPsNuEvt5yJ',
            AIRTABLE_TABLE_NAME2: 'tbl9SgC5wUi2TQuF7',
 
-           AIRTABLE_SUBCONTRACTOR_TABLE_NAME: 'tbl9SgC5wUi2TQuF7' // ✅ Added this for subcontractors
+           AIRTABLE_SUBCONTRACTOR_TABLE_NAME: 'tbl9SgC5wUi2TQuF7' 
         };
     </script>
-   
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const materialSelect = document.getElementById("material-needed-select");
+  const materialsTextarea = document.getElementById("materials-needed");
+  const textareaContainer = document.getElementById("materials-needed-container");
+
+  const placeholderOption = materialSelect.querySelector('option[value=""]');
+
+    // Show/hide textarea when user changes selection with confirmation
+    materialSelect.addEventListener("change", function () {
+    console.log("🔄 Dropdown changed to:", this.value);
+
+    if (this.value === "Needs Materials") {
+      console.log("📂 Showing materials-needed textarea");
+      textareaContainer.style.display = "block";
+    } else if (this.value === "Do Not Need Materials") {
+      if (materialsTextarea.value.trim() !== "") {
+        const confirmed = confirm("⚠️ You have entered materials. Do you want to clear them?");
+        if (confirmed) {
+          console.log("🧹 User confirmed clearing materials textarea.");
+          materialsTextarea.value = "";
+          textareaContainer.style.display = "none";
+        } else {
+          console.log("❌ User canceled. Reverting dropdown to 'Needs Materials'");
+          this.value = "Needs Materials";
+          textareaContainer.style.display = "block"; // show again in case it was hidden
+        }
+      } else {
+        console.log("📁 Hiding textarea (no content to clear)");
+        textareaContainer.style.display = "none";
+      }
+    }
+  });
+
+});
+  </script>
+  
+  <script>
+    document.getElementById("trigger-issue-upload").addEventListener("click", () => {
+      document.getElementById("upload-issue-picture").click();
+    });
+  
+    document.getElementById("trigger-completed-upload").addEventListener("click", () => {
+      document.getElementById("upload-completed-picture").click();
+    });
+  </script>
+  
+  
+
     
     <script src="job-details.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
