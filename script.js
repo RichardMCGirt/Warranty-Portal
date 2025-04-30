@@ -215,9 +215,26 @@ document.addEventListener("DOMContentLoaded", function () {
             } while (offset);
     
             allRecords.forEach(record => {
-                const managerId = record.fields['Field Manager Assigned']?.[0];
-                record.displayFieldManager = managerId && fieldManagerMap[managerId] ? fieldManagerMap[managerId] : 'Unknown';
+                const techField = record.fields['field tech'];
+                if (techField) {
+                    const names = techField
+                        .split(',')
+                        .map(n => n.trim())
+                        .sort((a, b) => a.localeCompare(b)); // Alphabetical order
+            
+                    record.normalizedTechName = names.join(', ');
+                } else {
+                    record.normalizedTechName = '';
+                }
             });
+            
+            
+            // ✅ Sort by field tech to make mergeTableCells work correctly
+            allRecords.sort((a, b) => {
+                return (a.normalizedTechName || '').localeCompare(b.normalizedTechName || '');
+            });
+            
+            
     
             // Count records by status
             const fieldTechReviewNeededCount = allRecords.filter(record => record.fields['Status'] === 'Field Tech Review Needed').length;
@@ -294,34 +311,35 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function applyFilters() {
         const selectedTechs = Array.from(document.querySelectorAll(".filter-checkbox:checked"))
-            .map(cb => normalizeTechName(cb.value));
+            .map(cb => cb.value.replace(/\s+/g, ' ').trim());
+    
+        console.log("🧪 Selected Techs:", selectedTechs);
     
         const rows = document.querySelectorAll("#airtable-data tbody tr, #feild-data tbody tr");
     
         rows.forEach((row, index) => {
             const techCell = row.querySelector('td[data-field="field tech"]');
-            if (!techCell) return;
     
-            const tech = normalizeTechName(techCell.textContent);
+            if (!techCell) {
+                console.warn(`⚠️ Row ${index + 1}: Missing field tech cell`);
+                return;
+            }
+    
+            const tech = techCell.textContent.replace(/\s+/g, ' ').trim();
     
             const match = selectedTechs.length === 0 || selectedTechs.includes(tech);
             row.style.display = match ? "" : "none";
+    
+            console.log(`🔍 Row ${index + 1}: "${tech}" | Show: ${match}`);
         });
+    
+        const visibleA = document.querySelectorAll('#airtable-data tbody tr:not([style*="display: none"])').length;
+        const visibleF = document.querySelectorAll('#feild-data tbody tr:not([style*="display: none"])').length;
+        console.log(`🧮 #airtable-data visible: ${visibleA}`);
+        console.log(`🧮 #feild-data visible: ${visibleF}`);
     }
     
     
-    function normalizeTechName(name) {
-        const normalized = name.toLowerCase().replace(/\s+/g, ' ').trim();
-        if (
-            normalized === 'doug sprenkle, cleandro gonzalez' ||
-            normalized === 'cleandro gonzalez, doug sprenkle'
-        ) {
-            return 'doug sprenkle + cleandro gonzalez';
-        }
-        if (normalized === 'doug sprenkle') return 'doug sprenkle + cleandro gonzalez';
-        if (normalized === 'cleandro gonzalez') return 'doug sprenkle + cleandro gonzalez';
-        return normalized;
-    }
     
        
     async function fetchFieldManagerNames() {
@@ -483,56 +501,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function mergeTableCells(tableSelector, columnIndex) {
         const table = document.querySelector(tableSelector);
-        if (!table) return;
+        if (!table) {
+            console.warn(`⚠️ Table not found: ${tableSelector}`);
+            return;
+        }
     
-        const rows = Array.from(table.querySelectorAll("tbody tr"));
+        const rows = table.querySelectorAll("tbody tr");
+        if (rows.length === 0) {
+            console.warn(`⚠️ No rows found in table: ${tableSelector}`);
+            return;
+        }
     
-        // Normalize and attach to each row
-        const rowsWithNormalized = rows.map(row => {
-            const cell = row.cells[columnIndex];
-            const rawText = cell ? cell.textContent.trim() : '';
-            const normalized = (rawText);
-            return { row, normalized, rawText };
-        });
-    
-        // Sort rows in the DOM based on normalized names
-        rowsWithNormalized.sort((a, b) => a.normalized.localeCompare(b.normalized));
-    
-        // Clear tbody and re-insert sorted rows
-        const tbody = table.querySelector("tbody");
-        tbody.innerHTML = '';
-        rowsWithNormalized.forEach(({ row }) => tbody.appendChild(row));
-    
-        // Now proceed with merging as usual
         let lastCell = null;
-        let lastNormalized = '';
         let rowspanCount = 1;
         let rowGroupStart = null;
     
-        rowsWithNormalized.forEach(({ row, normalized }, index) => {
+        rows.forEach((row, index) => {
             const currentCell = row.cells[columnIndex];
     
-            if (lastCell && lastNormalized === normalized) {
-                rowspanCount++;
-                lastCell.rowSpan = rowspanCount;
-                currentCell.style.display = "none";
-            } else {
-                if (rowGroupStart && rowspanCount > 1) {
-                    rowGroupStart.classList.add("merged-group-start");
-                }
-                lastCell = currentCell;
-                lastNormalized = normalized;
-                rowspanCount = 1;
-                rowGroupStart = row;
+            if (!currentCell) {
+                console.warn(`⚠️ No cell at column ${columnIndex} in row ${index + 1}`);
+                return;
             }
+    
+            const currText = currentCell.textContent.trim().split(',').map(n => n.trim()).sort().join(', ');
+    
+            if (lastCell) {
+                const prevText = lastCell.textContent.trim().split(',').map(n => n.trim()).sort().join(', ');
+    
+                if (prevText === currText) {
+                    rowspanCount++;
+                    lastCell.rowSpan = rowspanCount;
+                    currentCell.style.display = "none"; // Hide duplicate cell
+                    return;
+                }
+            }
+    
+            // Start new merge group
+            if (rowGroupStart) {
+                rowGroupStart.classList.add("merged-group-start");
+            }
+    
+            lastCell = currentCell;
+            rowspanCount = 1;
+            rowGroupStart = row;
         });
     
-        if (rowGroupStart && rowspanCount > 1) {
-            rowGroupStart.classList.add("merged-group-start");
+        if (rowGroupStart) {
+            rowGroupStart.classList.add("merged-group-start"); // Final group
         }
     }
-    
-    
     
     
     
@@ -662,7 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
        
     
             const fieldConfigs = isSecondary ? [
-                { field: 'field tech', value: fields['field tech'] || '' },
+                { field: 'field tech', value: record.normalizedTechName || fields['field tech'] || '' },
                 {
                     field: 'Lot Number and Community/Neighborhood',
                     value: fields['Lot Number and Community/Neighborhood'] || 'N/A',
@@ -670,7 +688,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 { field: 'b', value: fields['b'] || '', hidden: true } // 👈 Add this
             ] : [
-                { field: 'field tech', value: fields['field tech'] || '' },
+                { field: 'field tech', value: record.normalizedTechName || fields['field tech'] || '' },
                 {
                     field: 'Lot Number and Community/Neighborhood',
                     value: fields['Lot Number and Community/Neighborhood'] || 'N/A',
