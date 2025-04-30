@@ -294,35 +294,34 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function applyFilters() {
         const selectedTechs = Array.from(document.querySelectorAll(".filter-checkbox:checked"))
-            .map(cb => cb.value.replace(/\s+/g, ' ').trim());
-    
-        console.log("🧪 Selected Techs:", selectedTechs);
+            .map(cb => normalizeTechName(cb.value));
     
         const rows = document.querySelectorAll("#airtable-data tbody tr, #feild-data tbody tr");
     
         rows.forEach((row, index) => {
             const techCell = row.querySelector('td[data-field="field tech"]');
+            if (!techCell) return;
     
-            if (!techCell) {
-                console.warn(`⚠️ Row ${index + 1}: Missing field tech cell`);
-                return;
-            }
-    
-            const tech = techCell.textContent.replace(/\s+/g, ' ').trim();
+            const tech = normalizeTechName(techCell.textContent);
     
             const match = selectedTechs.length === 0 || selectedTechs.includes(tech);
             row.style.display = match ? "" : "none";
-    
-            console.log(`🔍 Row ${index + 1}: "${tech}" | Show: ${match}`);
         });
-    
-        const visibleA = document.querySelectorAll('#airtable-data tbody tr:not([style*="display: none"])').length;
-        const visibleF = document.querySelectorAll('#feild-data tbody tr:not([style*="display: none"])').length;
-        console.log(`🧮 #airtable-data visible: ${visibleA}`);
-        console.log(`🧮 #feild-data visible: ${visibleF}`);
     }
     
     
+    function normalizeTechName(name) {
+        const normalized = name.toLowerCase().replace(/\s+/g, ' ').trim();
+        if (
+            normalized === 'doug sprenkle, cleandro gonzalez' ||
+            normalized === 'cleandro gonzalez, doug sprenkle'
+        ) {
+            return 'doug sprenkle + cleandro gonzalez';
+        }
+        if (normalized === 'doug sprenkle') return 'doug sprenkle + cleandro gonzalez';
+        if (normalized === 'cleandro gonzalez') return 'doug sprenkle + cleandro gonzalez';
+        return normalized;
+    }
     
        
     async function fetchFieldManagerNames() {
@@ -484,47 +483,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function mergeTableCells(tableSelector, columnIndex) {
         const table = document.querySelector(tableSelector);
-        if (!table) {
-            console.warn(`⚠️ Table not found: ${tableSelector}`);
-            return;
-        }
+        if (!table) return;
     
-        const rows = table.querySelectorAll("tbody tr");
-        if (rows.length === 0) {
-            console.warn(`⚠️ No rows found in table: ${tableSelector}`);
-            return;
-        }
+        const rows = Array.from(table.querySelectorAll("tbody tr"));
     
+        // Normalize and attach to each row
+        const rowsWithNormalized = rows.map(row => {
+            const cell = row.cells[columnIndex];
+            const rawText = cell ? cell.textContent.trim() : '';
+            const normalized = (rawText);
+            return { row, normalized, rawText };
+        });
+    
+        // Sort rows in the DOM based on normalized names
+        rowsWithNormalized.sort((a, b) => a.normalized.localeCompare(b.normalized));
+    
+        // Clear tbody and re-insert sorted rows
+        const tbody = table.querySelector("tbody");
+        tbody.innerHTML = '';
+        rowsWithNormalized.forEach(({ row }) => tbody.appendChild(row));
+    
+        // Now proceed with merging as usual
         let lastCell = null;
+        let lastNormalized = '';
         let rowspanCount = 1;
         let rowGroupStart = null;
     
-        rows.forEach((row, index) => {
+        rowsWithNormalized.forEach(({ row, normalized }, index) => {
             const currentCell = row.cells[columnIndex];
     
-            if (!currentCell) {
-                console.warn(`⚠️ No cell found at column ${columnIndex} in row ${index + 1}`);
-                return;
-            }
-    
-            if (lastCell && lastCell.textContent.trim() === currentCell.textContent.trim()) {
+            if (lastCell && lastNormalized === normalized) {
                 rowspanCount++;
                 lastCell.rowSpan = rowspanCount;
-                currentCell.style.display = "none"; // Hide duplicate cell
+                currentCell.style.display = "none";
             } else {
-                if (rowGroupStart) {
-                    rowGroupStart.classList.add("merged-group-start"); // Mark first row in a merged group
+                if (rowGroupStart && rowspanCount > 1) {
+                    rowGroupStart.classList.add("merged-group-start");
                 }
                 lastCell = currentCell;
+                lastNormalized = normalized;
                 rowspanCount = 1;
-                rowGroupStart = row; // Track first row in this new group
+                rowGroupStart = row;
             }
         });
     
-        if (rowGroupStart) {
-            rowGroupStart.classList.add("merged-group-start"); // Ensure the last group is marked
+        if (rowGroupStart && rowspanCount > 1) {
+            rowGroupStart.classList.add("merged-group-start");
         }
     }
+    
+    
+    
     
     
     

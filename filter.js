@@ -120,7 +120,12 @@ function extractFieldTechsFromTable() {
             const cell = row.cells[0]; // ✅ Field Tech is the first column
             if (cell) {
                 const names = cell.textContent.split(',')
-                .map(name => name.replace(/\s+/g, ' ').trim());
+                .map(name => name.replace(/\s+/g, ' ').trim())
+                .sort(); // ✅ Normalize order
+            
+            const normalized = names.join(', ');
+            techs.add(normalized);
+            
                             names.forEach(name => {
                     if (name) techs.add(name);
                 });
@@ -476,8 +481,10 @@ function attachCheckboxListeners() {
 
 
 document.querySelectorAll('table tbody tr').forEach((row, index) => {
-    if (row.cells.length !== 2) {
-      console.warn(`⚠️ Row ${index + 1} has ${row.cells.length} cells (should be 2)`, row.innerHTML);
+    const tdCount = row.querySelectorAll('td').length;
+    if (tdCount !== 2) {
+        console.warn(`⚠️ Row ${index + 1} has ${tdCount} <td> elements (expected 2)`, row.innerHTML);
     }
-  });
+});
+
   
