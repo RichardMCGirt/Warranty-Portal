@@ -149,15 +149,10 @@ td {
         position: relative; 
     }
     
-
-
-
         /* Add styles to make divs scrollable */
         .scrollable-div {
-            max-height: 90vh; /* or whatever height you want */
-            overflow-y: auto;
-            overflow-x: auto;
-            position: relative; 
+            max-height: none !important;
+            overflow: visible !important;
         }
         
 /* Header Styles */
@@ -205,14 +200,12 @@ th, td {
     width: auto;
     font-size: 22px;
     white-space: normal;
-
 }
 
 .hidden-column {
     display: none !important;
   }
   
-
 th {
     background-color: #002244;
     color: white;
@@ -231,8 +224,6 @@ th {
 .scrollable-div {
     overflow-y: auto;
 }
-
-
 
 /* Alternate row colors */
 tbody tr:nth-child(odd) {
@@ -273,9 +264,6 @@ button:hover {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     transform: translateY(-4px);
 }
-
-/* Draggable Submit Button */
-
 
 /* Search Input */
 .search-container {
@@ -385,14 +373,13 @@ button:hover {
     margin-right: 10px;
 }
 
-
     /* Table */
     table {
         width: 100%;
     }
 
     th, td {
-        font-size: 25px !important;
+        font-size: 20px !important;
         padding: 6px;
     }
 
@@ -400,15 +387,22 @@ button:hover {
         display: flex;
         flex-direction: column;
         align-items: stretch; /* Stretch container to fit */
-        height: 30vh !important /* Make sure it takes full viewport */
+        height: 30vh !important; /* Make sure it takes full viewport */
+        margin: 0 auto; /* ✅ center horizontally */
+
     }
     
     /* Default style for both tables */
     .scrollable-div {
-        margin: 0 auto;
-        max-width: calc(100% - 40px); /* Set 20px margin on each side */
-        overflow-x: auto;
+        max-height: none !important;
+        overflow: visible !important;
+        
     }
+
+    html {
+        scroll-behavior: smooth;
+      }
+      
     
     .single-table-view .scrollable-div {
         width: calc(100% - 0px); /* Adjust to match your desired width */
@@ -416,7 +410,6 @@ button:hover {
         height: auto;
     }
     
-
     /* Search input */
     #search-input {
         width: 90%;
@@ -579,7 +572,6 @@ button:hover {
     margin-right: 10px;
 }
 
-
     th, td {
         font-size: 15px;
         padding: 6px;
@@ -740,9 +732,44 @@ button:hover {
     margin-right: 10px;
 }
 
-
     #search-input {
         font-size: 0.8rem;
         padding: 6px;
     }
+}
+
+@media screen and (max-width: 768px) {
+    .scrollable-div {
+        max-height: none !important;
+        overflow: visible !important;
+        width: 90% !important;
+        margin: 0 auto; /* ✅ center horizontally */
+    }
+}
+
+
+.scrollable-div::after {
+    content: '';
+    display: block;
+    height: 40px; /* space from bottom */
+}
+@media (max-width: 768px) {
+    .scrollable-div::after {
+        height: 20px;
+    }
+}
+.jump-link {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 8px 12px;
+    background-color: #003366;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.jump-link:hover {
+    background-color: #002244;
 }

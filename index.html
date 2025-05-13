@@ -5,13 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warranty</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-
     <link rel="stylesheet" href="style.css"> 
-
 </head>
 <body>
-   
- 
+    <div id="loader" style="
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    z-index: 9999;
+">
+    Loading jobs, please wait...
+</div>
 
     <!-- Toast Notification -->
     <div id="toast">
@@ -32,10 +41,16 @@
         </div>
     </div>
 
-    <!-- Search Input -->
-    <input type="text" id="search-input" placeholder="Search..." />
+<!-- Search Input -->
+<input type="text" id="search-input" placeholder="Search..." />
+
+<!-- Jump Link -->
 </div>
+<a href="#secoundary-content" class="jump-link">Jump to Scheduled Awaiting</a>
+
     <div class="table-wrapper">
+        <div class="table-container-padding">
+
     <div id="main-content" style="display: none;">
         <h2>Field Tech Review Needed</h2>
         <div class="scrollable-div">
@@ -44,7 +59,6 @@
                     <tr>
                         <th>Field Tech Assigned</th>
                         <th>Lot Number and Community</th>
-                        
                     </tr>
                 </thead>
                 <tbody>
@@ -53,6 +67,7 @@
             </table>
         </div>
     </div>
+        
     <div class="trash-can" id="trash-can"></div>
 
     <div id="secoundary-content" style="display: none;">
@@ -61,10 +76,8 @@
             <table id="feild-data">
                 <thead>
                     <tr>
-                     
                         <th>Field Tech Assigned</th>
                         <th>Lot Number and Community</th>
-                    
                     </tr>
                 </thead>
                 <tbody>
@@ -74,7 +87,7 @@
         </div>
     </div>
 </div>
-
+</div>
     <!-- Configuration for Airtable -->
     <script>
         window.env = {
@@ -83,17 +96,10 @@
             AIRTABLE_TABLE_NAME: 'tbl6EeKPsNuEvt5yJ',
             AIRTABLE_TABLE_NAME2: 'tbl9SgC5wUi2TQuF7',
         };
-        
-       
-
-
         </script>
         
     <!-- JavaScript for interactivity -->
     <script src="script.js"></script>
       <script src="filter.js"></script> 
-
-   
-
 </body>
 </html>

@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ✅ Load filters from URL (if present)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTechs = urlParams.get('techs');
+    if (urlTechs) {
+        const techArray = urlTechs.split(',').map(t => t.trim());
+        localStorage.setItem("selectedFilters", JSON.stringify(techArray));
+        console.log("🌐 Loaded filters from URL:", techArray);
+    }
     const menuToggle = document.getElementById('menu-toggle');
     const checkboxContainer = document.getElementById('checkbox-container');
 
@@ -46,8 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-
-
 function resetTableMerges(tableSelector) {
     const rows = document.querySelectorAll(`${tableSelector} tbody tr`);
     rows.forEach(row => {
@@ -57,7 +63,6 @@ function resetTableMerges(tableSelector) {
         });
     });
 }
-
 
 document.getElementById('search-input').addEventListener('input', function () {
     const searchValue = this.value.toLowerCase();
@@ -71,45 +76,41 @@ document.getElementById('search-input').addEventListener('input', function () {
         const h2 = table.closest('.scrollable-div')?.previousElementSibling;
 
         let visibleCount = 0;
+        const uniqueTechs = new Set();
 
         rows.forEach(row => {
-            const column2 = row.querySelector('td:nth-child(2)');
-            const column3 = row.querySelector('td:nth-child(3)');
-            const match = column2 && column2.textContent.toLowerCase().includes(searchValue);
+            const cells = Array.from(row.querySelectorAll('td'));
+            const rowMatches = cells.some(cell => cell.textContent.toLowerCase().includes(searchValue));
 
-            row.style.display = match ? '' : 'none';
+            row.style.display = rowMatches ? '' : 'none';
 
-            // 🔧 Hide column 3 if searching
-            if (column3) {
-                column3.style.display = searchValue ? 'none' : '';
+            if (rowMatches) {
+                visibleCount++;
+                const techCell = row.querySelector('td:nth-child(1)');
+                if (techCell) {
+                    uniqueTechs.add(techCell.textContent.trim());
+                }
             }
-
-            if (match) visibleCount++;
         });
 
-        // 🔍 Hide column 3 header too
-        const th3 = thead?.querySelector('th:nth-child(3)');
-        if (th3) {
-            th3.style.display = searchValue ? 'none' : '';
-        }
+        // Show/hide the entire table section
+        table.style.display = visibleCount > 0 ? 'table' : 'none';
+        if (thead) thead.style.display = visibleCount > 0 ? 'table-header-group' : 'none';
+        if (h2) h2.style.display = visibleCount > 0 ? 'block' : 'none';
 
-        // 🔍 Hide or show section based on visible row count
-        if (visibleCount === 0) {
-            table.style.display = 'none';
-            if (thead) thead.style.display = 'none';
-            if (h2) h2.style.display = 'none';
-        } else {
-            table.style.display = 'table';
-            if (thead) thead.style.display = 'table-header-group';
-            if (h2) h2.style.display = 'block';
-        }
+        const hideTechColumn = uniqueTechs.size <= 1;
+
+        // Hide or show TH in column 1
+        const ths = table.querySelectorAll('thead th');
+        if (ths[0]) ths[0].style.display = hideTechColumn ? 'none' : '';
+
+        // Hide or show TDs in column 1
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells[0]) cells[0].style.display = hideTechColumn ? 'none' : '';
+        });
     });
 });
-
-
-
-
-
 
 function extractFieldTechsFromTable() {
     const techs = new Set();
@@ -120,12 +121,7 @@ function extractFieldTechsFromTable() {
             const cell = row.cells[0]; // ✅ Field Tech is the first column
             if (cell) {
                 const names = cell.textContent.split(',')
-                .map(name => name.replace(/\s+/g, ' ').trim())
-                .sort(); // ✅ Normalize order
-            
-            const normalized = names.join(', ');
-            techs.add(normalized);
-            
+                .map(name => name.replace(/\s+/g, ' ').trim());
                             names.forEach(name => {
                     if (name) techs.add(name);
                 });
@@ -135,8 +131,6 @@ function extractFieldTechsFromTable() {
 
     return Array.from(techs).sort();
 }
-
-
 
 // ✅ Function to observe when table rows are added
 function observeTableData(selector) {
@@ -162,9 +156,6 @@ function observeTableData(selector) {
 
     observer.observe(targetNode, { childList: true });
 }
-
-
-
 
 // ✅ Generate Checkboxes only when menu is clicked
 function generateCheckboxes(fieldTechs) {
@@ -204,8 +195,6 @@ document.getElementById('clear-filters').addEventListener('click', () => {
     applyFilters();
 });
 
-
-
 // ✅ Ensure fetchFieldTechs is defined
 async function fetchFieldTechs() {
     const AIRTABLE_API_KEY = window.env.AIRTABLE_API_KEY;
@@ -233,9 +222,7 @@ async function fetchFieldTechs() {
                     fieldTech.split(',').forEach(name => fieldTechsFromAirtable.add(name.trim()));
                 }
             }
-        });
-
-        
+        }); 
     } catch (error) {
         console.error('❌ Error fetching field techs:', error);
     }
@@ -290,7 +277,6 @@ function filterRows() {
     });
 }
 
-
 // ✅ Function to extract Field Techs from the table dynamically
 function getFieldTechsFromTable() {
     const fieldTechsInTable = new Set();
@@ -328,7 +314,6 @@ function waitForElements(callback) {
         }
     }, 300); // ✅ Check every 300ms until checkboxes exist
 }
-
 
 // ✅ Save selected checkboxes to `localStorage`
 function saveFiltersToLocalStorage() {
@@ -370,8 +355,6 @@ function loadFiltersFromLocalStorage() {
     });
 }
 
-
-
 function applyFilters() {
     const selectedTechs = Array.from(document.querySelectorAll('.filter-checkbox:checked'))
         .map(cb => cb.value.trim().replace(/\s+/g, ' ')); // Normalize
@@ -402,10 +385,8 @@ function applyFilters() {
         if (h2) h2.style.display = visibleCount > 0 ? 'block' : 'none';
     
         console.log(`🧮 ${visibleCount} rows visible in ${selector}`);
-    });
-    
+    });  
 }
-
 
 // ✅ Function to ensure table data is loaded before filtering
 function waitForTableData(callback) {
@@ -435,7 +416,6 @@ function handleCheckboxChange(event) {
     saveFiltersToLocalStorage();
     filterRows();
 }
-
 
 function attachCheckboxListeners() {
     const checkboxes = document.querySelectorAll('.filter-checkbox');
@@ -470,7 +450,8 @@ function attachCheckboxListeners() {
 
             saveFiltersToLocalStorage();
             console.log("📦 Saved selected filters to localStorage.");
-            
+            updateURLWithFilters(selected);
+
             applyFilters();
             console.log("🎯 Applied filters to the table.");
         });
@@ -479,12 +460,21 @@ function attachCheckboxListeners() {
     console.log("✅ Checkbox listeners attached.");
 }
 
+function updateURLWithFilters(selected) {
+    const params = new URLSearchParams(window.location.search);
+    if (selected.length > 0) {
+        params.set('techs', selected.join(','));
+    } else {
+        params.delete('techs');
+    }
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    history.replaceState(null, '', newURL);
+}
+
 
 document.querySelectorAll('table tbody tr').forEach((row, index) => {
-    const tdCount = row.querySelectorAll('td').length;
-    if (tdCount !== 2) {
-        console.warn(`⚠️ Row ${index + 1} has ${tdCount} <td> elements (expected 2)`, row.innerHTML);
+    if (row.cells.length !== 2) {
+      console.warn(`⚠️ Row ${index + 1} has ${row.cells.length} cells (should be 2)`, row.innerHTML);
     }
-});
-
+  });
   

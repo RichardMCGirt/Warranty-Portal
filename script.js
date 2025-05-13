@@ -48,6 +48,16 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 1000); // Adjust timeout based on data load speed
 });
 
+function showLoader() {
+    const loader = document.getElementById('loader');
+    if (loader) loader.style.display = 'flex';
+}
+
+function hideLoader() {
+    const loader = document.getElementById('loader');
+    if (loader) loader.style.display = 'none';
+}
+
     async function fetchAirtableFields() {
         const url = `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableName}?maxRecords=1`;
     
@@ -62,7 +72,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     Authorization: `Bearer ${airtableApiKey}`,
                 },
             });
-    
     
             // Check if the response was successful
             if (!response.ok) {
@@ -134,15 +143,22 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
     
+        // ✅ Skip scrollability on small screens
+        if (window.innerWidth <= 768) {
+            table.parentElement.style.maxHeight = 'none';
+            table.parentElement.style.overflowY = 'visible';
+            return;
+        }
+    
         const nav = document.querySelector('nav');
         const header = document.querySelector('.header');
         const searchContainer = document.querySelector('.search-container');
     
-        const headerHeight = 
+        const headerHeight =
             (nav ? nav.offsetHeight : 0) +
             (header ? header.offsetHeight : 0) +
             (searchContainer ? searchContainer.offsetHeight : 0) +
-            50; // Add some padding
+            50;
     
         table.parentElement.style.maxHeight = `calc(100vh - ${headerHeight}px)`;
         table.parentElement.style.overflowY = 'auto';
@@ -183,6 +199,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     async function fetchAllData() {
+
+        showLoader(); // 👈 Show loader at the start
+        mainContent.style.display = 'none';
+        secondaryContent.style.display = 'none';
         mainContent.style.display = 'none';
         secondaryContent.style.display = 'none';
     
@@ -228,14 +248,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             });
             
-            
             // ✅ Sort by field tech to make mergeTableCells work correctly
             allRecords.sort((a, b) => {
                 return (a.normalizedTechName || '').localeCompare(b.normalizedTechName || '');
             });
             
-            
-    
             // Count records by status
             const fieldTechReviewNeededCount = allRecords.filter(record => record.fields['Status'] === 'Field Tech Review Needed').length;
             const scheduledAwaitingFieldCount = allRecords.filter(record => record.fields['Status'] === 'Scheduled- Awaiting Field').length;
@@ -259,32 +276,25 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 300);
     
             mainContent.style.display = 'block';
-            secondaryContent.style.display = 'block';
-            setTimeout(() => {
-                mainContent.style.opacity = '1';
-                secondaryContent.style.opacity = '1';
-            }, 10);
-        } catch (error) {
-            console.error("🚨 Error in fetchAllData:", {
-                function: "fetchAllData",
-                status: error.response ? error.response.status : "Unknown",
-                statusText: error.response ? error.response.statusText : "Unknown",
-                details: error.message || "No message available",
-                stackTrace: error.stack || "No stack trace available"
-            });
-        }
+        secondaryContent.style.display = 'block';
+        setTimeout(() => {
+            mainContent.style.opacity = '1';
+            secondaryContent.style.opacity = '1';
+        }, 10);
+    } catch (error) {
+        console.error("🚨 Error in fetchAllData:", error);
+    } finally {
+        hideLoader(); // 👈 Always hide loader after attempt
     }
+}
     
     async function filterAndSortRecords(records, status, isSecondary) {
       
-    
         const filteredRecords = records.filter(record => {
             const match = record.fields['Status'] === status;
             return match;
         });
         
-    
-    
         // Ensure sorting only happens when 'displayFieldManager' exists
         const sortedRecords = filteredRecords.sort((a, b) => {
             const aField = a.displayFieldManager || "";
@@ -292,11 +302,9 @@ document.addEventListener("DOMContentLoaded", function () {
             return aField.localeCompare(bField);
         });
     
-    
         return sortedRecords;
     }
     
-
     document.addEventListener("DOMContentLoaded", function () {
         const filterBranch = document.getElementById("filter-branch");
         if (filterBranch) {
@@ -339,9 +347,6 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(`🧮 #feild-data visible: ${visibleF}`);
     }
     
-    
-    
-       
     async function fetchFieldManagerNames() {
         const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tblHdf9KskO1auw3l`; 
     
@@ -414,7 +419,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     
-
     async function fetchDataAndInitializeFilter() {
         await fetchAllData(); // Ensure this function populates the tables
     }
@@ -552,91 +556,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    
-    
-    
     function applyAlternatingRowColors(tableSelector) {
-    
-        const rows = Array.from(document.querySelectorAll(`${tableSelector} tbody tr`));
-    
-        if (rows.length === 0) {
-            console.warn(`⚠️ No visible rows found in ${tableSelector}. Skipping color application.`);
+        const table = document.querySelector(tableSelector);
+        if (!table) {
+            console.warn(`⚠️ Table not found: ${tableSelector}`);
             return;
         }
     
+        const rows = Array.from(table.querySelectorAll("tbody tr"));
+        if (rows.length === 0) {
+            console.warn(`⚠️ No rows found in ${tableSelector}`);
+            return;
+        }
     
-        let lastColor = "#ffffff"; // Start with white
-        let previousMergedGroup = null;
+        let currentColor = "#e0e0e0"; // Slightly darker starting color
+        let lastMergedValue = null;
     
-        rows.forEach((row, index) => {
-            // Check if the row is the start of a new merged group
-            const isMergedGroupStart = row.classList.contains("merged-group-start");
+        rows.forEach((row) => {
+            const techCell = row.querySelector('td[data-field="field tech"]');
     
-            if (isMergedGroupStart || previousMergedGroup === null) {
-                lastColor = lastColor === "#ffffff" ? "#e6e6e6" : "#ffffff"; // Alternate color only for new groups
+            if (!techCell) {
+                row.style.backgroundColor = currentColor;
+                return;
             }
     
-            // Apply color to the current row
-            row.style.backgroundColor = lastColor;
+            const normalizedText = techCell.textContent.trim().split(',')
+                .map(s => s.trim()).sort().join(', ');
     
-            // Extend color to all hidden rows (merged rows)
-            const cells = Array.from(row.cells);
-            cells.forEach(cell => {
-                if (cell.rowSpan > 1) {
-                    let nextRow = row.nextElementSibling;
-                    for (let i = 1; i < cell.rowSpan; i++) {
-                        if (nextRow) {
-                            nextRow.style.backgroundColor = lastColor;
-                            nextRow = nextRow.nextElementSibling;
-                        }
-                    }
-                }
-            });
+            // Toggle color when the tech group changes
+            if (normalizedText !== lastMergedValue) {
+                currentColor = currentColor === "#e0e0e0" ? "#cfcfcf" : "#e0e0e0"; // Darker tones
+                lastMergedValue = normalizedText;
+            }
     
-            // Track previous merged group
-            previousMergedGroup = isMergedGroupStart ? row : previousMergedGroup;
-    
+            row.style.backgroundColor = currentColor;
         });
-    
     }
-    
-    
-    
-    
-    
-    // Function to ensure table data is ready before applying colors
-    async function waitForTableDataAndApplyColors(tableSelector, retries = 10) {
-        let attempt = 0;
-        let tableReady = false;
-    
-        while (attempt < retries) {
-    
-            const table = document.querySelector(tableSelector);
-            const rows = table ? table.querySelectorAll("tbody tr") : [];
-    
-            if (rows.length > 0 && rows[rows.length - 1].offsetHeight > 0) {
-                tableReady = true;
-                break;
-            }
-    
-            await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retrying
-            attempt++;
-        }
-    
-        if (tableReady) {
-            mergeTableCells(tableSelector, 2); // Ensure merging is done first
-            applyAlternatingRowColors(tableSelector);
-        } else {
-            console.error(`❌ Table ${tableSelector} did not finish rendering in time.`);
-        }
-    }
-    
+     
     // Ensure final table is ready before applying colors
     setTimeout(() => {
-        waitForTableDataAndApplyColors("#airtable-data");
-        waitForTableDataAndApplyColors("#feild-data");
-    }, 3500); // Increase timeout if necessary
-    
+        applyAlternatingRowColors("#airtable-data");
+        applyAlternatingRowColors("#feild-data");
+    }, 3500);
     
     const labels = document.querySelectorAll('.billable-option');
 
@@ -647,8 +608,6 @@ document.addEventListener('DOMContentLoaded', () => {
         label.querySelector('input').checked = true;
       });
     });
-    
-    
     
     async function displayData(records, tableSelector, isSecondary = false) {
         const tableElement = document.querySelector(tableSelector); // Select the entire table
@@ -678,23 +637,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const fields = record.fields;
             const row = document.createElement('tr');
        
-    
             const fieldConfigs = isSecondary ? [
                 { field: 'field tech', value: record.normalizedTechName || fields['field tech'] || '' },
                 {
                     field: 'Lot Number and Community/Neighborhood',
-                    value: fields['Lot Number and Community/Neighborhood'] || 'N/A',
+                    value: fields['Lot Number and Community/Neighborhood'] || fields['Street Address'] || 'N/A',
                     jobDetailsLink: true
                 },
-                { field: 'b', value: fields['b'] || '', hidden: true } // 👈 Add this
+                { field: 'b', value: fields['b'] || '', hidden: true }
             ] : [
                 { field: 'field tech', value: record.normalizedTechName || fields['field tech'] || '' },
                 {
                     field: 'Lot Number and Community/Neighborhood',
-                    value: fields['Lot Number and Community/Neighborhood'] || 'N/A',
+                    value: fields['Lot Number and Community/Neighborhood'] || fields['Street Address'] || 'N/A',
                     jobDetailsLink: true
                 },
-                { field: 'b', value: fields['b'] || '', hidden: true } // 👈 Add this
+                { field: 'b', value: fields['b'] || '', hidden: true }
             ];
             
             fieldConfigs.forEach(config => {
@@ -708,7 +666,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (config.hidden) {
                     cell.style.display = 'none'; // 👻 make it invisible in the table
                 }
-                
+
                 cell.textContent = value;
         
                 row.appendChild(cell);
@@ -732,8 +690,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.href = `job-details.html?id=${warrantyRecordId}`; // redirect using it
                 });
             }
-            
-            
         tbody.appendChild(row);
     }); // end records.forEach
 } // ✅ END of displayData
@@ -755,6 +711,4 @@ document.getElementById('search-input').addEventListener('input', function () {
 });
 
 fetchAllData();
-
-  
-  }); // 👈 this closes the top-level DOMContentLoaded
+  });

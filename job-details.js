@@ -1,5 +1,36 @@
 let dropboxRefreshToken = null;
+function setInputValue(id, value) {
+    const element = document.getElementById(id);
+    if (!element) {
+        console.warn(`⚠️ Element with ID '${id}' not found.`);
+        return;
+    }
 
+    if (id === "subcontractor-payment") {
+        console.log("💰 Setting subcontractor-payment with:", value);
+
+        // Show raw string (like "Sub Not Needed")
+        if (typeof value === "string" && isNaN(parseFloat(value))) {
+            element.value = value;
+            return;
+        }
+
+        // Format number as currency
+        const numberValue = parseFloat(value);
+        if (!isNaN(numberValue)) {
+            element.value = `$${numberValue.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
+        } else {
+            element.value = "";
+        }
+        return;
+    }
+
+    // Default case
+    element.value = value || "";
+}
 
 function openMapApp() {
     const addressInput = document.getElementById("address");
@@ -62,9 +93,6 @@ function openMapApp() {
     });
 }
 
-
-
-
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("🚀 Page Loaded: JavaScript execution started!");
     let primaryData = null; // <-- Declare it globally within this function
@@ -109,10 +137,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         // ✅ Fetch Primary Job Details
         console.log("📋 Primary Data Fetched:", primaryData);
 
-     
-
-        // ✅ Populate UI with Primary Fields
-      // ✅ Populate UI with Primary Fields
+           // ✅ Populate UI with Primary Fields
 populatePrimaryFields(primaryData.fields);
 const lotName = primaryData.fields["Lot Number and Community/Neighborhood"];
 const statusRaw = primaryData.fields["Status"];
@@ -136,10 +161,24 @@ const noLongerNeedsFieldTech = ![
 ].includes(status);
 
 if (redirectStatuses.includes(status) || noLongerNeedsFieldTech) {
-    showToast(`📦 ${lotName} status is "${statusRaw}". Redirecting...`, "success");
-    setTimeout(() => {
+    const fieldTechName = primaryData.fields["field tech"] || "Field Tech";
+    showToast(`📦 ${lotName} status updated to "${statusRaw}" by ${fieldTechName}. Redirecting...`, "success", 6000);
+
+    const redirectTimer = setTimeout(() => {
         window.location.href = "index.html";
-    }, 2000);
+    }, 6000);
+
+    // Cancel redirect if toast is dismissed early
+    document.addEventListener("click", function handleClickAway(event) {
+        const toast = document.getElementById("toast-message");
+        if (toast && !toast.contains(event.target)) {
+            clearTimeout(redirectTimer);
+            toast.classList.remove("show");
+            document.removeEventListener("click", handleClickAway);
+            console.log("🚫 Redirect canceled by user.");
+        }
+    });
+
     return;
 }
 
@@ -191,14 +230,19 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
             const input = document.getElementById("subcontractor-dropdown");
             const datalist = document.getElementById("subcontractor-options");
             const checkbox = document.getElementById("sub-not-needed");
+            const paymentContainer = document.getElementById("subcontractor-payment-container");
+            const paymentInput = document.getElementById("subcontractor-payment");
         
-            if (!input || !checkbox || !datalist) return;
+            if (!input || !checkbox || !datalist || !paymentContainer || !paymentInput) return;
         
             if (checkbox.checked) {
                 input.value = "Sub Not Needed";
                 input.setAttribute("readonly", "true");
                 input.style.pointerEvents = "none";
                 input.style.background = "#e9ecef";
+        
+                paymentContainer.style.display = "none";
+                paymentInput.value = "Sub Not Needed"; // Set value to match logic
         
                 // 🔁 Add "Sub Not Needed" to datalist if missing
                 const exists = Array.from(datalist.options).some(opt => opt.value === "Sub Not Needed");
@@ -208,14 +252,17 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                     option.label = "Sub Not Needed (Manual Entry)";
                     datalist.appendChild(option);
                 }
-        
             } else {
                 input.value = "";
                 input.removeAttribute("readonly");
                 input.style.pointerEvents = "auto";
                 input.style.background = "";
+        
+                paymentContainer.style.display = "block";
+                paymentInput.value = ""; // Clear when re-enabled
             }
         }
+        
         
         function checkImagesVisibility() {
             const images = document.querySelectorAll(".image-container img"); // Adjust selector if needed
@@ -237,26 +284,18 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
         });
 
         // Initialize subcontractor checkbox and dropdown state from job data
-        function setInputValue(fieldId, value) {
-            const inputElement = document.getElementById(fieldId);
-            if (inputElement) {
-                if (inputElement.type === "checkbox") {
-                    inputElement.checked = !!value;
-                } else {
-                    inputElement.value = value;
-                }
-            }
-        }
+  
+        
+        
 
         // Set initial checkbox state from job data
         setCheckboxValue("sub-not-needed", primaryData.fields["Subcontractor Not Needed"]);
-
+        setTimeout(() => {
+            toggleSubcontractorField();
+        }, 50);
         // Apply subcontractor logic on load
         toggleSubcontractorField();
 
-     
-        
-        
         console.log("🎯 Subcontractor logic fully integrated!");
         
         /** ✅ Add Event Listener for Save Button **/
@@ -273,7 +312,6 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
               }
             }
           
-
             console.log("💾 Save button clicked!");
             const warrantyId = getWarrantyId(); // <-- ensure this is defined BELOW getWarrantyId()
             if (!warrantyId) {
@@ -286,7 +324,6 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
             }
         
             try {
-
                 // 🔄 Get the original record from Airtable to compare datetime values
                 const recordData = await fetchAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId);
 
@@ -327,16 +364,34 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                     "Billable/ Non Billable": selectedBillable ? selectedBillable.value : undefined,
                     "Homeowner Builder pay": document.getElementById("homeowner-builder").value,
                     "Billable Reason (If Billable)": document.getElementById("billable-reason").value,
-                    "Field Review Not Needed": document.getElementById("field-review-needed").checked,
-                    "Field Review Needed": document.getElementById("field-review-not-needed").checked,
+                    "Field Review Not Needed": document.getElementById("field-review-not-needed")?.checked || false,
+"Field Review Needed": document.getElementById("field-review-needed")?.checked || false,
+
+
                     "Subcontractor Payment": parseFloat(document.getElementById("subcontractor-payment").value) || 0,
                     "Materials Needed": document.getElementById("materials-needed").value,
-                    "Field Tech Reviewed": document.getElementById("field-tech-reviewed").checked,
-                    "Job Completed": document.getElementById("job-completed").checked,
+"Field Tech Reviewed": document.getElementById("field-tech-reviewed")?.checked || false,
+"Job Completed": document.getElementById("job-completed")?.checked || false,
              //       "Material Not Needed": document.getElementById("material-not-needed").checked,
-
                 };
-        
+                const fieldTechReviewedEl = document.getElementById("field-tech-reviewed");
+                const jobCompletedEl = document.getElementById("job-completed");
+                
+                if (!fieldTechReviewedEl) console.warn("⚠️ Element #field-tech-reviewed not found.");
+                if (!jobCompletedEl) console.warn("⚠️ Element #job-completed not found.");
+                
+                jobData["Field Tech Reviewed"] = fieldTechReviewedEl?.checked || false;
+                jobData["Job Completed"] = jobCompletedEl?.checked || false;
+                
+// ✅ Safely parse Subcontractor Payment input
+const paymentInput = document.getElementById("subcontractor-payment");
+let paymentValue = paymentInput?.value?.replace(/[^0-9.]/g, ""); // Strip $ and commas
+paymentValue = parseFloat(paymentValue);
+if (!isNaN(paymentValue)) {
+    jobData["Subcontractor Payment"] = paymentValue;
+}
+
+
                 // ✅ Add dates only if they changed
                 if (convertedStartAMPM !== originalStartUTC) {
                     jobData["StartDate"] = convertedStartAMPM;
@@ -359,7 +414,6 @@ if (subcontractorCheckbox.checked) {
 } else if (selectedSub !== "") {
     jobData["Subcontractor"] = selectedSub;
 }
-
         
                 console.log("📤 Sending updated fields to Airtable:", jobData);
                 console.log("🔎 Sending Billable value:", updatedFields["Billable/ Non Billable"]);
@@ -381,7 +435,6 @@ if (subcontractorCheckbox.checked) {
         
             } catch (err) {
                 console.error("❌ Error saving job data:", err);
-                showToast("❌ Error saving job data. Please try again.", "error");
             }
         });
             
@@ -399,10 +452,29 @@ if (subcontractorCheckbox.checked) {
             console.log("🔍 Raw status:", status);
             console.log("🔍 Normalized status:", normalizedStatus);
         
-            const shouldHideCompleted = 
-                normalizedStatus === "scheduled- awaiting field" ||
-                normalizedStatus === "scheduled awaiting field";
-        
+            let shouldHideCompleted = [
+                "scheduled- awaiting field",
+                "field tech review needed"
+            ].includes(normalizedStatus);
+            
+            // ✅ Force override: never hide if explicitly this status
+            if (normalizedStatus === "scheduled awaiting field technician") {
+                shouldHideCompleted = false;
+            }
+            
+            if (normalizedStatus === "scheduled awaiting field technician") {
+                console.log("✅ Forcing show for Scheduled Awaiting Field Technician");
+            
+                [
+                    "job-completed-container",
+                    "job-completed",
+                    "job-completed-check",
+                    "upload-completed-picture",
+                    "completed-pictures-heading",
+                    "completed-pictures"
+                ].forEach(showElement);
+            }
+            
             const elementsToToggle = [
                 "completed-pictures",
                 "upload-completed-picture",
@@ -410,34 +482,11 @@ if (subcontractorCheckbox.checked) {
                 "job-completed-container",
                 "job-completed",
                 "job-completed-check"
-            ];
-        
-            elementsToToggle.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) {
-                    console.warn(`⚠️ Element not found: ${id}`);
-                    return;
-                }
-        
-                if (shouldHideCompleted) {
-                    console.log(`🔒 Hiding element with ID: ${id}`);
-                    el.style.display = "none";
-                    el.style.margin = "0";
-                    el.style.padding = "0";
-                    el.style.height = "0";
-                } else {
-                    console.log(`🔓 Showing element with ID: ${id}`);
-                    el.style.display = "block";
-                    el.style.removeProperty("margin");
-                    el.style.removeProperty("padding");
-                    el.style.removeProperty("height");
-                }
-            });
+            ];  
         });
         
         console.log("🎯 Subcontractor logic fully integrated!");
         
-    
         // ✅ Fetch and Populate Subcontractor Dropdown
         await fetchAndPopulateSubcontractors(resolvedRecordId);
         
@@ -457,7 +506,6 @@ if (subcontractorCheckbox.checked) {
      //       materialsInput.style.backgroundColor = "";
     //    }
  //   });
-    
     
     async function ensureDropboxToken() {
         if (!dropboxAccessToken) {
@@ -534,7 +582,6 @@ if (subcontractorCheckbox.checked) {
         }
       });
       
-
     const labels = document.querySelectorAll('.billable-label');
     let lastSelectedBillable = null;
     
@@ -584,10 +631,6 @@ if (subcontractorCheckbox.checked) {
         });
     });
     
-    
-    
-    
-    // 🔹 Fetch Airtable Record Function
     async function fetchAirtableRecord(tableName, lotNameOrRecordId) {
         console.log("📡 Fetching record for:", lotNameOrRecordId);
     
@@ -598,7 +641,6 @@ if (subcontractorCheckbox.checked) {
     
         let recordId = lotNameOrRecordId;
     
-        // ✅ Check if the given `lotNameOrRecordId` is already an Airtable record ID
         if (!recordId.startsWith("rec")) {
             console.log("🔍 Searching for Record ID using Lot Name...");
             recordId = await getRecordIdByWarrantyId(recordId);
@@ -609,7 +651,6 @@ if (subcontractorCheckbox.checked) {
             }
         }
     
-        // ✅ Use Record ID to fetch data
         const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${recordId}`;
         console.log("🔗 Airtable API Request:", url);
     
@@ -628,7 +669,7 @@ if (subcontractorCheckbox.checked) {
     
             if (data.fields && !data.fields["Completed  Pictures"]) {
                 console.warn("⚠️ 'Completed  Pictures' field is missing. Initializing as empty array.");
-                data.fields["Completed  Pictures"] = []; // Prevent undefined errors
+                data.fields["Completed  Pictures"] = []; 
             }
     
             return data;
@@ -640,8 +681,7 @@ if (subcontractorCheckbox.checked) {
 
     async function getRecordIdByWarrantyId(warrantyId) {
         
-        // Step 1️⃣ Try exact match
-        const filterFormula = `{Warranty Record ID} = "${warrantyId}"`;
+    const filterFormula = `{Warranty Record ID} = "${warrantyId}"`;
     const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=1`;
     console.log("🔎 Airtable Filter Formula:", filterFormula);
     console.log("🌐 Request URL:", url);
@@ -672,7 +712,6 @@ if (subcontractorCheckbox.checked) {
         const saveButton = document.getElementById("save-job");
         if (saveButton) saveButton.disabled = true;
     
-        // 🚫 Check for internet connectivity before proceeding
         if (!navigator.onLine) {
             console.error("❌ No internet connection detected.");
             showToast("❌ You are offline. Please check your internet connection and try again.", "error");
@@ -694,7 +733,6 @@ if (subcontractorCheckbox.checked) {
                 recordId = resolvedId;
             }
             
-    
             const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${recordId}`;
             console.log("📡 Sending API Request to Airtable:", url);
             console.log("🔎 Verifying field values before sending...");
@@ -716,7 +754,6 @@ const sanitizedFields = Object.fromEntries(
     body: JSON.stringify({ fields: sanitizedFields })
   });
   
-
   if (!response.ok) {
     let errorDetails;
     try {
@@ -740,9 +777,6 @@ const sanitizedFields = Object.fromEntries(
     showToast(`❌ Airtable error: ${errorDetails.error?.message || 'Unknown error'}`, "error");
     return;
 }
-
-
-    
             console.log("✅ Airtable record updated successfully:", fields);
             showToast("✅ Record updated successfully!", "success");
     
@@ -777,6 +811,44 @@ const sanitizedFields = Object.fromEntries(
             window.location.href = url.toString();
         });
     });
+    document.addEventListener("DOMContentLoaded", function () {
+        const subcontractorDropdown = document.getElementById("subcontractor-dropdown");
+        const paymentContainer = document.getElementById("subcontractor-payment-container");
+        const subNotNeededCheckbox = document.getElementById("sub-not-needed");
+    
+        subcontractorDropdown.addEventListener("change", function () {
+            const selectedValue = subcontractorDropdown.value.trim().toLowerCase();
+    
+            if (selectedValue === "sub not needed") {
+                // Hide payment input and check the box
+                paymentContainer.style.display = "none";
+                if (subNotNeededCheckbox) subNotNeededCheckbox.checked = true;
+            } else {
+                // Show payment input and uncheck the box
+                paymentContainer.style.display = "";
+                if (subNotNeededCheckbox) subNotNeededCheckbox.checked = false;
+            }
+        });
+    });
+    
+    async function fetchSubcontractorNameById(recordId) {
+        const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl9SgC5wUi2TQuF7/${recordId}`;
+      
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`
+          }
+        });
+      
+        if (!response.ok) {
+          console.error("Failed to fetch subcontractor record", recordId);
+          return "";
+        }
+      
+        const data = await response.json();
+        return data.fields["Subcontractor Company Name"] || ""; // adjust "Name" to your actual field
+      }
+      
     
 // 🔹 Populate Primary Fields
 async function populatePrimaryFields(job) {
@@ -787,7 +859,6 @@ async function populatePrimaryFields(job) {
         return value === undefined || value === null ? "" : value;
     }
     setInputValue("warranty-id", job["Warranty Record ID"]);
-
     setInputValue("job-name", safeValue(job["Lot Number and Community/Neighborhood"]));
     setInputValue("field-tech", safeValue(job["field tech"]));
     setInputValue("address", safeValue(job["Address"]));
@@ -801,6 +872,53 @@ async function populatePrimaryFields(job) {
     setInputValue("StartDate", convertUTCToLocalInput(job["StartDate"]));
     setInputValue("EndDate", convertUTCToLocalInput(job["EndDate"]));
     setInputValue("subcontractor", safeValue(job["Subcontractor"]));
+    setInputValue("subcontractor-payment", safeValue(job["Subcontractor Payment"])); 
+
+  // HIDE the job completed container if Status is "Field Tech Review Needed"
+  const jobCompletedContainer = document.querySelector(".job-completed-container");
+  if (job["Status"] === "Field Tech Review Needed") {
+    jobCompletedContainer.style.display = "none";
+  } else {
+    jobCompletedContainer.style.display = "block";
+  }
+
+    const subNotNeededCheckbox = document.getElementById("sub-not-needed");
+if (subNotNeededCheckbox) {
+    const isChecked = !!job["Subcontractor Not Needed"];
+    subNotNeededCheckbox.checked = isChecked;
+    console.log("📦 Subcontractor Not Needed (fetched):", isChecked);
+}
+
+    document.getElementById("original-subcontractor").textContent = job["Original Subcontractor"] || "";
+    const originalSubElement = document.getElementById("original-subcontractor");
+const originalSubContainer = originalSubElement?.parentElement;
+
+const originalPhone = job["Original Subcontractor Phone Number"];
+const originalSub = job["Original Subcontractor"];
+
+if (Array.isArray(originalSub) && originalSub.length > 0) {
+  const originalSubId = originalSub[0];
+
+  fetchSubcontractorNameById(originalSubId).then(name => {
+    if (name && originalPhone) {
+      originalSubElement.textContent = name;
+      originalSubElement.onclick = () => {
+        console.log(`📞 Calling ${originalPhone}...`);
+        window.location.href = `tel:${originalPhone}`;
+      };
+      originalSubContainer.style.display = "";
+    } else {
+      originalSubElement.textContent = "";
+      originalSubElement.onclick = null;
+      originalSubContainer.style.display = "none";
+    }
+  });
+} else {
+  originalSubElement.textContent = "";
+  originalSubElement.onclick = null;
+  originalSubContainer.style.display = "none";
+}
+
   //  setCheckboxValue("material-not-needed", job["Material Not Needed"] || false);
   setTimeout(() => {
     const materialsTextarea = document.getElementById("materials-needed");
@@ -864,8 +982,8 @@ if (materialsTextarea && materialSelect && textareaContainer) {
     adjustTextareaSize("materials-needed");
 
     if (job["Status"] === "Scheduled- Awaiting Field") {
-        console.log("🚨 Job is 'Scheduled - Awaiting Field' - Deleting completed images...");
-
+        console.log("🚨 Job is 'Scheduled - Awaiting Field' - Hiding upload elements...");
+    
         [
             "billable-status",
             "homeowner-builder",
@@ -881,11 +999,13 @@ if (materialsTextarea && materialSelect && textareaContainer) {
             "upload-issue-picture-label",
             "field-tech-reviewed-label",
             "materials-needed-container",
-            "material-needed-container" // 👈 added this
-          ].forEach(hideElementById);
-          
-          
-          
+            "material-needed-container",
+            "issue-pictures",                
+            "upload-issue-picture",         
+            "trigger-issue-upload", 
+        
+            "issue-file-list"              
+        ].forEach(hideElementById);
           if (job["Status"] !== "Field Tech Review Needed") {
             hideParentFormGroup("field-tech-reviewed");
         }
@@ -922,39 +1042,30 @@ if (materialsTextarea && materialSelect && textareaContainer) {
                     console.log("🙈 Hiding Billable Reason and Homeowner/Builder dropdowns.");
                 }
             }
-            
         });
-        
-
-                setInputValue("homeowner-builder", safeValue(job["Homeowner Builder pay"]));
+        setInputValue("homeowner-builder", safeValue(job["Homeowner Builder pay"]));
         setInputValue("billable-reason", safeValue(job["Billable Reason (If Billable)"]));
-        setInputValue("subcontractor-payment", safeValue(job["Subcontractor Payment"]));
+        console.log("🧪 Subcontractor Payment Raw Value:", job["Subcontractor Payment"]);
+        console.log("🔍 Calling setInputValue for 'subcontractor-payment'");
         setCheckboxValue("field-tech-reviewed", job["Field Tech Reviewed"]);
     }
 
-    setCheckboxValue("job-completed", job["Job Completed"]);
+    setCheckboxValue("job-completed-checkbox", job["Job Completed"]);
 
-    if (job["Status"] === "Field Tech Review Needed") {
-        console.log("🚨 Field Tech Review Needed - Hiding completed job elements.");
-    
-        // Hide specified elements
-        [
-            "completed-pictures",
-            "upload-completed-picture",
-            "completed-pictures-heading",
-            "file-input-container",
-            "job-completed-container",
-            "job-completed",
-            "job-completed-check"
-        ].forEach(hideElementById);
-
-        if (job["Status"] !== "Field Tech Review Needed") {
-            hideParentFormGroup("field-tech-reviewed");
-        }
-        
-    } else {
-        showElement("job-completed-container");
-    }
+    const status = (job["Status"] || "").trim().toLowerCase();
+   // 🔒 Enforce hiding of completed section if Field Tech Review Needed
+if (status === "field tech review needed") {
+    console.log("🚨 Field Tech Review Needed - Hiding completed job elements (override).");
+    [
+        "completed-pictures",
+        "upload-completed-picture",
+        "completed-pictures-heading",
+        "file-input-container",
+        "job-completed-container",
+        "job-completed",
+        "job-completed-check"
+    ].forEach(hideElementById);
+}
 
     showElement("save-job");
 }
@@ -1067,7 +1178,6 @@ async function displayImages(files, containerId) {
             console.error("❌ Missing 'url' field in file object:", file);
             continue;
         }
-    
         const wrapperDiv = document.createElement("div");
         wrapperDiv.classList.add("file-wrapper");
         wrapperDiv.style.display = "inline-block";
@@ -1117,8 +1227,6 @@ closePreview.addEventListener("click", () => {
     previewModal.style.display = "none";
     previewContent.innerHTML = '<span id="closePreview" style="position:absolute; top:20px; right:30px; font-size:30px; cursor:pointer; color:white;">&times;</span>';
 });
-
-
         let previewElement;
 
         if (file.type && file.type === "application/pdf") {
@@ -1333,7 +1441,6 @@ async function fetchImagesByLotName(warrantyId, imageField) {
     }
 }
 
-
 async function loadImagesForLot(warrantyId, status) {
     console.log("📡 Loading images for warrantyId:", warrantyId);
 
@@ -1373,17 +1480,24 @@ async function loadImagesForLot(warrantyId, status) {
         issuePicturesSection.innerHTML = hasIssueImages ? "" : "";
         completedPicturesSection.innerHTML = hasCompletedImages ? "" : "";
 
-        // If no images exist, hide sections and delete button
-        if (!hasIssueImages && !hasCompletedImages) {
-            console.warn("⚠️ No images found, hiding sections.");
-            checkAndHideDeleteButton(); // Hide delete button if no images
-            return;
-        }
+if (!hasIssueImages && !hasCompletedImages) {
+    console.warn("⚠️ No images found, hiding sections.");
+    checkAndHideDeleteButton();
+    return;
+}
 
-        // Display images if available
-        if (hasIssueImages) {
-            await displayImages(issueImages, "issue-pictures");
-        }
+// ✅ Only show if status allows
+if (status?.toLowerCase() === "scheduled- awaiting field") {
+    console.log("🚫 Skipping display of issue images due to status:", status);
+    // Do not show issue images
+} else if (hasIssueImages) {
+    await displayImages(issueImages, "issue-pictures");
+}
+
+if (hasCompletedImages) {
+    await displayImages(completedImages, "completed-pictures");
+}
+
         if (hasCompletedImages) {
             await displayImages(completedImages, "completed-pictures");
         }
@@ -1391,7 +1505,6 @@ async function loadImagesForLot(warrantyId, status) {
         // Ensure delete button updates correctly after image load
         setTimeout(checkAndHideDeleteButton, 500);
         checkAndHideDeleteButton();
-
 
     } catch (error) {
         console.error("❌ Error loading images for lot:", lotName, error);
@@ -1440,7 +1553,6 @@ function getWarrantyId() {
     return id;
 }
 
-
 // ✅ Set the record ID on page load
 document.addEventListener("DOMContentLoaded", () => {
     let recordId = getSavedRecordId() || new URLSearchParams(window.location.search).get("id");
@@ -1477,33 +1589,13 @@ document.addEventListener("DOMContentLoaded", () => {
           setTimeout(() => {
             const input = document.getElementById("upload-completed-picture");
             const label = document.querySelector("label[for='upload-completed-picture']");
-            const container = document.getElementById("file-input-container");
         
             if (input) input.style.setProperty("display", "none", "important");
             if (label) label.style.setProperty("display", "none", "important");
-            if (container) container.style.setProperty("display", "none", "important");
         }, 500);
         
     });
-
-    function formatToAMPM(dateString) {
-        if (!dateString) return null;
-        const date = new Date(dateString);
     
-        let hours = date.getHours();
-        let minutes = date.getMinutes();
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-    
-        hours = hours % 12;
-        hours = hours ? hours : 12; // the hour '0' should be '12'
-        minutes = minutes < 10 ? '0' + minutes : minutes;
-    
-        return `${hours}:${minutes} ${ampm}`;
-    }
-    
-
-    
-
     document.getElementById("save-job").addEventListener("click", async function () {
         const scrollPosition = window.scrollY; // ✅ Add this as your first line
 
@@ -1541,7 +1633,6 @@ if (materialSelect && materialsTextarea) {
     }
 }
 
-
         const currentRecord = await fetchAirtableRecord(airtableTableName, recordId);
         const originalStartUTC = currentRecord?.fields?.["StartDate"];
         const originalEndUTC = currentRecord?.fields?.["EndDate"];
@@ -1551,17 +1642,18 @@ if (materialSelect && materialsTextarea) {
         
         const convertedStartUTC = currentStartLocal ? new Date(currentStartLocal).toISOString() : null;
         const convertedEndUTC = currentEndLocal ? new Date(currentEndLocal).toISOString() : null;
-        
+
+        const subNotNeededCheckbox = document.getElementById("sub-not-needed");
+const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
         
         const updatedFields = {}; // begin fresh field collection
-        
-        
 
         if (!currentRecord || !currentRecord.fields) {
             alert("❌ Could not load original record data. Try again.");
             return;
         }
-        
+        updatedFields["Subcontractor Not Needed"] = subcontractorNotNeeded;
+
         // ✅ Only add StartDate if it changed
         if (convertedStartUTC !== originalStartUTC) {
             updatedFields["StartDate"] = convertedStartUTC;
@@ -1571,7 +1663,6 @@ if (materialSelect && materialsTextarea) {
             updatedFields["EndDate"] = convertedEndUTC;
         }
         
-
         // ✅ Manually handle radio buttons for Billable/Non Billable
         const selectedRadio = document.querySelector('input[name="billable-status"]:checked');
         const billableField = selectedRadio?.getAttribute("data-field") || "Billable/ Non Billable";
@@ -1595,6 +1686,7 @@ if (subcontractorPaymentInput) {
         const inputs = document.querySelectorAll("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
 
         inputs.forEach(input => {
+
             const fieldName = input.getAttribute("data-field");
             if (!fieldName) return;
         
@@ -1620,7 +1712,6 @@ if (subcontractorPaymentInput) {
         
             updatedFields[fieldName] = value;
         });
-        
         
         // Clean empty strings to nulls (avoid Airtable errors)
         for (let key in updatedFields) {
@@ -1680,14 +1771,13 @@ if (subcontractorPaymentInput) {
                             ].includes(status);
                             
                             if (redirectStatuses.includes(status) || noLongerNeedsFieldTech) {
-                                showToast(`📦 ${lotName} status updated to "${statusRaw}". Redirecting...`, "success");
+                                const fieldTechName = primaryData.fields["field tech"] || "Field Tech";
+                                showToast(`📦 ${lotName} status updated to "${statusRaw}" by ${fieldTechName}. Redirecting...`, "success", 6000);
                                 setTimeout(() => {
                                     window.location.href = "index.html";
-                                }, 2000);
+                                }, 6000);
                                 return;
                             }
-                            
-            
            }
         } catch (error) {
             console.error("❌ Error updating Airtable:", error);
@@ -1707,7 +1797,7 @@ if (subcontractorPaymentInput) {
         return dateObj.toISOString().split("T")[0]; // Convert to 'YYYY-MM-DD'
     }
     
-    function showToast(message, type = "success") {
+    function showToast(message, type = "success", duration = 3000) {
         let toast = document.getElementById("toast-message");
     
         // Create toast element if it doesn’t exist
@@ -1721,15 +1811,30 @@ if (subcontractorPaymentInput) {
         toast.textContent = message;
         toast.classList.add("show");
     
-        // Add different styles for error and success
-        toast.style.background = type === "error" ? "rgba(200, 0, 0, 0.85)" : "rgba(0, 128, 0, 0.85)";
+        toast.style.background = type === "error"
+            ? "rgba(200, 0, 0, 0.85)"
+            : "rgba(0, 128, 0, 0.85)";
     
-        // Hide toast after 3 seconds
+        // Remove any existing click handler to prevent duplicates
+        document.removeEventListener("click", toastClickAwayHandler);
+    
+        // Add click-away dismiss logic
+        function toastClickAwayHandler(e) {
+            if (!toast.contains(e.target)) {
+                toast.classList.remove("show");
+                document.removeEventListener("click", toastClickAwayHandler);
+            }
+        }
+    
+        document.addEventListener("click", toastClickAwayHandler);
+    
+        // Auto-hide after duration
         setTimeout(() => {
             toast.classList.remove("show");
-        }, 3000);
+            document.removeEventListener("click", toastClickAwayHandler);
+        }, duration);
     }
-     
+    
    // 🔹 Fetch Dropbox Token from Airtable
 async function fetchDropboxToken() {
     try {
@@ -2177,8 +2282,20 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
     
     document.getElementById("subcontractor-dropdown").addEventListener("change", function () {
         console.log("📌 Subcontractor Selected:", this.value);
+    
+        // Hide subcontractor payment container
+        const paymentContainer = document.getElementById("subcontractor-payment-container");
+        if (paymentContainer) {
+            paymentContainer.style.display = "none";
+        }
+    
+        // Check the "Subcontractor Not Needed" checkbox
+        const subNotNeededCheckbox = document.getElementById("sub-not-needed");
+        if (subNotNeededCheckbox) {
+            subNotNeededCheckbox.checked = true;
+        }
     });
-        
+    
     function populateSubcontractorDropdown(subcontractors, currentSelection = "") {
         console.log("📌 Populating the subcontractor dropdown...");
     
@@ -2244,30 +2361,6 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
     // ✅ Call this function when the page loads
     document.addEventListener('DOMContentLoaded', populateSubcontractorDropdown);
 
-    function setInputValue(id, value) {
-        const element = document.getElementById(id);
-        if (!element) {
-            console.warn(`⚠️ Element with ID '${id}' not found.`);
-            return;
-        }
-    
-        if (id === "subcontractor-payment") {
-            if (value === undefined || value === null || value === "") {
-                element.value = "";
-            } else {
-                const numberValue = parseFloat(value);
-                if (!isNaN(numberValue)) {
-                    element.value = `$${numberValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                } else {
-                    element.value = "";
-                }
-            }
-        } else {
-            element.value = value || "";
-        }
-    }
-    
-    
     function setCheckboxValue(id, value) {
         const element = document.getElementById(id);
         if (element) {
@@ -2275,5 +2368,4 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
             console.log(`✅ Checkbox ${id} set to:`, element.checked);
         }
     }
-    
 });
