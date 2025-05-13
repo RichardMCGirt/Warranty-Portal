@@ -859,7 +859,6 @@ async function populatePrimaryFields(job) {
         return value === undefined || value === null ? "" : value;
     }
     setInputValue("warranty-id", job["Warranty Record ID"]);
-    setInputValue("job-name", safeValue(job["Lot Number and Community/Neighborhood"]));
     setInputValue("field-tech", safeValue(job["field tech"]));
     setInputValue("address", safeValue(job["Address"]));
     setInputValue("homeowner-name", safeValue(job["Homeowner Name"]));
@@ -873,7 +872,41 @@ async function populatePrimaryFields(job) {
     setInputValue("EndDate", convertUTCToLocalInput(job["EndDate"]));
     setInputValue("subcontractor", safeValue(job["Subcontractor"]));
     setInputValue("subcontractor-payment", safeValue(job["Subcontractor Payment"])); 
+    setInputValue("job-name", safeValue(job["Lot Number and Community/Neighborhood"]));
 
+    // ✅ Inject Airtable iframe with prefilled Job Name
+    const jobName = document.getElementById("job-name")?.value?.trim();
+    
+    if (jobName) {
+        const baseFormURL = "https://airtable.com/embed/appQDdkj6ydqUaUkE/shrF3YuWUD98THzOF";
+        const prefillParams = new URLSearchParams({ "prefill_Job%20Name": jobName });
+        const iframeURL = `${baseFormURL}?${prefillParams.toString()}`;
+        console.log("🔗 Injecting Airtable Iframe with URL:", iframeURL);
+    
+        const iframe = document.createElement("iframe");
+        iframe.src = iframeURL;
+        iframe.width = "100%";
+        iframe.height = "800";
+        iframe.style.border = "1px solid #ccc";
+        iframe.allowFullscreen = true;
+        iframe.className = "airtable-embed";
+    
+        // Ensure container exists
+        let container = document.getElementById("iframe-container");
+        if (!container) {
+            container = document.createElement("div");
+            container.id = "iframe-container";
+            container.className = "iframe-container";
+            document.body.appendChild(container);
+        } else {
+            container.innerHTML = ""; // Clear previous iframe if already injected
+        }
+    
+        container.appendChild(iframe);
+    } else {
+        console.warn("⚠️ Job name is missing — not injecting Airtable iframe.");
+    }
+    
   // HIDE the job completed container if Status is "Field Tech Review Needed"
   const jobCompletedContainer = document.querySelector(".job-completed-container");
   if (job["Status"] === "Field Tech Review Needed") {
@@ -2368,4 +2401,5 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
             console.log(`✅ Checkbox ${id} set to:`, element.checked);
         }
     }
+    
 });
