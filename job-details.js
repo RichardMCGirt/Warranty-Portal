@@ -1738,6 +1738,25 @@ if (subcontractorPaymentInput) {
         updatedFields["Subcontractor Payment"] = null; // or 0 if you prefer
     }
 }
+// ✅ Vendor patch (already exists in your code)
+const vendorDropdown = document.getElementById("vendor-dropdown");
+const selectedVendorName = vendorDropdown?.value?.trim();
+const selectedVendorId = vendorIdMap[selectedVendorName];
+
+if (selectedVendorName && selectedVendorId) {
+  updatedFields["Material Vendor"] = [selectedVendorId]; // 🔗 Link record
+} else if (selectedVendorName) {
+  console.warn("⚠️ Vendor selected but not found in vendorIdMap:", selectedVendorName);
+}
+
+// ✅ ⬇️ Place this logging block here
+console.log("🧪 Material Vendor ID:", selectedVendorId);
+console.log("🧪 Vendor Field Value Being Sent:", updatedFields["Material Vendor"]);
+
+// ⬇️ Airtable update happens after logging
+await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFields);
+
+
 
         const inputs = document.querySelectorAll("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
 
@@ -2431,36 +2450,7 @@ async function fetchVendors() {
 document.addEventListener("DOMContentLoaded", fetchVendors);
 
 
-document.addEventListener("DOMContentLoaded", () => {
-    const vendorDropdown = document.getElementById("vendor-dropdown");
-  
-    vendorDropdown?.addEventListener("change", async () => {
-      const selectedName = vendorDropdown.value;
-      const selectedVendorId = vendorIdMap[selectedName];
-  
-      if (!selectedVendorId) {
-        console.warn("❌ No matching vendor record ID found.");
-        return;
-      }
-  
-      const warrantyId = document.getElementById("warranty-id")?.value?.trim();
-      if (!warrantyId) {
-        console.warn("❌ Warranty ID is missing.");
-        return;
-      }
-  
-      const update = {
-        "Material Vendor": [selectedVendorId] // ✅ Link to vendor
-      };
-  
-      try {
-        await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, update);
-        console.log("✅ Material Vendor linked successfully");
-      } catch (err) {
-        console.error("❌ Failed to link Material Vendor:", err);
-      }
-    });
-  });
+
 
   async function populateVendorDropdownWithSelection(warrantyId) {
     const vendorDropdown = document.getElementById("vendor-dropdown");
