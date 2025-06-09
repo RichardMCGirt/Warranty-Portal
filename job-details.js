@@ -1035,6 +1035,7 @@ if (materialsTextarea && materialSelect && textareaContainer) {
             "billable-status",
             "homeowner-builder",
             "subcontractor",
+            "vendor-dropdown-container",
             "materials-needed",
             "billable-reason",
             "field-review-not-needed",
@@ -1050,7 +1051,6 @@ if (materialsTextarea && materialSelect && textareaContainer) {
             "issue-pictures",                
             "upload-issue-picture",         
             "trigger-issue-upload", 
-        
             "issue-file-list"              
         ].forEach(hideElementById);
           if (job["Status"] !== "Field Tech Review Needed") {
@@ -1106,7 +1106,6 @@ if (materialsTextarea && materialSelect && textareaContainer) {
         console.log("🚨 Field Tech Review Needed - Hiding completed job elements (override).");
         [
             "completed-pictures",
-            "vendor-dropdown-container",
             "upload-completed-picture",
             "completed-pictures-heading",
             "file-input-container",
