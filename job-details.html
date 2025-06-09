@@ -158,15 +158,12 @@
         <input type="checkbox" id="field-review-not-needed" data-field="Field Review Needed">
     </div>
 
-    <div id="vendor-dropdown-container">
-      <label for="vendor-dropdown">Select a Vendor:</label>
-      <select id="vendor-dropdown" data-field="Material Vendor">
-        <option value="">Select a Vendor...</option>
-      </select>
-    </div>
+
 
     <div id="material-needed-container" class="material-needed-container"
     style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px 0;">
+
+    
 
 
     <select id="material-needed-select" 
@@ -176,6 +173,17 @@
         <option value="Needs Materials">Needs Materials</option>
     </select>
     <br>
+  
+    <div id="vendor-dropdown-container">
+      <label for="vendor-dropdown">Select a Vendor:</label>
+      <select id="vendor-dropdown" data-field="Material Vendor">
+        <option value="">Select a Vendor...</option>
+        <!-- Options will be populated dynamically by JavaScript -->
+      </select>
+    </div>
+    
+
+
     <div class="form-group" id="materials-needed-container">
         <label for="materials-needed" id="materials-needed-label">Materials Needed</label>
         <textarea id="materials-needed" name="materials-needed" data-field="Materials Needed"

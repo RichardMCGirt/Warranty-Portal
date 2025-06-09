@@ -1,4 +1,5 @@
 let dropboxRefreshToken = null;
+
 function setInputValue(id, value) {
     const element = document.getElementById(id);
     if (!element) {
@@ -96,7 +97,6 @@ function showToast(message, type = "success", duration = 3000) {
     }, duration);
 }
 
-
 async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
     console.log("📡 Updating Airtable record for:", lotNameOrRecordId);
 
@@ -111,17 +111,18 @@ async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
     }
 
     try {
-        let recordId = lotNameOrRecordId;
+        let resolvedRecordId = recordId;
+if (!recordId.startsWith("rec")) {
+  resolvedRecordId = await getRecordIdByWarrantyId(recordId);
+  if (!resolvedRecordId) {
+    console.error("❌ Could not resolve Record ID for:", recordId);
+    return;
+  }
+}
 
-        if (!recordId.startsWith("rec")) {
-            const resolvedId = await getRecordIdByWarrantyId(recordId);
-            if (!resolvedId) {
-                alert(`No record found with Warranty Record ID: ${recordId}`);
-                console.warn("❌ No record found for Warranty Record ID:", recordId);
-                return;
-            }
-            recordId = resolvedId;
-        }
+await populateVendorDropdownWithSelection(resolvedRecordId);
+
+
 
         const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${recordId}`;
         console.log("📡 Sending API Request to Airtable:", url);
@@ -275,6 +276,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         console.log("✅ Fetching Job Details...");
         primaryData = await fetchAirtableRecord(airtableTableName, recordId); // ✅ Assign it here
 
+        let resolvedRecordId = recordId;
+if (!resolvedRecordId.startsWith("rec")) {
+  resolvedRecordId = await getRecordIdByWarrantyId(recordId);
+  if (!resolvedRecordId) {
+    console.error("❌ Could not resolve Record ID for:", recordId);
+    return;
+  }
+}
+
+
+await populateVendorDropdownWithSelection(resolvedRecordId);
+
         // ✅ Fetch Primary Job Details
         console.log("📋 Primary Data Fetched:", primaryData);
 
@@ -329,7 +342,6 @@ await loadImagesForLot(warrantyId, statusRaw).then(() => {
 
         
         // ✅ Fetch Subcontractors Based on `b` Value and Populate Dropdown
-        let resolvedRecordId = recordId;
 
 if (!recordId.startsWith("rec")) {
     resolvedRecordId = await getRecordIdByWarrantyId(recordId);
@@ -403,7 +415,6 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                 paymentInput.value = ""; // Clear when re-enabled
             }
         }
-        
         
         function checkImagesVisibility() {
             const images = document.querySelectorAll(".image-container img"); // Adjust selector if needed
@@ -633,21 +644,20 @@ if (subcontractorCheckbox.checked) {
         await fetchAndPopulateSubcontractors(resolvedRecordId);
         
     } catch (error) {
-        console.error("❌ Error occurred:", error);
+        const timestamp = new Date().toISOString();
+        console.groupCollapsed(`❌ Error occurred [${timestamp}]`);
+        console.error("🔍 Operation Context: [Describe what was being done here]");
+        console.error("📛 Error Name:", error.name || "N/A");
+        console.error("📝 Error Message:", error.message || "No message");
+        if (error.stack) {
+            console.error("📜 Stack Trace:", error.stack);
+        }
+        console.error("🧾 Full Error Object:", error);
+        console.groupEnd();
     }
+    
 
-   // document.getElementById("material-not-needed").addEventListener("change", function () {
-     //   const materialsInput = document.getElementById("materials-needed");
-     //   if (this.checked) {
-       //     materialsInput.value = "Material Not Needed";
-        //    materialsInput.setAttribute("readonly", true);
-       //     materialsInput.style.backgroundColor = "#e9ecef";
-      //  } else {
-      //      materialsInput.value = "";
-      //      materialsInput.removeAttribute("readonly");
-     //       materialsInput.style.backgroundColor = "";
-    //    }
- //   });
+
 
  function safeToISOString(dateString) {
     if (!dateString || typeof dateString !== "string") return null;
@@ -2416,80 +2426,108 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
 let vendorIdMap = {};
 
 async function fetchVendors() {
-  const apiKey = 'patCnUsdz4bORwYNV.5c27cab8c99e7caf5b0dc05ce177182df1a9d60f4afc4a5d4b57802f44c65328';
-  const baseId = 'appO21PVRA4Qa087I';
-  const tableId = 'tblHZqptShyGhbP5B';
-  const view = 'viwioQYJrw5ZhmfIN';
-
-  const url = `https://api.airtable.com/v0/${baseId}/${tableId}?view=${view}`;
-  const headers = { Authorization: `Bearer ${apiKey}` };
-
-  try {
-    const response = await fetch(url, { headers });
-    const data = await response.json();
-
-    const dropdown = document.getElementById("vendor-dropdown");
-    if (!dropdown) return console.warn("⚠️ vendor-dropdown not found.");
-
-    data.records.forEach(record => {
-      const name = record.fields["Name"];
-      if (name) {
-        vendorIdMap[name] = record.id; // ✅ Store ID for later
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        dropdown.appendChild(option);
-      }
-    });
-  } catch (error) {
-    console.error("❌ Error fetching vendors:", error);
-  }
-}
-
-
-document.addEventListener("DOMContentLoaded", fetchVendors);
-
-
-
-
-  async function populateVendorDropdownWithSelection(warrantyId) {
-    const vendorDropdown = document.getElementById("vendor-dropdown");
-    if (!vendorDropdown) return;
+    const apiKey = 'patCnUsdz4bORwYNV.5c27cab8c99e7caf5b0dc05ce177182df1a9d60f4afc4a5d4b57802f44c65328';
+    const baseId = 'appO21PVRA4Qa087I';
+    const tableId = 'tblHZqptShyGhbP5B';
+    const view = 'viwioQYJrw5ZhmfIN';
   
-    // Step 1: Fetch current record
-    const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}/${warrantyId}`;
-    const headers = {
-      Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`
-    };
+    const url = `https://api.airtable.com/v0/${baseId}/${tableId}?view=${view}`;
+    const headers = { Authorization: `Bearer ${apiKey}` };
   
     try {
       const response = await fetch(url, { headers });
       const data = await response.json();
   
-      const linkedVendorIds = data.fields["Material Vendor"];
-      if (!Array.isArray(linkedVendorIds) || linkedVendorIds.length === 0) {
-        console.log("ℹ️ No Material Vendor linked yet.");
-        return;
-      }
+      const dropdown = document.getElementById("vendor-dropdown");
+      if (!dropdown) return;
   
-      const currentVendorId = linkedVendorIds[0];
+      dropdown.innerHTML = '<option value="">Select a Vendor...</option>';
+      vendorIdMap = {}; // reset
   
-      // Wait for vendors to be loaded
-      await fetchVendors();
+      data.records.forEach(record => {
+        const name = record.fields["Name"];
+        if (name) {
+          vendorIdMap[name] = record.id;
   
-      // Find vendor name by matching ID
-      const selectedName = Object.keys(vendorIdMap).find(
-        name => vendorIdMap[name] === currentVendorId
-      );
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          dropdown.appendChild(option);
+        }
+      });
   
-      if (selectedName) {
-        vendorDropdown.value = selectedName;
-        console.log("✅ Pre-selected vendor:", selectedName);
-      } else {
-        console.warn("⚠️ Linked vendor ID not found in available vendors.");
-      }
-    } catch (err) {
-      console.error("❌ Failed to fetch or match Material Vendor:", err);
+      return vendorIdMap;
+    } catch (error) {
+      console.error("❌ Error fetching vendors:", error);
     }
   }
+  
+  async function populateVendorDropdownWithSelection(recordId) {
+    const dropdown = document.getElementById("vendor-dropdown");
+    if (!dropdown) {
+      console.warn("⚠️ Vendor dropdown element not found.");
+      return;
+    }
+  
+    console.log("🔍 Starting vendor dropdown population for record:", recordId);
+  
+    // 1. Fetch current record to get linked vendor
+    const currentRecordUrl = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl6EeKPsNuEvt5yJ/${recordId}`;
+    const headers = {
+      Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`
+    };
+    
+      
+  
+    let selectedVendorId = null;
+  
+    try {
+      console.log("📡 Fetching current record from Airtable:", currentRecordUrl);
+      const response = await fetch(currentRecordUrl, { headers });
+      const data = await response.json();
+      console.log("✅ Current record data:", data);
+  
+      const vendorField = data.fields["Material Vendor"];
+      if (Array.isArray(vendorField) && vendorField.length > 0) {
+        selectedVendorId = vendorField[0]; // ID of linked vendor
+        console.log("🔗 Found linked Material Vendor ID:", selectedVendorId);
+      } else {
+        console.log("ℹ️ No linked Material Vendor found for this record.");
+      }
+    } catch (error) {
+      console.error("❌ Failed to fetch current record:", error);
+    }
+  
+    // 2. Fetch all vendors
+    const vendorListUrl = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tblHZqptShyGhbP5B?view=viwioQYJrw5ZhmfIN`;
+  
+    try {
+      console.log("📡 Fetching vendor list from Airtable:", vendorListUrl);
+      const vendorResponse = await fetch(vendorListUrl, { headers });
+      const vendorData = await vendorResponse.json();
+      console.log(`✅ Fetched ${vendorData.records.length} vendors`);
+  
+      // 3. Clear old options and add new ones
+      dropdown.innerHTML = `<option value="">Select a Vendor...</option>`;
+  
+      vendorData.records.forEach(vendor => {
+        const option = document.createElement("option");
+        option.value = vendor.id;
+        option.textContent = vendor.fields["Name"] || "(No name)";
+        
+        if (vendor.id === selectedVendorId) {
+          option.selected = true;
+          console.log(`⭐ Preselected vendor: ${option.textContent} (${vendor.id})`);
+        }
+      
+        dropdown.appendChild(option);
+      });  
+  
+      console.log("✅ Vendor dropdown populated successfully.");
+    } catch (error) {
+      console.error("❌ Failed to fetch vendor list:", error);
+    }
+  }
+  
+  
   
