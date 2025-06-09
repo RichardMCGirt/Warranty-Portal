@@ -32,6 +32,147 @@ function setInputValue(id, value) {
     element.value = value || "";
 }
 
+async function getRecordIdByWarrantyId(warrantyId) {
+    const filterFormula = `{Warranty Record ID} = "${warrantyId}"`;
+    const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=1`;
+    console.log("🔎 Airtable Filter Formula:", filterFormula);
+    console.log("🌐 Request URL:", url);
+
+    try {
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
+        });
+
+        const data = await response.json();
+
+        if (data.records?.length > 0) {
+            console.log("✅ Found record ID by Warranty Record ID:", data.records[0].id);
+            return data.records[0].id;
+        }
+
+        console.warn("❌ No record found with Warranty Record ID:", warrantyId);
+        return null;
+    } catch (error) {
+        console.error("❌ Error fetching by Warranty Record ID:", error);
+        return null;
+    }
+}
+
+function showToast(message, type = "success", duration = 3000) {
+    let toast = document.getElementById("toast-message");
+
+    // Create toast element if it doesn’t exist
+    if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "toast-message";
+        toast.className = "toast-container";
+        document.body.appendChild(toast);
+    }
+
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    toast.style.background = type === "error"
+        ? "rgba(200, 0, 0, 0.85)"
+        : "rgba(0, 128, 0, 0.85)";
+
+    // Remove any existing click handler to prevent duplicates
+    document.removeEventListener("click", toastClickAwayHandler);
+
+    // Add click-away dismiss logic
+    function toastClickAwayHandler(e) {
+        if (!toast.contains(e.target)) {
+            toast.classList.remove("show");
+            document.removeEventListener("click", toastClickAwayHandler);
+        }
+    }
+
+    document.addEventListener("click", toastClickAwayHandler);
+
+    // Auto-hide after duration
+    setTimeout(() => {
+        toast.classList.remove("show");
+        document.removeEventListener("click", toastClickAwayHandler);
+    }, duration);
+}
+
+
+async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
+    console.log("📡 Updating Airtable record for:", lotNameOrRecordId);
+
+    const saveButton = document.getElementById("save-job");
+    if (saveButton) saveButton.disabled = true;
+
+    if (!navigator.onLine) {
+        console.error("❌ No internet connection detected.");
+        showToast("❌ You are offline. Please check your internet connection and try again.", "error");
+        if (saveButton) saveButton.disabled = false;
+        return;
+    }
+
+    try {
+        let recordId = lotNameOrRecordId;
+
+        if (!recordId.startsWith("rec")) {
+            const resolvedId = await getRecordIdByWarrantyId(recordId);
+            if (!resolvedId) {
+                alert(`No record found with Warranty Record ID: ${recordId}`);
+                console.warn("❌ No record found for Warranty Record ID:", recordId);
+                return;
+            }
+            recordId = resolvedId;
+        }
+
+        const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${recordId}`;
+        console.log("📡 Sending API Request to Airtable:", url);
+
+        const sanitizedFields = Object.fromEntries(
+            Object.entries(fields).filter(([key]) => key !== "Warranty Record ID")
+        );
+
+        const response = await fetch(url, {
+            method: "PATCH",
+            headers: {
+                Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ fields: sanitizedFields })
+        });
+
+        if (!response.ok) {
+            let errorDetails;
+            try {
+                errorDetails = await response.json();
+            } catch (jsonErr) {
+                console.error("❌ Failed to parse Airtable error JSON:", jsonErr);
+                const text = await response.text();
+                console.error("📄 Raw response body:", text);
+                showToast("❌ Error updating Airtable: Unable to parse error response", "error");
+                return;
+            }
+
+            console.group("📛 Airtable Update Error Details");
+            console.error("❌ Status Code:", response.status);
+            console.error("❌ Status Text:", response.statusText);
+            console.error("❌ Error Type:", errorDetails.error?.type || "Unknown");
+            console.error("❌ Error Message:", errorDetails.error?.message || "No message provided");
+            console.error("📦 Full Error Object:", errorDetails);
+            console.groupEnd();
+
+            showToast(`❌ Airtable error: ${errorDetails.error?.message || 'Unknown error'}`, "error");
+            return;
+        }
+
+        console.log("✅ Airtable record updated successfully:", fields);
+        showToast("✅ Record updated successfully!", "success");
+
+    } catch (error) {
+        console.error("❌ Error updating Airtable:", error);
+    } finally {
+        if (saveButton) saveButton.disabled = false;
+    }
+}
+
 function openMapApp() {
     const addressInput = document.getElementById("address");
 
@@ -338,11 +479,12 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                 const currentEndLocal = document.getElementById("EndDate")?.value;
                 
                 // 🔥 ADD THESE TWO LINES
-                const convertedStartUTC = currentStartLocal ? new Date(currentStartLocal).toISOString() : null;
-                const convertedEndUTC = currentEndLocal ? new Date(currentEndLocal).toISOString() : null;
+                const convertedStartUTC = safeToISOString(currentStartLocal);
+                const convertedEndUTC = safeToISOString(currentEndLocal);
+                
                 
         
-                const convertedStartAMPM = currentStartLocal ? new Date(currentStartLocal).toISOString() : null;
+                const convertedStartAMPM = safeToISOString(currentStartLocal);
               
                 const updatedFields = {}; // add this above all field assignments
 
@@ -506,6 +648,14 @@ if (subcontractorCheckbox.checked) {
      //       materialsInput.style.backgroundColor = "";
     //    }
  //   });
+
+ function safeToISOString(dateString) {
+    if (!dateString || typeof dateString !== "string") return null;
+    const d = new Date(dateString);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+
     
     async function ensureDropboxToken() {
         if (!dropboxAccessToken) {
@@ -679,113 +829,10 @@ if (subcontractorCheckbox.checked) {
         }
     }
 
-    async function getRecordIdByWarrantyId(warrantyId) {
-        
-    const filterFormula = `{Warranty Record ID} = "${warrantyId}"`;
-    const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=1`;
-    console.log("🔎 Airtable Filter Formula:", filterFormula);
-    console.log("🌐 Request URL:", url);
+ 
     
-    try {
-        const response = await fetch(url, {
-            headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
-        });
 
-        const data = await response.json();
 
-        if (data.records?.length > 0) {
-            console.log("✅ Found record ID by Warranty Record ID:", data.records[0].id);
-            return data.records[0].id;
-        }
-
-        console.warn("❌ No record found with Warranty Record ID:", warrantyId);
-        return null;
-    } catch (error) {
-        console.error("❌ Error fetching by Warranty Record ID:", error);
-        return null;
-    }
-}
-    
-    async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
-        console.log("📡 Updating Airtable record for:", lotNameOrRecordId);
-    
-        const saveButton = document.getElementById("save-job");
-        if (saveButton) saveButton.disabled = true;
-    
-        if (!navigator.onLine) {
-            console.error("❌ No internet connection detected.");
-            showToast("❌ You are offline. Please check your internet connection and try again.", "error");
-            if (saveButton) saveButton.disabled = false;
-            return;
-        }
-    
-        try {
-            let recordId = lotNameOrRecordId;
-    
-            // ✅ If not a record ID, find the corresponding record ID
-            if (!recordId.startsWith("rec")) {
-                const resolvedId = await getRecordIdByWarrantyId(recordId);
-                if (!resolvedId) {
-                    alert(`No record found with Warranty Record ID: ${recordId}`);
-                    console.warn("❌ No record found for Warranty Record ID:", recordId);
-                    return;
-                }
-                recordId = resolvedId;
-            }
-            
-            const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${recordId}`;
-            console.log("📡 Sending API Request to Airtable:", url);
-            console.log("🔎 Verifying field values before sending...");
-            for (const [key, value] of Object.entries(fields)) {
-                console.log(`• ${key}:`, value, `(${typeof value})`);
-            }
-                
-            // ⛔️ Remove computed fields before sending to Airtable
-const sanitizedFields = Object.fromEntries(
-    Object.entries(fields).filter(([key]) => key !== "Warranty Record ID")
-  );
-  
-  const response = await fetch(url, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ fields: sanitizedFields })
-  });
-  
-  if (!response.ok) {
-    let errorDetails;
-    try {
-        errorDetails = await response.json();
-    } catch (jsonErr) {
-        console.error("❌ Failed to parse Airtable error JSON:", jsonErr);
-        const text = await response.text();
-        console.error("📄 Raw response body:", text);
-        showToast("❌ Error updating Airtable: Unable to parse error response", "error");
-        return;
-    }
-
-    console.group("📛 Airtable Update Error Details");
-    console.error("❌ Status Code:", response.status);
-    console.error("❌ Status Text:", response.statusText);
-    console.error("❌ Error Type:", errorDetails.error?.type || "Unknown");
-    console.error("❌ Error Message:", errorDetails.error?.message || "No message provided");
-    console.error("📦 Full Error Object:", errorDetails);
-    console.groupEnd();
-
-    showToast(`❌ Airtable error: ${errorDetails.error?.message || 'Unknown error'}`, "error");
-    return;
-}
-            console.log("✅ Airtable record updated successfully:", fields);
-            showToast("✅ Record updated successfully!", "success");
-    
-        } catch (error) {
-            console.error("❌ Error updating Airtable:", error);
-        } finally {
-            if (saveButton) saveButton.disabled = false;
-        }
-    }
     
     document.querySelectorAll(".job-link").forEach(link => {
         link.addEventListener("click", function (event) {
@@ -859,6 +906,7 @@ async function populatePrimaryFields(job) {
         return value === undefined || value === null ? "" : value;
     }
     setInputValue("warranty-id", job["Warranty Record ID"]);
+    setInputValue("job-name", safeValue(job["Lot Number and Community/Neighborhood"]));
     setInputValue("field-tech", safeValue(job["field tech"]));
     setInputValue("address", safeValue(job["Address"]));
     setInputValue("homeowner-name", safeValue(job["Homeowner Name"]));
@@ -872,41 +920,7 @@ async function populatePrimaryFields(job) {
     setInputValue("EndDate", convertUTCToLocalInput(job["EndDate"]));
     setInputValue("subcontractor", safeValue(job["Subcontractor"]));
     setInputValue("subcontractor-payment", safeValue(job["Subcontractor Payment"])); 
-    setInputValue("job-name", safeValue(job["Lot Number and Community/Neighborhood"]));
 
-    // ✅ Inject Airtable iframe with prefilled Job Name
-    const jobName = document.getElementById("job-name")?.value?.trim();
-    
-    if (jobName) {
-        const baseFormURL = "https://airtable.com/embed/appQDdkj6ydqUaUkE/shrF3YuWUD98THzOF";
-        const prefillParams = new URLSearchParams({ "prefill_Job%20Name": jobName });
-        const iframeURL = `${baseFormURL}?${prefillParams.toString()}`;
-        console.log("🔗 Injecting Airtable Iframe with URL:", iframeURL);
-    
-        const iframe = document.createElement("iframe");
-        iframe.src = iframeURL;
-        iframe.width = "100%";
-        iframe.height = "800";
-        iframe.style.border = "1px solid #ccc";
-        iframe.allowFullscreen = true;
-        iframe.className = "airtable-embed";
-    
-        // Ensure container exists
-        let container = document.getElementById("iframe-container");
-        if (!container) {
-            container = document.createElement("div");
-            container.id = "iframe-container";
-            container.className = "iframe-container";
-            document.body.appendChild(container);
-        } else {
-            container.innerHTML = ""; // Clear previous iframe if already injected
-        }
-    
-        container.appendChild(iframe);
-    } else {
-        console.warn("⚠️ Job name is missing — not injecting Airtable iframe.");
-    }
-    
   // HIDE the job completed container if Status is "Field Tech Review Needed"
   const jobCompletedContainer = document.querySelector(".job-completed-container");
   if (job["Status"] === "Field Tech Review Needed") {
@@ -1086,21 +1100,25 @@ if (materialsTextarea && materialSelect && textareaContainer) {
     setCheckboxValue("job-completed-checkbox", job["Job Completed"]);
 
     const status = (job["Status"] || "").trim().toLowerCase();
-   // 🔒 Enforce hiding of completed section if Field Tech Review Needed
-if (status === "field tech review needed") {
-    console.log("🚨 Field Tech Review Needed - Hiding completed job elements (override).");
-    [
-        "completed-pictures",
-        "upload-completed-picture",
-        "completed-pictures-heading",
-        "file-input-container",
-        "job-completed-container",
-        "job-completed",
-        "job-completed-check"
-    ].forEach(hideElementById);
-}
 
+    // 🚨 Hide completed job section if status is "Field Tech Review Needed"
+    if (status === "field tech review needed") {
+        console.log("🚨 Field Tech Review Needed - Hiding completed job elements (override).");
+        [
+            "completed-pictures",
+            "vendor-dropdown-container",
+            "upload-completed-picture",
+            "completed-pictures-heading",
+            "file-input-container",
+            "job-completed-container",
+            "job-completed",
+            "job-completed-check"
+        ].forEach(hideElementById);
+    }
+       
+    // Always show save button
     showElement("save-job");
+    
 }
 
 function checkAndHideDeleteButton() {
@@ -1673,8 +1691,7 @@ if (materialSelect && materialsTextarea) {
         const currentStartLocal = document.getElementById("StartDate")?.value;
         const currentEndLocal = document.getElementById("EndDate")?.value;
         
-        const convertedStartUTC = currentStartLocal ? new Date(currentStartLocal).toISOString() : null;
-        const convertedEndUTC = currentEndLocal ? new Date(currentEndLocal).toISOString() : null;
+      
 
         const subNotNeededCheckbox = document.getElementById("sub-not-needed");
 const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
@@ -1688,13 +1705,20 @@ const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
         updatedFields["Subcontractor Not Needed"] = subcontractorNotNeeded;
 
         // ✅ Only add StartDate if it changed
-        if (convertedStartUTC !== originalStartUTC) {
+        const convertedStartUTC = safeToISOString(currentStartLocal);
+        if (convertedStartUTC && convertedStartUTC !== originalStartUTC) {
             updatedFields["StartDate"] = convertedStartUTC;
+        } else {
+            console.log("⏸ No change or empty StartDate.");
         }
         
-        if (convertedEndUTC !== originalEndUTC) {
+        const convertedEndUTC = safeToISOString(currentEndLocal);
+        if (convertedEndUTC && convertedEndUTC !== originalEndUTC) {
             updatedFields["EndDate"] = convertedEndUTC;
+        } else {
+            console.log("⏸ No change or empty EndDate.");
         }
+        
         
         // ✅ Manually handle radio buttons for Billable/Non Billable
         const selectedRadio = document.querySelector('input[name="billable-status"]:checked');
@@ -1769,8 +1793,9 @@ if (subcontractorPaymentInput) {
             window.scrollTo({ top: scrollPosition, behavior: "instant" });
 
             console.log("✅ Airtable record updated successfully.");
-            console.log("🕔 UTC Sent to Airtable:", new Date(document.getElementById("StartDate").value).toISOString());
-
+            const debugStartDate = safeToISOString(document.getElementById("StartDate")?.value);
+            console.log("🕔 UTC Sent to Airtable:", debugStartDate || "No valid StartDate");
+            
             showToast("✅ Job details saved successfully!", "success");
     
            // ✅ Refresh UI after save to reflect correct date format
@@ -1830,43 +1855,7 @@ if (subcontractorPaymentInput) {
         return dateObj.toISOString().split("T")[0]; // Convert to 'YYYY-MM-DD'
     }
     
-    function showToast(message, type = "success", duration = 3000) {
-        let toast = document.getElementById("toast-message");
     
-        // Create toast element if it doesn’t exist
-        if (!toast) {
-            toast = document.createElement("div");
-            toast.id = "toast-message";
-            toast.className = "toast-container";
-            document.body.appendChild(toast);
-        }
-    
-        toast.textContent = message;
-        toast.classList.add("show");
-    
-        toast.style.background = type === "error"
-            ? "rgba(200, 0, 0, 0.85)"
-            : "rgba(0, 128, 0, 0.85)";
-    
-        // Remove any existing click handler to prevent duplicates
-        document.removeEventListener("click", toastClickAwayHandler);
-    
-        // Add click-away dismiss logic
-        function toastClickAwayHandler(e) {
-            if (!toast.contains(e.target)) {
-                toast.classList.remove("show");
-                document.removeEventListener("click", toastClickAwayHandler);
-            }
-        }
-    
-        document.addEventListener("click", toastClickAwayHandler);
-    
-        // Auto-hide after duration
-        setTimeout(() => {
-            toast.classList.remove("show");
-            document.removeEventListener("click", toastClickAwayHandler);
-        }, duration);
-    }
     
    // 🔹 Fetch Dropbox Token from Airtable
 async function fetchDropboxToken() {
@@ -2314,20 +2303,23 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
     }
     
     document.getElementById("subcontractor-dropdown").addEventListener("change", function () {
-        console.log("📌 Subcontractor Selected:", this.value);
+        const selectedValue = this.value.trim().toLowerCase();
+        console.log("📌 Subcontractor Selected:", selectedValue);
     
-        // Hide subcontractor payment container
         const paymentContainer = document.getElementById("subcontractor-payment-container");
-        if (paymentContainer) {
-            paymentContainer.style.display = "none";
-        }
-    
-        // Check the "Subcontractor Not Needed" checkbox
         const subNotNeededCheckbox = document.getElementById("sub-not-needed");
-        if (subNotNeededCheckbox) {
-            subNotNeededCheckbox.checked = true;
+    
+        if (selectedValue === "sub not needed") {
+            // Only check box and hide payment if value is "Sub Not Needed"
+            if (paymentContainer) paymentContainer.style.display = "none";
+            if (subNotNeededCheckbox) subNotNeededCheckbox.checked = true;
+        } else {
+            // Uncheck the box and show payment input
+            if (paymentContainer) paymentContainer.style.display = "";
+            if (subNotNeededCheckbox) subNotNeededCheckbox.checked = false;
         }
     });
+    
     
     function populateSubcontractorDropdown(subcontractors, currentSelection = "") {
         console.log("📌 Populating the subcontractor dropdown...");
@@ -2401,5 +2393,114 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
             console.log(`✅ Checkbox ${id} set to:`, element.checked);
         }
     }
-    
 });
+
+let vendorIdMap = {};
+
+async function fetchVendors() {
+  const apiKey = 'patCnUsdz4bORwYNV.5c27cab8c99e7caf5b0dc05ce177182df1a9d60f4afc4a5d4b57802f44c65328';
+  const baseId = 'appO21PVRA4Qa087I';
+  const tableId = 'tblHZqptShyGhbP5B';
+  const view = 'viwioQYJrw5ZhmfIN';
+
+  const url = `https://api.airtable.com/v0/${baseId}/${tableId}?view=${view}`;
+  const headers = { Authorization: `Bearer ${apiKey}` };
+
+  try {
+    const response = await fetch(url, { headers });
+    const data = await response.json();
+
+    const dropdown = document.getElementById("vendor-dropdown");
+    if (!dropdown) return console.warn("⚠️ vendor-dropdown not found.");
+
+    data.records.forEach(record => {
+      const name = record.fields["Name"];
+      if (name) {
+        vendorIdMap[name] = record.id; // ✅ Store ID for later
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        dropdown.appendChild(option);
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error fetching vendors:", error);
+  }
+}
+
+
+document.addEventListener("DOMContentLoaded", fetchVendors);
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const vendorDropdown = document.getElementById("vendor-dropdown");
+  
+    vendorDropdown?.addEventListener("change", async () => {
+      const selectedName = vendorDropdown.value;
+      const selectedVendorId = vendorIdMap[selectedName];
+  
+      if (!selectedVendorId) {
+        console.warn("❌ No matching vendor record ID found.");
+        return;
+      }
+  
+      const warrantyId = document.getElementById("warranty-id")?.value?.trim();
+      if (!warrantyId) {
+        console.warn("❌ Warranty ID is missing.");
+        return;
+      }
+  
+      const update = {
+        "Material Vendor": [selectedVendorId] // ✅ Link to vendor
+      };
+  
+      try {
+        await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, update);
+        console.log("✅ Material Vendor linked successfully");
+      } catch (err) {
+        console.error("❌ Failed to link Material Vendor:", err);
+      }
+    });
+  });
+
+  async function populateVendorDropdownWithSelection(warrantyId) {
+    const vendorDropdown = document.getElementById("vendor-dropdown");
+    if (!vendorDropdown) return;
+  
+    // Step 1: Fetch current record
+    const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}/${warrantyId}`;
+    const headers = {
+      Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`
+    };
+  
+    try {
+      const response = await fetch(url, { headers });
+      const data = await response.json();
+  
+      const linkedVendorIds = data.fields["Material Vendor"];
+      if (!Array.isArray(linkedVendorIds) || linkedVendorIds.length === 0) {
+        console.log("ℹ️ No Material Vendor linked yet.");
+        return;
+      }
+  
+      const currentVendorId = linkedVendorIds[0];
+  
+      // Wait for vendors to be loaded
+      await fetchVendors();
+  
+      // Find vendor name by matching ID
+      const selectedName = Object.keys(vendorIdMap).find(
+        name => vendorIdMap[name] === currentVendorId
+      );
+  
+      if (selectedName) {
+        vendorDropdown.value = selectedName;
+        console.log("✅ Pre-selected vendor:", selectedName);
+      } else {
+        console.warn("⚠️ Linked vendor ID not found in available vendors.");
+      }
+    } catch (err) {
+      console.error("❌ Failed to fetch or match Material Vendor:", err);
+    }
+  }
+  

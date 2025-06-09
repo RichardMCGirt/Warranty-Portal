@@ -4,6 +4,7 @@
   <title>Responsive Airtable Embed</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
 
   <style>
     body {
@@ -18,18 +19,21 @@
     .iframe-wrapper {
       position: relative;
       width: 100%;
-      padding-top: 70vh; /* 70% of the viewport height for better aspect ratio */
+      padding-top: 100vh; /* 70% of the viewport height for better aspect ratio */
       overflow: hidden;
     }
 
     .iframe-wrapper iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  opacity: 0;
+  transition: opacity 0.8s ease-in;
+}
+
     .loader {
   position: absolute;
   top: 50%;
@@ -69,24 +73,29 @@
 
         <iframe
           class="airtable-embed"
-          src="https://airtable.com/embed/appQDdkj6ydqUaUkE/shrF3YuWUD98THzOF"
+          src="https://airtable.com/embed/appQDdkj6ydqUaUkE/shrNfBEnWzsMIRoBl"
           frameborder="0"
           allowfullscreen
-          onload="document.getElementById('loader').style.display='none';"
         ></iframe>
       </div>
       
       <script>
-        document.addEventListener("DOMContentLoaded", function () {
-          const jobName = document.getElementById("job-name")?.value?.trim();
-          if (!jobName) return;
+        window.addEventListener('load', function () {
+          const iframe = document.querySelector('iframe');
+          const loader = document.getElementById('loader');
       
-          const prefill = encodeURIComponent(jobName);
-          const iframe = document.querySelector(".airtable-embed");
-          const base = "https://airtable.com/embed/appQDdkj6ydqUaUkE/shrF3YuWUD98THzOF";
-          iframe.src = `${base}?prefill_Job%20Name=${prefill}`;
+          // Fade out the loader
+          loader.style.transition = 'opacity 0.5s ease';
+          loader.style.opacity = '0';
+          setTimeout(() => loader.style.display = 'none', 500);
+      
+          // Fade in the iframe
+          setTimeout(() => {
+            iframe.style.opacity = '1';
+          }, 100); // delay slightly to ensure loader transition starts first
         });
       </script>
+      
       
 </body>
 </html>
