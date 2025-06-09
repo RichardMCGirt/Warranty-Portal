@@ -174,14 +174,6 @@
     </select>
     <br>
   
-    <div id="vendor-dropdown-container">
-      <label for="vendor-dropdown">Select a Vendor:</label>
-      <select id="vendor-dropdown" data-field="Material Vendor">
-        <option value="">Select a Vendor...</option>
-        <!-- Options will be populated dynamically by JavaScript -->
-      </select>
-    </div>
-    
 
 
     <div class="form-group" id="materials-needed-container">
@@ -191,7 +183,13 @@
                box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;
                min-height: 80px; resize: vertical; display: block;"
         autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
-    
+        <div id="vendor-dropdown-container">
+          <label for="vendor-dropdown">Select a Vendor:</label>
+          <select id="vendor-dropdown" data-field="Material Vendor">
+            <option value="">Select a Vendor...</option>
+            <!-- Options will be populated dynamically by JavaScript -->
+          </select>
+        </div>
     </div>
     
 </div>
