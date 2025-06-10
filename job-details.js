@@ -111,20 +111,18 @@ async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
     }
 
     try {
-        let resolvedRecordId = recordId;
-if (!recordId.startsWith("rec")) {
-  resolvedRecordId = await getRecordIdByWarrantyId(recordId);
-  if (!resolvedRecordId) {
-    console.error("❌ Could not resolve Record ID for:", recordId);
-    return;
-  }
-}
+        let resolvedRecordId = lotNameOrRecordId;
+        if (!resolvedRecordId.startsWith("rec")) {
+            resolvedRecordId = await getRecordIdByWarrantyId(lotNameOrRecordId);
+            if (!resolvedRecordId) {
+                console.error("❌ Could not resolve Record ID for:", lotNameOrRecordId);
+                return;
+            }
+        }
 
-await populateVendorDropdownWithSelection(resolvedRecordId);
+        await populateVendorDropdownWithSelection(resolvedRecordId);
 
-
-
-        const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${recordId}`;
+        const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${resolvedRecordId}`;
         console.log("📡 Sending API Request to Airtable:", url);
 
         const sanitizedFields = Object.fromEntries(
@@ -173,6 +171,7 @@ await populateVendorDropdownWithSelection(resolvedRecordId);
         if (saveButton) saveButton.disabled = false;
     }
 }
+
 
 function openMapApp() {
     const addressInput = document.getElementById("address");
@@ -237,19 +236,23 @@ function openMapApp() {
 
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("🚀 Page Loaded: JavaScript execution started!");
-    let primaryData = null; // <-- Declare it globally within this function
-
-
-    // ✅ Extract URL Parameters
+    
     const params = new URLSearchParams(window.location.search);
-    let recordId = params.get("id");
+    let recordId = params.get("id") || getSavedRecordId();
+    const isCarouselMode = params.get("carousel") === "true";
 
-    if (!recordId || recordId.trim() === "") {
-        console.error("❌ ERROR: No record ID found in URL!");
+    console.log("📦 recordId:", recordId);
+    console.log("🖼️ carousel mode:", isCarouselMode);
+
+    if ((!recordId || recordId.trim() === "") && !isCarouselMode) {
+        console.error("❌ ERROR: No record ID found in URL or localStorage!");
         alert("No job selected. Redirecting to job list.");
-        window.location.href = "index.html"; // Redirect to job list
+        window.location.href = "index.html";
         return;
     }
+
+    // ✅ Save to localStorage if it came from URL
+    if (recordId) saveRecordIdToLocal(recordId);
 
     console.log("✅ Record ID retrieved:", recordId);
 
@@ -656,17 +659,214 @@ if (subcontractorCheckbox.checked) {
         console.groupEnd();
     }
     
-
-
-
  function safeToISOString(dateString) {
     if (!dateString || typeof dateString !== "string") return null;
     const d = new Date(dateString);
     return isNaN(d.getTime()) ? null : d.toISOString();
 }
 
+// ✅ Global state
+let currentCarouselFiles = [];
+let currentCarouselIndex = 0;
+let currentCarouselField = null;
+let currentWarrantyId = null;
 
-    
+// ✅ Open the carousel
+function openCarousel(files, startIndex = 0, warrantyId, field) {
+  const overlay = document.getElementById("attachment-carousel");
+  const body = document.getElementById("carousel-body");
+
+  if (!overlay || !body) return;
+
+  console.log("🚀 Opening carousel with files:", files, "Start index:", startIndex);
+
+  currentCarouselFiles = files;
+  currentCarouselIndex = startIndex;
+  currentCarouselField = field;
+  currentWarrantyId = warrantyId;
+
+  overlay.style.display = "flex";
+  displayCarouselItem(currentCarouselIndex);
+}
+
+// ✅ Display an individual item
+function displayCarouselItem(index) {
+  const body = document.getElementById("carousel-body");
+
+  if (
+    !body ||
+    !Array.isArray(currentCarouselFiles) ||
+    index < 0 ||
+    index >= currentCarouselFiles.length
+  ) {
+    console.warn("⚠️ Invalid carousel state or index:", index, "Files:", currentCarouselFiles);
+    return; // Do NOT close overlay
+  }
+
+  console.log("📸 Displaying carousel index:", index);
+  console.log("📁 Files:", currentCarouselFiles);
+
+  const file = currentCarouselFiles[index];
+  body.innerHTML = ""; // Clear previous content
+
+  if (file.type?.startsWith("image/")) {
+    const img = document.createElement("img");
+    img.src = file.url;
+    img.alt = file.filename || "Image Preview";
+    img.style.maxWidth = "100%";
+    img.style.maxHeight = "80vh";
+    img.style.borderRadius = "8px";
+    img.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+    body.appendChild(img);
+  } else if (file.type === "application/pdf") {
+    const iframe = document.createElement("iframe");
+    iframe.src = file.url;
+    iframe.title = file.filename || "PDF Preview";
+    iframe.style.width = "80vw";
+    iframe.style.height = "80vh";
+    iframe.style.border = "none";
+    iframe.style.borderRadius = "8px";
+    body.appendChild(iframe);
+  } else {
+    const fallback = document.createElement("p");
+    fallback.textContent = "⚠️ Unsupported file type.";
+    fallback.style.color = "#fff";
+    fallback.style.fontSize = "18px";
+    body.appendChild(fallback);
+  }
+}
+
+// ✅ Close the carousel
+function closeCarousel() {
+  const overlay = document.getElementById("attachment-carousel");
+  if (overlay) overlay.style.display = "none";
+}
+
+// ✅ Setup navigation buttons
+document.getElementById("carousel-next")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  if (currentCarouselFiles.length > 0) {
+    currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
+    displayCarouselItem(currentCarouselIndex);
+  }
+});
+
+document.getElementById("carousel-prev")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  if (currentCarouselFiles.length > 0) {
+    currentCarouselIndex =
+      (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
+    displayCarouselItem(currentCarouselIndex);
+  }
+});
+
+// ✅ Close button logic
+document.getElementById("close-carousel")?.addEventListener("click", () => {
+  closeCarousel();
+});
+
+// ✅ Optional: Delete button
+document.getElementById("delete-current-attachment")?.addEventListener("click", async (e) => {
+  e.preventDefault(); // ✅ STOP form from submitting
+  e.stopPropagation(); // ✅ (Optional but helps if inside a form)
+
+  console.log("🗑️ Delete button clicked in carousel.");
+
+  if (!currentWarrantyId) {
+    console.error("❌ currentWarrantyId is missing.");
+    alert("Missing warranty ID. Cannot proceed with deletion.");
+    return;
+  }
+
+  if (!currentCarouselField) {
+    console.error("❌ currentCarouselField is missing.");
+    alert("Missing image field name. Cannot proceed with deletion.");
+    return;
+  }
+
+  if (!currentCarouselFiles || !currentCarouselFiles[currentCarouselIndex]) {
+    console.error("❌ No current file selected or invalid index.");
+    alert("No file selected. Cannot delete.");
+    return;
+  }
+
+  const fileToDelete = currentCarouselFiles[currentCarouselIndex];
+  console.log("📁 Attempting to delete file:", fileToDelete);
+
+  if (!fileToDelete.id) {
+    console.warn("⚠️ File missing 'id'. Cannot remove from Airtable:", fileToDelete);
+    alert("File is missing a valid ID. Cannot delete.");
+    return;
+  }
+
+  if (!confirm(`Delete ${fileToDelete.filename}?`)) {
+    console.log("❌ Deletion canceled by user.");
+    return;
+  }
+
+  try {
+    const existing = await fetchCurrentImagesFromAirtable(currentWarrantyId, currentCarouselField);
+    console.log("📦 Existing images fetched:", existing);
+
+    const updated = existing.filter(file => file.id !== fileToDelete.id);
+    console.log("🧹 Images after filtering out deleted file:", updated);
+
+    await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, currentWarrantyId, {
+      [currentCarouselField]: updated
+    });
+
+    console.log("✅ Airtable field updated successfully.");
+
+    currentCarouselFiles = updated;
+
+    if (currentCarouselFiles.length === 0) {
+      closeCarousel();
+    } else {
+      currentCarouselIndex = Math.min(currentCarouselIndex, currentCarouselFiles.length - 1);
+      displayCarouselItem(currentCarouselIndex);
+    }
+
+    showToast("✅ File deleted successfully.", "success");
+
+  } catch (error) {
+    console.error("❌ Error deleting file from Airtable:", error);
+    showToast("❌ Failed to delete file. Try again.", "error");
+  }
+});
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const carouselOverlay = document.getElementById("attachment-carousel");
+  if (!carouselOverlay) return;
+
+  let touchStartX = 0;
+
+  carouselOverlay.addEventListener("touchstart", e => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, false);
+
+  carouselOverlay.addEventListener("touchend", e => {
+    const touchEndX = e.changedTouches[0].screenX;
+    const diffX = touchEndX - touchStartX;
+
+    if (Math.abs(diffX) > 50) {
+      if (diffX > 0) {
+        // Swipe right → previous
+        currentCarouselIndex = (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
+      } else {
+        // Swipe left → next
+        currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
+      }
+      displayCarouselItem(currentCarouselIndex);
+    }
+  }, false);
+});
+
+
+
     async function ensureDropboxToken() {
         if (!dropboxAccessToken) {
             console.log("🔄 Fetching Dropbox token...");
@@ -844,30 +1044,35 @@ if (subcontractorCheckbox.checked) {
 
 
     
-    document.querySelectorAll(".job-link").forEach(link => {
-        link.addEventListener("click", function (event) {
-            event.preventDefault();
-    
-            const jobId = this.dataset.recordId?.trim(); // Ensure valid ID
-            const jobName = this.textContent.trim(); // Lot Number / Community
-    
-            if (!jobId) {
-                console.error("❌ ERROR: Missing job ID in the link. Check 'data-record-id' attribute.");
-                alert("Error: No job ID found. Please try again.");
-                return;
-            }
-    
-            console.log("🔗 Navigating to Job:", jobId);
-            console.log("🏠 Job Name:", jobName);
-    
-            // Construct the URL properly
-            const url = new URL(window.location.origin + window.location.pathname);
-            url.searchParams.set("id", jobId);
-    
-            console.log("🌍 Navigating to:", url.toString());
-            window.location.href = url.toString();
-        });
+document.querySelectorAll(".job-link").forEach(link => {
+    link.addEventListener("click", function (event) {
+        event.preventDefault();
+
+        const jobId = this.dataset.recordId?.trim();
+        const jobName = this.textContent.trim();
+
+        if (!jobId) {
+            console.error("❌ ERROR: Missing job ID in the link. Check 'data-record-id' attribute.");
+            alert("Error: No job ID found. Please try again.");
+            return;
+        }
+
+        console.log("🔗 Navigating to Job:", jobId);
+        console.log("🏠 Job Name:", jobName);
+
+        // ✅ Save to localStorage before redirect
+        saveRecordIdToLocal(jobId);
+console.log("💾 Saved record ID to localStorage:", jobId);
+
+        const url = new URL(window.location.origin + window.location.pathname);
+        url.searchParams.set("id", jobId);
+
+        console.log("🌍 Navigating to:", url.toString());
+        window.location.href = url.toString();
     });
+});
+
+
     document.addEventListener("DOMContentLoaded", function () {
         const subcontractorDropdown = document.getElementById("subcontractor-dropdown");
         const paymentContainer = document.getElementById("subcontractor-payment-container");
@@ -1213,7 +1418,7 @@ function showElement(elementId) {
     }
 }
 
-async function displayImages(files, containerId) {
+async function displayImages(files, containerId, fieldName = "") {
     const container = document.getElementById(containerId);
     if (!container) {
         console.warn(`⚠️ Container not found: ${containerId}`);
@@ -1296,7 +1501,10 @@ closePreview.addEventListener("click", () => {
             previewElement.style.borderRadius = "5px";
             previewElement.style.cursor = "pointer";
 
-            previewElement.addEventListener("click", () => window.open(file.url, "_blank"));
+previewElement.addEventListener("click", () => {
+  const fileIndex = currentCarouselFiles.findIndex(f => f.url === file.url);
+openCarousel(currentCarouselFiles, fileIndex >= 0 ? fileIndex : 0, getWarrantyId(), fieldName);
+});
 
             try {
                 const pdf = await pdfjsLib.getDocument(file.url).promise;
@@ -1322,7 +1530,7 @@ closePreview.addEventListener("click", () => {
             }
         } else if (file.type && typeof file.type === "string" && file.type.startsWith("image/")) {
             previewElement = document.createElement("img");
-            previewElement.src = file.url;
+            previewElement.src = file.url; 
             previewElement.setAttribute("data-file-id", file.id || "");
             previewElement.classList.add("uploaded-file");
             previewElement.style.maxWidth = "100%";
@@ -1330,7 +1538,10 @@ closePreview.addEventListener("click", () => {
             previewElement.style.border = "1px solid #ddd";
             previewElement.style.cursor = "pointer";
 
-            previewElement.addEventListener("click", () => window.open(file.url, "_blank"));
+previewElement.addEventListener("click", () => {
+  const index = files.findIndex(f => f.url === file.url);
+openCarousel(files, index >= 0 ? index : 0, getWarrantyId(), fieldName);
+});
         } else {
             previewElement = document.createElement("a");
             previewElement.href = file.url;
@@ -1551,15 +1762,15 @@ if (status?.toLowerCase() === "scheduled- awaiting field") {
     console.log("🚫 Skipping display of issue images due to status:", status);
     // Do not show issue images
 } else if (hasIssueImages) {
-    await displayImages(issueImages, "issue-pictures");
+await displayImages(issueImages, "issue-pictures", "Picture(s) of Issue");
 }
 
 if (hasCompletedImages) {
-    await displayImages(completedImages, "completed-pictures");
+await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
 }
 
         if (hasCompletedImages) {
-            await displayImages(completedImages, "completed-pictures");
+await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
         }
 
         // Ensure delete button updates correctly after image load
@@ -1606,16 +1817,20 @@ function getSavedRecordId() {
 }
 function getWarrantyId() {
     const id = document.getElementById("warranty-id")?.value?.trim();
-    if (!id) {
-        console.warn("⚠️ Warranty ID is missing or empty.");
-        return null;
+    if (id) return id;
+    if (currentWarrantyId) {
+        console.warn("⚠️ Using fallback warranty ID from global context.");
+        return currentWarrantyId;
     }
-    return id;
+    console.warn("⚠️ Warranty ID is missing from both DOM and fallback.");
+    return null;
 }
+
 
 // ✅ Set the record ID on page load
 document.addEventListener("DOMContentLoaded", () => {
-    let recordId = getSavedRecordId() || new URLSearchParams(window.location.search).get("id");
+let recordId = new URLSearchParams(window.location.search).get("id") || getSavedRecordId();
+console.log("📦 Resolved record ID:", recordId);
 
     if (!recordId) {
         console.error("❌ No record ID found! Preventing redirect loop.");
@@ -2060,49 +2275,65 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
     }
        
     // 🔹 Dropbox Image Upload
-    async function uploadToDropbox(files, targetField) {
-        if (!dropboxAccessToken) {
-            console.error("❌ Dropbox token is missing.");
-            return;
-        }
-    
-        console.log(`📂 Uploading ${files.length} file(s) to Dropbox for field: ${targetField}`);
-    
-        const warrantyId = getWarrantyId();
+let uploadInProgress = false; // Global flag for unload warning
 
-        let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField); // ✅
-        const uploadedUrls = [...existingImages];
-    
-        for (const file of files) {
-            try {
-                const creds = {
-                    appKey: dropboxAppKey,
-                    appSecret: dropboxAppSecret,
-                    refreshToken: dropboxRefreshToken
+async function uploadToDropbox(files, targetField) {
+    if (!dropboxAccessToken) {
+        console.error("❌ Dropbox token is missing.");
+        return;
+    }
+
+    uploadInProgress = true; // ⚠️ Mark uploads as in progress
+
+    console.log(`📂 Uploading ${files.length} file(s) to Dropbox for field: ${targetField}`);
+
+    const warrantyId = getWarrantyId();
+    const existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField) || [];
+    const uploadedUrls = [...existingImages]; // Start with current attachments
+
+    for (const file of files) {
+        try {
+            const creds = {
+                appKey: dropboxAppKey,
+                appSecret: dropboxAppSecret,
+                refreshToken: dropboxRefreshToken
+            };
+
+            const dropboxUrl = await uploadFileToDropbox(file, dropboxAccessToken, creds);
+
+            if (dropboxUrl) {
+                const uploadedFile = {
+                    url: dropboxUrl,
+                    filename: file.name || "upload.png"
                 };
-        
-                const dropboxUrl = await uploadFileToDropbox(file, dropboxAccessToken, creds);
-        
-                if (dropboxUrl) {
-                    uploadedUrls.push({ url: dropboxUrl });
-                }
-            } catch (error) {
-                console.error("❌ Error uploading to Dropbox:", error);
-            }
-        }
-    
-        console.log("✅ Final file list to save in Airtable:", uploadedUrls);
-    
-        if (uploadedUrls.length > 0) {
-            await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, { [targetField]: uploadedUrls });
-    
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-            checkAndHideDeleteButton();
 
-            await loadImagesForLot(warrantyId, document.getElementById("field-status")?.value);
-            setTimeout(checkAndHideDeleteButton, 500); // ✅ Ensure delete button appears after upload
+                uploadedUrls.push(uploadedFile); // ✅ Append to list
+
+                await displayImages(
+                    [uploadedFile],
+                    targetField === "Completed  Pictures" ? "completed-pictures" : "issue-pictures"
+                );
+
+                await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, {
+                    [targetField]: uploadedUrls
+                });
+
+                console.log(`✅ Uploaded ${file.name} and updated Airtable.`);
+            }
+        } catch (error) {
+            console.error(`❌ Error uploading ${file.name}:`, error);
+            showToast(`❌ Failed to upload ${file.name}`, "error");
         }
     }
+
+    uploadInProgress = false; // ✅ Mark uploads as done
+
+    checkAndHideDeleteButton();
+    showToast("✅ All files uploaded successfully!", "success");
+}
+
+
+
     
    // 🔹 Upload File to Dropbox
    async function uploadFileToDropbox(file, token, creds = {}) {
@@ -2160,41 +2391,54 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
         return null;
     }
 }
- 
-    // 🔹 Get Dropbox Shared Link
-    async function getDropboxSharedLink(filePath) {
-        const url = "https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings";
-        try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${dropboxAccessToken}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    path: filePath,
-                    settings: {
-                        requested_visibility: "public"
-                    }
-                })
-            });
-    
-            if (response.status === 409) {
-                console.warn("⚠️ Shared link already exists. Fetching existing link...");
-                return await getExistingDropboxLink(filePath);
-            }
-    
-            if (!response.ok) {
-                throw new Error("❌ Error creating Dropbox shared link.");
-            }
-    
-            const data = await response.json();
-            return convertToDirectLink(data.url);
-        } catch (error) {
-            console.error("Dropbox link error:", error);
-            return null;
-        }
+
+
+ window.addEventListener("beforeunload", function (e) {
+    if (uploadInProgress) {
+        e.preventDefault();
+        e.returnValue = "Uploads are still in progress. Are you sure you want to leave?";
+        return "Uploads are still in progress. Are you sure you want to leave?";
     }
+});
+
+    // 🔹 Get Dropbox Shared Link
+  async function getDropboxSharedLink(filePath) {
+  const url = "https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings";
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${dropboxAccessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        path: filePath,
+        settings: {
+          requested_visibility: "public"
+        }
+      })
+    });
+
+    if (response.status === 409) {
+      console.warn("⚠️ Shared link already exists. Fetching existing link...");
+      return await getExistingDropboxLink(filePath); // 🧠 Fallback handler
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Dropbox shared link error: ${errorData?.error_summary || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return convertToDirectLink(data.url);
+
+  } catch (error) {
+    console.error("Dropbox link error:", error);
+    return null;
+  }
+}
+
 
     async function fetchAndPopulateSubcontractors(resolvedRecordId) {
         console.log("🚀 Fetching branch `b` and 'Subcontractor' for record:", resolvedRecordId);
@@ -2291,37 +2535,39 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
         }));
     }
     
-    async function getExistingDropboxLink(filePath) {
-        const url = "https://api.dropboxapi.com/2/sharing/list_shared_links";
-        try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${dropboxAccessToken}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    path: filePath,
-                    direct_only: true
-                })
-            });
-    
-            if (!response.ok) {
-                throw new Error(`❌ Error fetching existing shared link: ${response.statusText}`);
-            }
-    
-            const data = await response.json();
-            if (data.links && data.links.length > 0) {
-                return convertToDirectLink(data.links[0].url);
-            } else {
-                console.error("❌ No existing shared link found.");
-                return null;
-            }
-        } catch (error) {
-            console.error("Dropbox existing link fetch error:", error);
-            return null;
-        }
+async function getExistingDropboxLink(filePath) {
+  const url = "https://api.dropboxapi.com/2/sharing/list_shared_links";
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${dropboxAccessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        path: filePath,
+        direct_only: true
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error listing existing shared links: ${response.statusText}`);
     }
+
+    const data = await response.json();
+    if (data.links && data.links.length > 0) {
+      return convertToDirectLink(data.links[0].url);
+    } else {
+      console.warn("⚠️ No shared links found for:", filePath);
+      return null;
+    }
+  } catch (error) {
+    console.error("❌ Error fetching existing Dropbox link:", error);
+    return null;
+  }
+}
+
     
     function convertToDirectLink(sharedUrl) {
         if (sharedUrl.includes("dropbox.com")) {
