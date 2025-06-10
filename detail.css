@@ -685,3 +685,107 @@ button:hover {
     transition: all 0.2s ease;
   }
   
+  .carousel-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.carousel-content {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Close button */
+.carousel-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 2rem;
+  color: white;
+  cursor: pointer;
+  z-index: 10000;
+}
+
+/* Carousel body */
+#carousel-body {
+  width: 100%;
+  max-height: 70%;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+#carousel-body img,
+#carousel-body iframe {
+  max-width: 90vw;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* Button group */
+.carousel-controls {
+  display: flex;
+  justify-content: space-between;
+  width: 90%;
+  max-width: 400px;
+  margin-top: auto;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.carousel-nav,
+#delete-current-attachment {
+  flex: 1;
+  font-size: 1rem;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .carousel-nav,
+  #delete-current-attachment {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+
+  #carousel-body img,
+  #carousel-body iframe {
+    max-width: 95vw;
+    max-height: 55vh;
+  }
+
+  .carousel-close {
+    font-size: 1.5rem;
+  }
+
+  .carousel-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+}

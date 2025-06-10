@@ -2053,7 +2053,6 @@ await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFi
            
                const statusRaw = updatedData.fields["Status"];
                const status = (statusRaw || "").trim().toLowerCase();
-                              const lotName = updatedData.fields["Lot Number and Community/Neighborhood"] || "This job";
            
                               const redirectStatuses = [
                                 "pending review",
@@ -2072,11 +2071,10 @@ await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFi
                             ].includes(status);
                             
                             if (redirectStatuses.includes(status) || noLongerNeedsFieldTech) {
-                                const fieldTechName = primaryData.fields["field tech"] || "Field Tech";
-                                showToast(`📦 ${lotName} status updated to "${statusRaw}" by ${fieldTechName}. Redirecting...`, "success", 6000);
+                                showToast("success", 4000);
                                 setTimeout(() => {
                                     window.location.href = "index.html";
-                                }, 6000);
+                                }, 4000);
                                 return;
                             }
            }
