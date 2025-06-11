@@ -2345,14 +2345,35 @@ uploadedUrls.push({ url: dropboxUrl });
         progressContainer.style.display = "none";
     }, 2000);
 
-   showToast("✅ All files uploaded successfully!", "success");
+  showToast("✅ All files uploaded successfully!", "success");
 
-// ⏳ Wait a moment so the user sees the toast, then refresh
+// ⏳ Wait so the user sees the toast, then refresh only image section
 setTimeout(() => {
-  location.reload();
-}, 1500); // waits 1.5 seconds before refreshing the page
-
+  refreshImageContainers(); // Your custom function to re-fetch and re-render
+}, 1500);
 }
+async function refreshImageContainers() {
+  console.log("🔄 Refreshing image containers...");
+
+  const warrantyId = getWarrantyId();
+  if (!warrantyId) {
+    console.error("❌ Cannot refresh images: missing warranty ID");
+    return;
+  }
+
+  const statusField = document.getElementById("field-status");
+  const status = statusField?.value || "";
+
+  try {
+    await loadImagesForLot(warrantyId, status);
+    console.log("✅ Image containers refreshed successfully.");
+  } catch (error) {
+    console.error("❌ Failed to refresh image containers:", error);
+    showToast("❌ Error refreshing images. Try again.", "error");
+  }
+}
+
+
 
 async function compressImage(file) {
     const options = {
