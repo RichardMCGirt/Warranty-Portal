@@ -2385,8 +2385,6 @@ setTimeout(() => {
     console.log("🔁 Force re-check after 3s to catch any late updates...");
     refreshImageContainers();
 }, 3000);
-
-
 }
 
 async function compressImage(file) {
