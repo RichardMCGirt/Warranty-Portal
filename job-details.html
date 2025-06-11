@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warranty</title>
-    <link rel="stylesheet" href="detail.css">
+    <link rel="stylesheet" href="detail.css"
+    <script src="https://unpkg.com/browser-image-compression@2.0.0/dist/browser-image-compression.js"></script>>
 </head>
 <body>
 
@@ -194,11 +195,6 @@
     
 </div>
 
-
-<div id="upload-spinner" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:9999;">
-    <img src="spinner.gif" alt="Uploading..." width="48" height="48">
-</div>
-
 <div id="attachment-carousel" class="carousel-overlay" style="display: none;">
   <div class="carousel-content">
     <span id="close-carousel" class="carousel-close">&times;</span>
@@ -212,10 +208,6 @@
     </div>
   </div>
 </div>
-
-</div>
-
-
 
         <div class="file-input-container">
          <!--   <label id="upload-issue-picture-label" class="custom-file-label" for="upload-issue-picture">
@@ -277,12 +269,39 @@
 
 <div id="file-preview" class="file-preview"></div>
 
-</div>
 
-<button type="button" id="save-job">Save Changes</button>
 
         </form>
     </div>
+<button type="button" id="save-job">Save Changes</button>
+
+<div id="upload-progress-container" style="
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 75%;
+  max-width: 600px;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  z-index: 9999;
+  text-align: center;
+">
+  <label id="upload-progress-label" style="display: block; margin-bottom: 10px;">Uploading...</label>
+  <div style="width: 100%; background: #eee; border-radius: 5px;">
+    <div id="upload-progress-bar" style="
+      height: 16px;
+      width: 0%;
+      background: #4caf50;
+      border-radius: 5px;
+      transition: width 0.3s ease;
+    "></div>
+  </div>
+</div>
+
 
     <script>
         window.env = {

@@ -2281,58 +2281,100 @@ async function uploadToDropbox(files, targetField) {
         return;
     }
 
-    uploadInProgress = true; // ⚠️ Mark uploads as in progress
-
-    console.log(`📂 Uploading ${files.length} file(s) to Dropbox for field: ${targetField}`);
+    uploadInProgress = true;
 
     const warrantyId = getWarrantyId();
     const existingImages = await fetchCurrentImagesFromAirtable(warrantyId, targetField) || [];
-    const uploadedUrls = [...existingImages]; // Start with current attachments
+    const uploadedUrls = [...existingImages];
+    const creds = { appKey: dropboxAppKey, appSecret: dropboxAppSecret, refreshToken: dropboxRefreshToken };
 
-    for (const file of files) {
+    // ⏳ Show and reset progress UI
+    const progressContainer = document.getElementById("upload-progress-container");
+    const progressBar = document.getElementById("upload-progress-bar");
+    const progressLabel = document.getElementById("upload-progress-label");
+    progressContainer.style.display = "block";
+    progressBar.style.width = "0%";
+    progressLabel.textContent = "Starting upload...";
+
+    let completed = 0;
+    const total = files.length;
+
+    const uploadPromises = Array.from(files).map(async (file, index) => {
         try {
-            const creds = {
-                appKey: dropboxAppKey,
-                appSecret: dropboxAppSecret,
-                refreshToken: dropboxRefreshToken
-            };
+            progressLabel.textContent = `Compressing (${index + 1} of ${total})...`;
+            const compressedFile = await compressImage(file);
 
-            const dropboxUrl = await uploadFileToDropbox(file, dropboxAccessToken, creds);
+            progressLabel.textContent = `Uploading (${index + 1} of ${total})...`;
+            const dropboxUrl = await uploadFileToDropbox(compressedFile, dropboxAccessToken, creds);
 
             if (dropboxUrl) {
                 const uploadedFile = {
                     url: dropboxUrl,
-                    filename: file.name || "upload.png"
+                    filename: file.name || "upload.png",
                 };
-
-                uploadedUrls.push(uploadedFile); // ✅ Append to list
+uploadedUrls.push({ url: dropboxUrl });
 
                 await displayImages(
                     [uploadedFile],
-                    targetField === "Completed  Pictures" ? "completed-pictures" : "issue-pictures"
+                    targetField === "Completed  Pictures" ? "completed-pictures" : "issue-pictures",
+                    targetField
                 );
-
-                await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, {
-                    [targetField]: uploadedUrls
-                });
-
-                console.log(`✅ Uploaded ${file.name} and updated Airtable.`);
             }
+
+            completed++;
+            const percent = Math.round((completed / total) * 100);
+            progressBar.style.width = `${percent}%`;
         } catch (error) {
-            console.error(`❌ Error uploading ${file.name}:`, error);
+            console.error(`❌ Upload failed for ${file.name}:`, error);
             showToast(`❌ Failed to upload ${file.name}`, "error");
         }
-    }
+    });
 
-    uploadInProgress = false; // ✅ Mark uploads as done
+    await Promise.all(uploadPromises);
 
+    await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, {
+        [targetField]: uploadedUrls
+    });
+
+    uploadInProgress = false;
     checkAndHideDeleteButton();
-    showToast("✅ All files uploaded successfully!", "success");
+
+    progressBar.style.width = `100%`;
+    progressLabel.textContent = "✅ Upload complete!";
+    setTimeout(() => {
+        progressContainer.style.display = "none";
+    }, 2000);
+
+   showToast("✅ All files uploaded successfully!", "success");
+
+// ⏳ Wait a moment so the user sees the toast, then refresh
+setTimeout(() => {
+  location.reload();
+}, 1500); // waits 1.5 seconds before refreshing the page
+
 }
 
+async function compressImage(file) {
+    const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1600,
+        useWebWorker: true
+    };
 
+    try {
+        if (file.type.startsWith("image/")) {
+            const compressed = await window.imageCompression(file, options);
+            console.log(`📉 Compressed ${file.name} from ${file.size} to ${compressed.size} bytes`);
+            return compressed;
+        } else {
+            return file; // Skip non-image
+        }
+    } catch (err) {
+        console.error("❌ Image compression failed:", err);
+        return file;
+    }
+}
 
-    
    // 🔹 Upload File to Dropbox
    async function uploadFileToDropbox(file, token, creds = {}) {
     if (!token) {
