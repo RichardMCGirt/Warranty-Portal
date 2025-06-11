@@ -37,6 +37,8 @@ function checkAndHideDeleteButton() {
 function openCarousel(files, startIndex = 0, warrantyId, field) {
   const overlay = document.getElementById("attachment-carousel");
   const body = document.getElementById("carousel-body");
+  const closeBtn = document.getElementById("carousel-close-button");
+  const saveBtn = document.getElementById("save-job");
 
   if (!overlay || !body) return;
 
@@ -48,8 +50,17 @@ function openCarousel(files, startIndex = 0, warrantyId, field) {
   currentWarrantyId = warrantyId;
 
   overlay.style.display = "flex";
+
+  // Show the big red X
+  if (closeBtn) closeBtn.style.display = "block";
+
+  // Hide save button
+  if (saveBtn) saveBtn.style.display = "none";
+
   displayCarouselItem(currentCarouselIndex);
 }
+
+
 
 // ✅ Display an individual item
 function displayCarouselItem(index) {
@@ -101,8 +112,19 @@ function displayCarouselItem(index) {
 // ✅ Close the carousel
 function closeCarousel() {
   const overlay = document.getElementById("attachment-carousel");
+  const closeBtn = document.getElementById("carousel-close-button");
+  const saveBtn = document.getElementById("save-job");
+
   if (overlay) overlay.style.display = "none";
+  if (closeBtn) closeBtn.style.display = "none";
+  if (saveBtn) saveBtn.style.display = "block";
 }
+
+
+document.getElementById("carousel-close-button")?.addEventListener("click", () => {
+  closeCarousel();
+});
+
 
 // ✅ Setup navigation buttons
 document.getElementById("carousel-next")?.addEventListener("click", (e) => {
@@ -1163,7 +1185,6 @@ let currentCarouselIndex = 0;
 let currentCarouselField = null;
 let currentWarrantyId = null;
 
-
 document.addEventListener("DOMContentLoaded", () => {
   const carouselOverlay = document.getElementById("attachment-carousel");
   if (!carouselOverlay) return;
@@ -1176,7 +1197,7 @@ document.addEventListener("DOMContentLoaded", () => {
     touchStartX = e.changedTouches[0].screenX;
     touchStartY = e.changedTouches[0].screenY;
     touchMoved = false;
-  }, { passive: false }); // ⛔ Required to allow preventDefault()
+  }, { passive: false }); // ✅ MUST set to false so preventDefault works
 
   carouselOverlay.addEventListener("touchmove", (e) => {
     const touchX = e.changedTouches[0].screenX;
@@ -1185,12 +1206,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const diffX = Math.abs(touchX - touchStartX);
     const diffY = Math.abs(touchY - touchStartY);
 
-    if (diffX > diffY) {
-      // 🚫 Prevent scrolling if horizontal swipe is detected
-      e.preventDefault();
+    if (diffX > diffY && diffX > 10) {
+      e.preventDefault(); // ✅ Now works correctly
       touchMoved = true;
     }
-  }, { passive: false });
+  }, { passive: false }); // ✅ Also must be false here
 
   carouselOverlay.addEventListener("touchend", (e) => {
     if (!touchMoved) return;
@@ -1210,9 +1230,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }, false);
 });
-
-
-
 
 
     async function ensureDropboxToken() {

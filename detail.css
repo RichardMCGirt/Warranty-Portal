@@ -41,6 +41,11 @@ body {
     opacity: 1;
 }
 
+#close-carousel {
+  display: none !important;
+}
+
+
 #save-job {
     position: fixed;
     bottom: 0;
