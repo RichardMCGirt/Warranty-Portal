@@ -2361,30 +2361,31 @@ async function uploadToDropbox(files, targetField) {
     showToast(`❌ Failed to upload ${file.name}`, "error");
   }
 }
-    await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, {
-        [targetField]: uploadedUrls
-    });
+   await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, {
+    [targetField]: uploadedUrls
+});
 
-    uploadInProgress = false;
-    checkAndHideDeleteButton();
+uploadInProgress = false;
+checkAndHideDeleteButton();
 
-    progressBar.style.width = `100%`;
-    progressLabel.textContent = "✅ Upload complete!";
-    setTimeout(() => {
-        progressContainer.style.display = "none";
-    }, 2000);
+progressBar.style.width = `100%`;
+progressLabel.textContent = "✅ Upload complete!";
+setTimeout(() => {
+    progressContainer.style.display = "none";
+}, 2000);
 
-  showToast("✅ All files uploaded successfully!", "success");
+showToast("✅ All files uploaded successfully!", "success");
 
-// ⏳ Wait so the user sees the toast, then refresh only image section
-try {
-    console.log("🔁 Calling refreshImageContainers...");
+// ✅ Immediate refresh (may be too early if Airtable hasn’t propagated)
+refreshImageContainers();
+console.log("📸 Initial image container refresh triggered after upload");
 
-  await refreshImageContainers(); // ✅ Ensure we wait for it to finish
-  console.log("✅ Image containers refreshed after upload.");
-} catch (err) {
-  console.error("❌ Failed to refresh image containers after upload:", err);
-}
+// ✅ Delayed refresh to catch full Airtable sync
+setTimeout(() => {
+    console.log("🔁 Force re-check after 3s to catch any late updates...");
+    refreshImageContainers();
+}, 3000);
+
 
 }
 
