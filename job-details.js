@@ -1,5 +1,327 @@
 let dropboxRefreshToken = null;
 
+function getWarrantyId() {
+    const id = document.getElementById("warranty-id")?.value?.trim();
+    if (id) return id;
+    if (currentWarrantyId) {
+        console.warn("⚠️ Using fallback warranty ID from global context.");
+        return currentWarrantyId;
+    }
+    console.warn("⚠️ Warranty ID is missing from both DOM and fallback.");
+    return null;
+}
+
+function checkAndHideDeleteButton() {
+    const deleteButton = document.getElementById("delete-images-btn");
+    const issueContainer = document.getElementById("issue-pictures");
+    const completedContainer = document.getElementById("completed-pictures");
+
+    if (!deleteButton || !issueContainer || !completedContainer) return;
+
+    const issueImages = issueContainer.querySelectorAll("img").length;
+    const completedImages = completedContainer.querySelectorAll("img").length;
+    const selectedCheckboxes = document.querySelectorAll(".image-checkbox:checked").length;
+
+    console.log(`🔍 Issue Images: ${issueImages}, Completed Images: ${completedImages}, Checked Boxes: ${selectedCheckboxes}`);
+
+    if (issueImages > 0 || completedImages > 0 || selectedCheckboxes > 0) {
+        console.log("✅ Show delete button");
+        deleteButton.style.setProperty("display", "block", "important");
+    } else {
+        console.log("🚫 Hide delete button");
+        deleteButton.style.setProperty("display", "none", "important");
+    }
+}
+
+async function displayImages(files, containerId, fieldName = "") {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.warn(`⚠️ Container not found: ${containerId}`);
+        return;
+    }
+
+    container.innerHTML = ""; // Clear existing content
+
+    if (!files || files.length === 0) {
+        console.warn(`⚠️ No files found in ${containerId}`);
+        container.innerHTML = "<p></p>";
+        
+        // ✅ Hide delete button if both are empty
+        checkAndHideDeleteButton();
+        return;
+    }
+
+    console.log(`✅ Displaying files for ${containerId}:`, files);
+
+    for (const file of files) {
+        if (!file.url) {
+            console.error("❌ Missing 'url' field in file object:", file);
+            continue;
+        }
+        const wrapperDiv = document.createElement("div");
+        wrapperDiv.classList.add("file-wrapper");
+        wrapperDiv.style.display = "inline-block";
+        wrapperDiv.style.margin = "10px";
+        wrapperDiv.style.position = "relative";
+        wrapperDiv.style.textAlign = "center";
+        wrapperDiv.style.width = "200px";
+    
+        // ✅ Declare checkbox properly before using it
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.classList.add("file-checkbox", "image-checkbox");
+        checkbox.dataset.imageId = file.id || "";
+    
+        // ✅ Add event listener inside the loop
+        checkbox.addEventListener("change", function () {
+            wrapperDiv.classList.toggle("checked", this.checked);
+        });
+    
+        // Overlay text for "Marked for Deletion"
+        const overlay = document.createElement("div");
+        overlay.classList.add("marked-for-deletion");
+        overlay.innerText = "Marked for Deletion";
+
+        // Handle checkbox state changes
+        checkbox.addEventListener("change", function () {
+            if (this.checked) {
+                wrapperDiv.classList.add("checked");
+            } else {
+                wrapperDiv.classList.remove("checked");
+            }
+        });
+
+        // Filename label
+        const fileLabel = document.createElement("p");
+        fileLabel.innerText = file.filename || "Unknown File";
+        fileLabel.style.fontSize = "12px";
+        fileLabel.style.marginTop = "5px";
+        fileLabel.style.wordBreak = "break-word"; 
+
+        // Add this once outside the function
+const previewModal = document.getElementById("previewModal");
+const previewContent = document.getElementById("previewContent");
+const closePreview = document.getElementById("closePreview");
+
+closePreview.addEventListener("click", () => {
+    previewModal.style.display = "none";
+    previewContent.innerHTML = '<span id="closePreview" style="position:absolute; top:20px; right:30px; font-size:30px; cursor:pointer; color:white;">&times;</span>';
+});
+        let previewElement;
+
+        if (file.type && file.type === "application/pdf") {
+            previewElement = document.createElement("canvas");
+            previewElement.style.width = "100%";
+            previewElement.style.border = "1px solid #ddd";
+            previewElement.style.borderRadius = "5px";
+            previewElement.style.cursor = "pointer";
+
+previewElement.addEventListener("click", () => {
+  const fileIndex = currentCarouselFiles.findIndex(f => f.url === file.url);
+openCarousel(currentCarouselFiles, fileIndex >= 0 ? fileIndex : 0, getWarrantyId(), fieldName);
+});
+
+            try {
+                const pdf = await pdfjsLib.getDocument(file.url).promise;
+                const page = await pdf.getPage(1);
+                const scale = 1;
+                const viewport = page.getViewport({ scale });
+                const context = previewElement.getContext("2d");
+                previewElement.height = viewport.height;
+                previewElement.width = viewport.width;
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport,
+                });
+            } catch (error) {
+                console.error("❌ Error loading PDF preview:", error);
+                previewElement = document.createElement("iframe");
+                previewElement.src = file.url;
+                previewElement.width = "180";
+                previewElement.height = "220";
+                previewElement.style.borderRadius = "10px";
+                previewElement.style.border = "1px solid #ddd";
+            }
+        } else if (file.type && typeof file.type === "string" && file.type.startsWith("image/")) {
+            previewElement = document.createElement("img");
+            previewElement.src = file.url; 
+            previewElement.setAttribute("data-file-id", file.id || "");
+            previewElement.classList.add("uploaded-file");
+            previewElement.style.maxWidth = "100%";
+            previewElement.style.borderRadius = "5px";
+            previewElement.style.border = "1px solid #ddd";
+            previewElement.style.cursor = "pointer";
+
+previewElement.addEventListener("click", () => {
+  const index = files.findIndex(f => f.url === file.url);
+openCarousel(files, index >= 0 ? index : 0, getWarrantyId(), fieldName);
+});
+        } else {
+            previewElement = document.createElement("a");
+            previewElement.href = file.url;
+            previewElement.innerText = "Download File";
+            previewElement.target = "_blank";
+            previewElement.style.display = "block";
+            previewElement.style.padding = "5px";
+            previewElement.style.background = "#f4f4f4";
+            previewElement.style.borderRadius = "5px";
+            previewElement.style.textDecoration = "none";
+        }
+
+        // Append elements
+        wrapperDiv.appendChild(checkbox);
+        wrapperDiv.appendChild(overlay);
+        wrapperDiv.appendChild(previewElement);
+        wrapperDiv.appendChild(fileLabel);
+        container.appendChild(wrapperDiv);
+    }
+
+    container.style.display = "none";
+    container.offsetHeight;
+    container.style.display = "block";
+
+    console.log(`✅ Files displayed for ${containerId}`);
+    // ✅ Check if we need to show or hide delete button
+    checkAndHideDeleteButton();
+}
+
+async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
+    console.log("📡 Fetching images for Warranty ID:", warrantyId);
+    
+    if (!warrantyId) {
+        console.error("❌ Warranty ID is missing. Cannot fetch images.");
+        return [];
+    }
+
+    const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(`{Warranty Record ID} = '${warrantyId}'`)}&fields[]=${imageField}`;
+
+    try {
+        const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
+        });
+
+        if (!response.ok) {
+            console.error("❌ Error fetching record:", response.status, response.statusText);
+            return [];
+        }
+
+        const data = await response.json();
+
+        if (data.records.length === 0) {
+            console.warn(`⚠️ No records found for Warranty ID: ${warrantyId}`);
+            return [];
+        }
+
+        const record = data.records[0];
+
+        if (record.fields && record.fields[imageField]) {
+            console.log(`✅ Images found for '${warrantyId}' in field '${imageField}':`, record.fields[imageField]);
+            return record.fields[imageField];
+        } else {
+            console.warn(`⚠️ No images found in field '${imageField}' for '${warrantyId}'`);
+            return [];
+        }
+    } catch (error) {
+        console.error("❌ Error fetching images by Warranty ID:", error);
+        return [];
+    }
+}
+
+async function loadImagesForLot(warrantyId, status) {
+    console.log("📡 Loading images for warrantyId:", warrantyId);
+
+    // Get elements and ensure they exist before accessing them
+    const issuePicturesSection = document.getElementById("issue-pictures");
+    const completedPicturesSection = document.getElementById("completed-pictures");
+    const uploadIssueInput = document.getElementById("upload-issue-picture");
+    const uploadCompletedInput = document.getElementById("upload-completed-picture");
+
+    if (!issuePicturesSection || !completedPicturesSection || !uploadIssueInput || !uploadCompletedInput) {
+        console.error("❌ One or more required elements are missing from the DOM.");
+        return;
+    }
+
+    // Show loading indicators while fetching images
+    issuePicturesSection.innerHTML = "📡 Loading issue images...";
+    completedPicturesSection.innerHTML = "📡 Loading completed images...";
+
+    try {
+        // Fetch both sets of images
+    const issueImages = await fetchCurrentImagesFromAirtable(warrantyId, "Picture(s) of Issue");
+const completedImages = await fetchCurrentImagesFromAirtable(warrantyId, "Completed  Pictures");
+
+
+        console.log("🖼️ Loaded Images - Issue:", issueImages);
+        console.log("🖼️ Loaded Images - Completed:", completedImages);
+
+        // Check if any images exist
+        const hasIssueImages = issueImages && issueImages.length > 0;
+        const hasCompletedImages = completedImages && completedImages.length > 0;
+
+        // Show/Hide upload inputs based on images available
+        uploadIssueInput.style.display = hasIssueImages ? "block" : "none";
+        uploadCompletedInput.style.display = hasCompletedImages ? "block" : "none";
+
+        // Clear loading message before inserting images
+        issuePicturesSection.innerHTML = hasIssueImages ? "" : "";
+        completedPicturesSection.innerHTML = hasCompletedImages ? "" : "";
+
+if (!hasIssueImages && !hasCompletedImages) {
+    console.warn("⚠️ No images found, hiding sections.");
+    checkAndHideDeleteButton();
+    return;
+}
+
+// ✅ Only show if status allows
+if (status?.toLowerCase() === "scheduled- awaiting field") {
+    console.log("🚫 Skipping display of issue images due to status:", status);
+    // Do not show issue images
+} else if (hasIssueImages) {
+await displayImages(issueImages, "issue-pictures", "Picture(s) of Issue");
+}
+
+if (hasCompletedImages) {
+await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
+}
+
+        if (hasCompletedImages) {
+await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
+        }
+
+        // Ensure delete button updates correctly after image load
+        setTimeout(checkAndHideDeleteButton, 500);
+        checkAndHideDeleteButton();
+
+    } catch (error) {
+console.error(`❌ Error loading images for warranty ID: ${warrantyId}`, error);
+        issuePicturesSection.innerHTML = "❌ Error loading issue images.";
+        completedPicturesSection.innerHTML = "❌ Error loading completed images.";
+    }
+}
+
+async function refreshImageContainers() {
+  console.log("🔄 Refreshing image containers...");
+
+  const warrantyId = getWarrantyId();
+  if (!warrantyId) {
+    console.error("❌ Cannot refresh images: missing warranty ID");
+    return;
+  }
+
+  const statusField = document.getElementById("field-status");
+  const status = statusField?.value || "";
+
+  try {
+    await loadImagesForLot(warrantyId, status);
+    console.log("✅ Image containers refreshed successfully.");
+  } catch (error) {
+    console.error("❌ Failed to refresh image containers:", error);
+    showToast("❌ Error refreshing images. Try again.", "error");
+  }
+}
+
+
 function setInputValue(id, value) {
     const element = document.getElementById(id);
     if (!element) {
@@ -1335,27 +1657,7 @@ if (materialsTextarea && materialSelect && textareaContainer) {
     
 }
 
-function checkAndHideDeleteButton() {
-    const deleteButton = document.getElementById("delete-images-btn");
-    const issueContainer = document.getElementById("issue-pictures");
-    const completedContainer = document.getElementById("completed-pictures");
 
-    if (!deleteButton || !issueContainer || !completedContainer) return;
-
-    const issueImages = issueContainer.querySelectorAll("img").length;
-    const completedImages = completedContainer.querySelectorAll("img").length;
-    const selectedCheckboxes = document.querySelectorAll(".image-checkbox:checked").length;
-
-    console.log(`🔍 Issue Images: ${issueImages}, Completed Images: ${completedImages}, Checked Boxes: ${selectedCheckboxes}`);
-
-    if (issueImages > 0 || completedImages > 0 || selectedCheckboxes > 0) {
-        console.log("✅ Show delete button");
-        deleteButton.style.setProperty("display", "block", "important");
-    } else {
-        console.log("🚫 Hide delete button");
-        deleteButton.style.setProperty("display", "none", "important");
-    }
-}
 
 function hideParentFormGroup(elementId) {
     const el = document.getElementById(elementId);
@@ -1418,158 +1720,7 @@ function showElement(elementId) {
     }
 }
 
-async function displayImages(files, containerId, fieldName = "") {
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.warn(`⚠️ Container not found: ${containerId}`);
-        return;
-    }
 
-    container.innerHTML = ""; // Clear existing content
-
-    if (!files || files.length === 0) {
-        console.warn(`⚠️ No files found in ${containerId}`);
-        container.innerHTML = "<p></p>";
-        
-        // ✅ Hide delete button if both are empty
-        checkAndHideDeleteButton();
-        return;
-    }
-
-    console.log(`✅ Displaying files for ${containerId}:`, files);
-
-    for (const file of files) {
-        if (!file.url) {
-            console.error("❌ Missing 'url' field in file object:", file);
-            continue;
-        }
-        const wrapperDiv = document.createElement("div");
-        wrapperDiv.classList.add("file-wrapper");
-        wrapperDiv.style.display = "inline-block";
-        wrapperDiv.style.margin = "10px";
-        wrapperDiv.style.position = "relative";
-        wrapperDiv.style.textAlign = "center";
-        wrapperDiv.style.width = "200px";
-    
-        // ✅ Declare checkbox properly before using it
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.classList.add("file-checkbox", "image-checkbox");
-        checkbox.dataset.imageId = file.id || "";
-    
-        // ✅ Add event listener inside the loop
-        checkbox.addEventListener("change", function () {
-            wrapperDiv.classList.toggle("checked", this.checked);
-        });
-    
-        // Overlay text for "Marked for Deletion"
-        const overlay = document.createElement("div");
-        overlay.classList.add("marked-for-deletion");
-        overlay.innerText = "Marked for Deletion";
-
-        // Handle checkbox state changes
-        checkbox.addEventListener("change", function () {
-            if (this.checked) {
-                wrapperDiv.classList.add("checked");
-            } else {
-                wrapperDiv.classList.remove("checked");
-            }
-        });
-
-        // Filename label
-        const fileLabel = document.createElement("p");
-        fileLabel.innerText = file.filename || "Unknown File";
-        fileLabel.style.fontSize = "12px";
-        fileLabel.style.marginTop = "5px";
-        fileLabel.style.wordBreak = "break-word"; 
-
-        // Add this once outside the function
-const previewModal = document.getElementById("previewModal");
-const previewContent = document.getElementById("previewContent");
-const closePreview = document.getElementById("closePreview");
-
-closePreview.addEventListener("click", () => {
-    previewModal.style.display = "none";
-    previewContent.innerHTML = '<span id="closePreview" style="position:absolute; top:20px; right:30px; font-size:30px; cursor:pointer; color:white;">&times;</span>';
-});
-        let previewElement;
-
-        if (file.type && file.type === "application/pdf") {
-            previewElement = document.createElement("canvas");
-            previewElement.style.width = "100%";
-            previewElement.style.border = "1px solid #ddd";
-            previewElement.style.borderRadius = "5px";
-            previewElement.style.cursor = "pointer";
-
-previewElement.addEventListener("click", () => {
-  const fileIndex = currentCarouselFiles.findIndex(f => f.url === file.url);
-openCarousel(currentCarouselFiles, fileIndex >= 0 ? fileIndex : 0, getWarrantyId(), fieldName);
-});
-
-            try {
-                const pdf = await pdfjsLib.getDocument(file.url).promise;
-                const page = await pdf.getPage(1);
-                const scale = 1;
-                const viewport = page.getViewport({ scale });
-                const context = previewElement.getContext("2d");
-                previewElement.height = viewport.height;
-                previewElement.width = viewport.width;
-
-                await page.render({
-                    canvasContext: context,
-                    viewport: viewport,
-                });
-            } catch (error) {
-                console.error("❌ Error loading PDF preview:", error);
-                previewElement = document.createElement("iframe");
-                previewElement.src = file.url;
-                previewElement.width = "180";
-                previewElement.height = "220";
-                previewElement.style.borderRadius = "10px";
-                previewElement.style.border = "1px solid #ddd";
-            }
-        } else if (file.type && typeof file.type === "string" && file.type.startsWith("image/")) {
-            previewElement = document.createElement("img");
-            previewElement.src = file.url; 
-            previewElement.setAttribute("data-file-id", file.id || "");
-            previewElement.classList.add("uploaded-file");
-            previewElement.style.maxWidth = "100%";
-            previewElement.style.borderRadius = "5px";
-            previewElement.style.border = "1px solid #ddd";
-            previewElement.style.cursor = "pointer";
-
-previewElement.addEventListener("click", () => {
-  const index = files.findIndex(f => f.url === file.url);
-openCarousel(files, index >= 0 ? index : 0, getWarrantyId(), fieldName);
-});
-        } else {
-            previewElement = document.createElement("a");
-            previewElement.href = file.url;
-            previewElement.innerText = "Download File";
-            previewElement.target = "_blank";
-            previewElement.style.display = "block";
-            previewElement.style.padding = "5px";
-            previewElement.style.background = "#f4f4f4";
-            previewElement.style.borderRadius = "5px";
-            previewElement.style.textDecoration = "none";
-        }
-
-        // Append elements
-        wrapperDiv.appendChild(checkbox);
-        wrapperDiv.appendChild(overlay);
-        wrapperDiv.appendChild(previewElement);
-        wrapperDiv.appendChild(fileLabel);
-        container.appendChild(wrapperDiv);
-    }
-
-    container.style.display = "none";
-    container.offsetHeight;
-    container.style.display = "block";
-
-    console.log(`✅ Files displayed for ${containerId}`);
-    // ✅ Check if we need to show or hide delete button
-    checkAndHideDeleteButton();
-}
    
 function checkAndHideDeleteButton() {
     const deleteButton = document.getElementById("delete-images-btn");
@@ -1673,7 +1824,7 @@ async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
             [imageField]: updatedImages.length > 0 ? updatedImages : []
         });
 
-        console.log(`✅ Successfully deleted selected images from '${imageField}' for Lot: ${lotName}`);
+console.log(`✅ Successfully deleted selected images from '${imageField}' for Warranty ID: ${warrantyId}`);
 
         // ✅ **Refresh UI by reloading images dynamically**
         await loadImagesForLot(warrantyId);
@@ -1712,77 +1863,7 @@ async function fetchImagesByLotName(warrantyId, imageField) {
     }
 }
 
-async function loadImagesForLot(warrantyId, status) {
-    console.log("📡 Loading images for warrantyId:", warrantyId);
 
-    // Get elements and ensure they exist before accessing them
-    const issuePicturesSection = document.getElementById("issue-pictures");
-    const completedPicturesSection = document.getElementById("completed-pictures");
-    const uploadIssueInput = document.getElementById("upload-issue-picture");
-    const uploadCompletedInput = document.getElementById("upload-completed-picture");
-
-    if (!issuePicturesSection || !completedPicturesSection || !uploadIssueInput || !uploadCompletedInput) {
-        console.error("❌ One or more required elements are missing from the DOM.");
-        return;
-    }
-
-    // Show loading indicators while fetching images
-    issuePicturesSection.innerHTML = "📡 Loading issue images...";
-    completedPicturesSection.innerHTML = "📡 Loading completed images...";
-
-    try {
-        // Fetch both sets of images
-        const issueImages = await fetchImagesByLotName(warrantyId, "Picture(s) of Issue");
-
-        const completedImages = await fetchImagesByLotName(warrantyId, "Completed  Pictures");
-
-        console.log("🖼️ Loaded Images - Issue:", issueImages);
-        console.log("🖼️ Loaded Images - Completed:", completedImages);
-
-        // Check if any images exist
-        const hasIssueImages = issueImages && issueImages.length > 0;
-        const hasCompletedImages = completedImages && completedImages.length > 0;
-
-        // Show/Hide upload inputs based on images available
-        uploadIssueInput.style.display = hasIssueImages ? "block" : "none";
-        uploadCompletedInput.style.display = hasCompletedImages ? "block" : "none";
-
-        // Clear loading message before inserting images
-        issuePicturesSection.innerHTML = hasIssueImages ? "" : "";
-        completedPicturesSection.innerHTML = hasCompletedImages ? "" : "";
-
-if (!hasIssueImages && !hasCompletedImages) {
-    console.warn("⚠️ No images found, hiding sections.");
-    checkAndHideDeleteButton();
-    return;
-}
-
-// ✅ Only show if status allows
-if (status?.toLowerCase() === "scheduled- awaiting field") {
-    console.log("🚫 Skipping display of issue images due to status:", status);
-    // Do not show issue images
-} else if (hasIssueImages) {
-await displayImages(issueImages, "issue-pictures", "Picture(s) of Issue");
-}
-
-if (hasCompletedImages) {
-await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
-}
-
-        if (hasCompletedImages) {
-await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
-        }
-
-        // Ensure delete button updates correctly after image load
-        setTimeout(checkAndHideDeleteButton, 500);
-        checkAndHideDeleteButton();
-
-    } catch (error) {
-        console.error("❌ Error loading images for lot:", lotName, error);
-        issuePicturesSection.innerHTML = "❌ Error loading issue images.";
-        completedPicturesSection.innerHTML = "❌ Error loading completed images.";
-    }
-}
 
     async function testFetchImages() {
         try {
@@ -1815,16 +1896,7 @@ function saveRecordIdToLocal(recordId) {
 function getSavedRecordId() {
     return localStorage.getItem("currentRecordId");
 }
-function getWarrantyId() {
-    const id = document.getElementById("warranty-id")?.value?.trim();
-    if (id) return id;
-    if (currentWarrantyId) {
-        console.warn("⚠️ Using fallback warranty ID from global context.");
-        return currentWarrantyId;
-    }
-    console.warn("⚠️ Warranty ID is missing from both DOM and fallback.");
-    return null;
-}
+
 
 
 // ✅ Set the record ID on page load
@@ -2222,47 +2294,7 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
     }
 }
 
-async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
-    console.log("📡 Fetching images for Warranty ID:", warrantyId);
-    
-    if (!warrantyId) {
-        console.error("❌ Warranty ID is missing. Cannot fetch images.");
-        return [];
-    }
 
-    const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(`{Warranty Record ID} = '${warrantyId}'`)}&fields[]=${imageField}`;
-
-    try {
-        const response = await fetch(url, {
-            headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
-        });
-
-        if (!response.ok) {
-            console.error("❌ Error fetching record:", response.status, response.statusText);
-            return [];
-        }
-
-        const data = await response.json();
-
-        if (data.records.length === 0) {
-            console.warn(`⚠️ No records found for Warranty ID: ${warrantyId}`);
-            return [];
-        }
-
-        const record = data.records[0];
-
-        if (record.fields && record.fields[imageField]) {
-            console.log(`✅ Images found for '${warrantyId}' in field '${imageField}':`, record.fields[imageField]);
-            return record.fields[imageField];
-        } else {
-            console.warn(`⚠️ No images found in field '${imageField}' for '${warrantyId}'`);
-            return [];
-        }
-    } catch (error) {
-        console.error("❌ Error fetching images by Warranty ID:", error);
-        return [];
-    }
-}
 
     function convertUTCToLocalInput(utcDateString) {
         if (!utcDateString) return "";
@@ -2299,39 +2331,36 @@ async function uploadToDropbox(files, targetField) {
     let completed = 0;
     const total = files.length;
 
-    const uploadPromises = Array.from(files).map(async (file, index) => {
-        try {
-            progressLabel.textContent = `Compressing (${index + 1} of ${total})...`;
-            const compressedFile = await compressImage(file);
+  for (let index = 0; index < files.length; index++) {
+  const file = files[index];
+  try {
+    progressLabel.textContent = `Compressing (${index + 1} of ${files.length})...`;
+    const compressedFile = await compressImage(file);
 
-            progressLabel.textContent = `Uploading (${index + 1} of ${total})...`;
-            const dropboxUrl = await uploadFileToDropbox(compressedFile, dropboxAccessToken, creds);
+    progressLabel.textContent = `Uploading (${index + 1} of ${files.length})...`;
+    const dropboxUrl = await uploadFileToDropbox(compressedFile, dropboxAccessToken, creds);
 
-            if (dropboxUrl) {
-                const uploadedFile = {
-                    url: dropboxUrl,
-                    filename: file.name || "upload.png",
-                };
-uploadedUrls.push({ url: dropboxUrl });
+    if (dropboxUrl) {
+      const uploadedFile = {
+        url: dropboxUrl,
+        filename: file.name || "upload.png",
+      };
+      uploadedUrls.push(uploadedFile);
 
-                await displayImages(
-                    [uploadedFile],
-                    targetField === "Completed  Pictures" ? "completed-pictures" : "issue-pictures",
-                    targetField
-                );
-            }
+      await displayImages(
+        [uploadedFile],
+        targetField === "Completed  Pictures" ? "completed-pictures" : "issue-pictures",
+        targetField
+      );
+    }
 
-            completed++;
-            const percent = Math.round((completed / total) * 100);
-            progressBar.style.width = `${percent}%`;
-        } catch (error) {
-            console.error(`❌ Upload failed for ${file.name}:`, error);
-            showToast(`❌ Failed to upload ${file.name}`, "error");
-        }
-    });
-
-    await Promise.all(uploadPromises);
-
+    const percent = Math.round(((index + 1) / files.length) * 100);
+    progressBar.style.width = `${percent}%`;
+  } catch (error) {
+    console.error(`❌ Upload failed for ${file.name}:`, error);
+    showToast(`❌ Failed to upload ${file.name}`, "error");
+  }
+}
     await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, {
         [targetField]: uploadedUrls
     });
@@ -2348,32 +2377,16 @@ uploadedUrls.push({ url: dropboxUrl });
   showToast("✅ All files uploaded successfully!", "success");
 
 // ⏳ Wait so the user sees the toast, then refresh only image section
-setTimeout(() => {
-  refreshImageContainers(); // Your custom function to re-fetch and re-render
-}, 1500);
-}
-async function refreshImageContainers() {
-  console.log("🔄 Refreshing image containers...");
+try {
+    console.log("🔁 Calling refreshImageContainers...");
 
-  const warrantyId = getWarrantyId();
-  if (!warrantyId) {
-    console.error("❌ Cannot refresh images: missing warranty ID");
-    return;
-  }
-
-  const statusField = document.getElementById("field-status");
-  const status = statusField?.value || "";
-
-  try {
-    await loadImagesForLot(warrantyId, status);
-    console.log("✅ Image containers refreshed successfully.");
-  } catch (error) {
-    console.error("❌ Failed to refresh image containers:", error);
-    showToast("❌ Error refreshing images. Try again.", "error");
-  }
+  await refreshImageContainers(); // ✅ Ensure we wait for it to finish
+  console.log("✅ Image containers refreshed after upload.");
+} catch (err) {
+  console.error("❌ Failed to refresh image containers after upload:", err);
 }
 
-
+}
 
 async function compressImage(file) {
     const options = {
@@ -2397,7 +2410,7 @@ async function compressImage(file) {
 }
 
    // 🔹 Upload File to Dropbox
-   async function uploadFileToDropbox(file, token, creds = {}) {
+async function uploadFileToDropbox(file, token, creds = {}, attempt = 1) {
     if (!token) {
         console.error("❌ No Dropbox token provided.");
         return null;
@@ -2422,12 +2435,28 @@ async function compressImage(file) {
             body: file
         });
 
+        if (response.status === 429) {
+            const delayMs = Math.pow(2, attempt) * 1000; // exponential backoff
+            console.warn(`⏳ Rate limit hit. Retrying in ${delayMs / 1000}s (Attempt ${attempt})`);
+
+            if (attempt <= 5) {
+                await new Promise(res => setTimeout(res, delayMs));
+                return await uploadFileToDropbox(file, token, creds, attempt + 1);
+            } else {
+                console.error("❌ Max retry attempts reached for rate limiting.");
+                return null;
+            }
+        }
+
         if (!response.ok) {
             const errorResponse = await response.json();
             console.error("❌ Dropbox Upload Error:", errorResponse);
 
             const tag = errorResponse?.error?.[".tag"];
-            if (tag === "expired_access_token" || errorResponse?.error_summary?.startsWith("expired_access_token")) {
+            if (
+                tag === "expired_access_token" ||
+                errorResponse?.error_summary?.startsWith("expired_access_token")
+            ) {
                 console.warn("⚠️ Dropbox token expired. Refreshing...");
 
                 // Refresh the token
@@ -2436,7 +2465,7 @@ async function compressImage(file) {
 
                 if (newToken) {
                     console.log("🔄 Retrying file upload with refreshed token...");
-                    return await uploadFileToDropbox(file, newToken, creds); // ✅ Recursive retry
+                    return await uploadFileToDropbox(file, newToken, creds); // Recursive retry
                 }
             }
 
@@ -2452,6 +2481,7 @@ async function compressImage(file) {
         return null;
     }
 }
+
 
 
  window.addEventListener("beforeunload", function (e) {
