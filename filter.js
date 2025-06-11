@@ -96,7 +96,8 @@ document.getElementById('search-input').addEventListener('input', function () {
         // Show/hide the entire table section
         table.style.display = visibleCount > 0 ? 'table' : 'none';
         if (thead) thead.style.display = visibleCount > 0 ? 'table-header-group' : 'none';
-        if (h2) h2.style.display = visibleCount > 0 ? 'block' : 'none';
+const container = table.closest('#secoundary-content');
+if (container) container.style.display = visibleCount > 0 ? 'block' : 'none';
 
         const hideTechColumn = uniqueTechs.size <= 1;
 
@@ -382,7 +383,8 @@ function applyFilters() {
     
         table.style.display = visibleCount > 0 ? 'table' : 'none';
         if (thead) thead.style.display = visibleCount > 0 ? 'table-header-group' : 'none';
-        if (h2) h2.style.display = visibleCount > 0 ? 'block' : 'none';
+const container = table.closest('#secoundary-content');
+if (container) container.style.display = visibleCount > 0 ? 'block' : 'none';
     
         console.log(`🧮 ${visibleCount} rows visible in ${selector}`);
     });  

@@ -96,7 +96,53 @@
             AIRTABLE_TABLE_NAME: 'tbl6EeKPsNuEvt5yJ',
             AIRTABLE_TABLE_NAME2: 'tbl9SgC5wUi2TQuF7',
         };
+
+
+function toggleJumpLinkVisibility() {
+  const secondaryContent = document.getElementById("secoundary-content");
+  const jumpLink = document.querySelector(".jump-link");
+
+  if (!secondaryContent) {
+    console.warn("⚠️ Element with ID 'secoundary-content' not found.");
+    return;
+  }
+
+  if (!jumpLink) {
+    console.warn("⚠️ Element with class 'jump-link' not found.");
+    return;
+  }
+
+  const isHidden = !secondaryContent.offsetParent; // Better than getComputedStyle
+
+  console.log(`📦 #secoundary-content is currently ${isHidden ? "hidden" : "visible"} (offsetParent check)`);
+  console.log(`🔍 Should hide jump link? ${isHidden}`);
+
+  jumpLink.style.display = isHidden ? "none" : "inline";
+  console.log(`✅ .jump-link is now ${jumpLink.style.display === "none" ? "hidden" : "visible"}`);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  toggleJumpLinkVisibility();
+
+  const secondaryContent = document.getElementById("secoundary-content");
+
+  if (secondaryContent) {
+    const observer = new MutationObserver(() => {
+      console.log("👁️ Detected attribute change on #secoundary-content");
+      toggleJumpLinkVisibility();
+    });
+
+    observer.observe(secondaryContent, {
+      attributes: true,
+      attributeFilter: ['style', 'class'] // Watch for both class and style changes
+    });
+  } else {
+    console.warn("⚠️ #secoundary-content not found for observer setup.");
+  }
+});
         </script>
+
+
         
     <!-- JavaScript for interactivity -->
     <script src="script.js"></script>

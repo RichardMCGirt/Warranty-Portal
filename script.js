@@ -559,44 +559,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-function applyAlternatingRowColors(tableSelector) {
-    const table = document.querySelector(tableSelector);
-    if (!table) {
-        console.warn(`⚠️ Table not found: ${tableSelector}`);
-        return;
-    }
-
-    const rows = Array.from(table.querySelectorAll("tbody tr"));
-    if (rows.length === 0) {
-        console.warn(`⚠️ No rows found in ${tableSelector}`);
-        return;
-    }
-
-    let currentColor = "#e0e0e0";
-    let lastMergedValue = null;
-
-    rows.forEach((row) => {
-        const techCell = row.querySelector('td[data-field="field tech"]');
-
-        if (!techCell) {
-            row.style.backgroundColor = currentColor;
+    function applyAlternatingRowColors(tableSelector) {
+        const table = document.querySelector(tableSelector);
+        if (!table) {
+            console.warn(`⚠️ Table not found: ${tableSelector}`);
             return;
         }
-
-        // Use normalized text for consistent grouping
-        const normalizedTech = techCell.textContent.trim().split(',')
-            .map(s => s.trim()).sort().join(', ');
-
-        // Only toggle color when this is a new merged group (i.e., visible row)
-        if (techCell.style.display !== "none" && normalizedTech !== lastMergedValue) {
-            currentColor = currentColor === "#e0e0e0" ? "#cfcfcf" : "#e0e0e0";
-            lastMergedValue = normalizedTech;
+    
+        const rows = Array.from(table.querySelectorAll("tbody tr"));
+        if (rows.length === 0) {
+            console.warn(`⚠️ No rows found in ${tableSelector}`);
+            return;
         }
-
-        row.style.backgroundColor = currentColor;
-    });
-}
-
+    
+        let currentColor = "#e0e0e0"; // Slightly darker starting color
+        let lastMergedValue = null;
+    
+        rows.forEach((row) => {
+            const techCell = row.querySelector('td[data-field="field tech"]');
+    
+            if (!techCell) {
+                row.style.backgroundColor = currentColor;
+                return;
+            }
+    
+            const normalizedText = techCell.textContent.trim().split(',')
+                .map(s => s.trim()).sort().join(', ');
+    
+            // Toggle color when the tech group changes
+            if (normalizedText !== lastMergedValue) {
+                currentColor = currentColor === "#e0e0e0" ? "#cfcfcf" : "#e0e0e0"; // Darker tones
+                lastMergedValue = normalizedText;
+            }
+    
+            row.style.backgroundColor = currentColor;
+        });
+    }
      
    
     const labels = document.querySelectorAll('.billable-option');
@@ -693,6 +691,9 @@ function applyAlternatingRowColors(tableSelector) {
         tbody.appendChild(row);
     }); 
 } 
+
+
+
 
 document.getElementById('search-input').addEventListener('input', function () {
     const searchValue = this.value.toLowerCase();

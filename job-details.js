@@ -33,6 +33,176 @@ function checkAndHideDeleteButton() {
     }
 }
 
+// ✅ Open the carousel
+function openCarousel(files, startIndex = 0, warrantyId, field) {
+  const overlay = document.getElementById("attachment-carousel");
+  const body = document.getElementById("carousel-body");
+
+  if (!overlay || !body) return;
+
+  console.log("🚀 Opening carousel with files:", files, "Start index:", startIndex);
+
+  currentCarouselFiles = files;
+  currentCarouselIndex = startIndex;
+  currentCarouselField = field;
+  currentWarrantyId = warrantyId;
+
+  overlay.style.display = "flex";
+  displayCarouselItem(currentCarouselIndex);
+}
+
+// ✅ Display an individual item
+function displayCarouselItem(index) {
+  const body = document.getElementById("carousel-body");
+
+  if (
+    !body ||
+    !Array.isArray(currentCarouselFiles) ||
+    index < 0 ||
+    index >= currentCarouselFiles.length
+  ) {
+    console.warn("⚠️ Invalid carousel state or index:", index, "Files:", currentCarouselFiles);
+    return; // Do NOT close overlay
+  }
+
+  console.log("📸 Displaying carousel index:", index);
+  console.log("📁 Files:", currentCarouselFiles);
+
+  const file = currentCarouselFiles[index];
+  body.innerHTML = ""; // Clear previous content
+
+  if (file.type?.startsWith("image/")) {
+    const img = document.createElement("img");
+    img.src = file.url;
+    img.alt = file.filename || "Image Preview";
+    img.style.maxWidth = "100%";
+    img.style.maxHeight = "80vh";
+    img.style.borderRadius = "8px";
+    img.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+    body.appendChild(img);
+  } else if (file.type === "application/pdf") {
+    const iframe = document.createElement("iframe");
+    iframe.src = file.url;
+    iframe.title = file.filename || "PDF Preview";
+    iframe.style.width = "80vw";
+    iframe.style.height = "80vh";
+    iframe.style.border = "none";
+    iframe.style.borderRadius = "8px";
+    body.appendChild(iframe);
+  } else {
+    const fallback = document.createElement("p");
+    fallback.textContent = "⚠️ Unsupported file type.";
+    fallback.style.color = "#fff";
+    fallback.style.fontSize = "18px";
+    body.appendChild(fallback);
+  }
+}
+
+// ✅ Close the carousel
+function closeCarousel() {
+  const overlay = document.getElementById("attachment-carousel");
+  if (overlay) overlay.style.display = "none";
+}
+
+// ✅ Setup navigation buttons
+document.getElementById("carousel-next")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  if (currentCarouselFiles.length > 0) {
+    currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
+    displayCarouselItem(currentCarouselIndex);
+  }
+});
+
+document.getElementById("carousel-prev")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  if (currentCarouselFiles.length > 0) {
+    currentCarouselIndex =
+      (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
+    displayCarouselItem(currentCarouselIndex);
+  }
+});
+
+// ✅ Close button logic
+document.getElementById("close-carousel")?.addEventListener("click", () => {
+  closeCarousel();
+});
+
+// ✅ Optional: Delete button
+document.getElementById("delete-current-attachment")?.addEventListener("click", async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  console.log("🗑️ Delete button clicked in carousel.");
+
+  if (!currentWarrantyId) {
+    console.error("❌ currentWarrantyId is missing.");
+    alert("Missing warranty ID. Cannot proceed with deletion.");
+    return;
+  }
+
+  if (!currentCarouselField) {
+    console.error("❌ currentCarouselField is missing.");
+    alert("Missing image field name. Cannot proceed with deletion.");
+    return;
+  }
+
+  if (!currentCarouselFiles || !currentCarouselFiles[currentCarouselIndex]) {
+    console.error("❌ No current file selected or invalid index.");
+    alert("No file selected. Cannot delete.");
+    return;
+  }
+
+  const fileToDelete = currentCarouselFiles[currentCarouselIndex];
+  console.log("📁 Attempting to delete file:", fileToDelete);
+
+  if (!fileToDelete.id) {
+    console.warn("⚠️ File missing 'id'. Cannot remove from Airtable:", fileToDelete);
+    alert("File is missing a valid ID. Cannot delete.");
+    return;
+  }
+
+  if (!confirm(`Delete ${fileToDelete.filename}?`)) {
+    console.log("❌ Deletion canceled by user.");
+    return;
+  }
+
+  try {
+    const existing = await fetchCurrentImagesFromAirtable(currentWarrantyId, currentCarouselField);
+    console.log("📦 Existing images fetched:", existing);
+
+    const updated = existing.filter(file => file.id !== fileToDelete.id);
+    console.log("🧹 Images after filtering out deleted file:", updated);
+
+    await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, currentWarrantyId, {
+      [currentCarouselField]: updated
+    });
+
+    console.log("✅ Airtable field updated successfully.");
+
+    currentCarouselFiles = updated;
+
+    if (currentCarouselFiles.length === 0) {
+      closeCarousel();
+    } else {
+      currentCarouselIndex = Math.min(currentCarouselIndex, currentCarouselFiles.length - 1);
+      displayCarouselItem(currentCarouselIndex);
+    }
+
+    showToast("✅ File deleted successfully.", "success");
+
+    // 🔄 Force background image containers to update without disrupting carousel
+    setTimeout(() => {
+      refreshImageContainers();
+    }, 1000); // slight delay to allow Airtable update to propagate
+
+  } catch (error) {
+    console.error("❌ Error deleting file from Airtable:", error);
+    showToast("❌ Failed to delete file. Try again.", "error");
+  }
+});
+
+
+
 async function displayImages(files, containerId, fieldName = "") {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -993,184 +1163,38 @@ let currentCarouselIndex = 0;
 let currentCarouselField = null;
 let currentWarrantyId = null;
 
-// ✅ Open the carousel
-function openCarousel(files, startIndex = 0, warrantyId, field) {
-  const overlay = document.getElementById("attachment-carousel");
-  const body = document.getElementById("carousel-body");
-
-  if (!overlay || !body) return;
-
-  console.log("🚀 Opening carousel with files:", files, "Start index:", startIndex);
-
-  currentCarouselFiles = files;
-  currentCarouselIndex = startIndex;
-  currentCarouselField = field;
-  currentWarrantyId = warrantyId;
-
-  overlay.style.display = "flex";
-  displayCarouselItem(currentCarouselIndex);
-}
-
-// ✅ Display an individual item
-function displayCarouselItem(index) {
-  const body = document.getElementById("carousel-body");
-
-  if (
-    !body ||
-    !Array.isArray(currentCarouselFiles) ||
-    index < 0 ||
-    index >= currentCarouselFiles.length
-  ) {
-    console.warn("⚠️ Invalid carousel state or index:", index, "Files:", currentCarouselFiles);
-    return; // Do NOT close overlay
-  }
-
-  console.log("📸 Displaying carousel index:", index);
-  console.log("📁 Files:", currentCarouselFiles);
-
-  const file = currentCarouselFiles[index];
-  body.innerHTML = ""; // Clear previous content
-
-  if (file.type?.startsWith("image/")) {
-    const img = document.createElement("img");
-    img.src = file.url;
-    img.alt = file.filename || "Image Preview";
-    img.style.maxWidth = "100%";
-    img.style.maxHeight = "80vh";
-    img.style.borderRadius = "8px";
-    img.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
-    body.appendChild(img);
-  } else if (file.type === "application/pdf") {
-    const iframe = document.createElement("iframe");
-    iframe.src = file.url;
-    iframe.title = file.filename || "PDF Preview";
-    iframe.style.width = "80vw";
-    iframe.style.height = "80vh";
-    iframe.style.border = "none";
-    iframe.style.borderRadius = "8px";
-    body.appendChild(iframe);
-  } else {
-    const fallback = document.createElement("p");
-    fallback.textContent = "⚠️ Unsupported file type.";
-    fallback.style.color = "#fff";
-    fallback.style.fontSize = "18px";
-    body.appendChild(fallback);
-  }
-}
-
-// ✅ Close the carousel
-function closeCarousel() {
-  const overlay = document.getElementById("attachment-carousel");
-  if (overlay) overlay.style.display = "none";
-}
-
-// ✅ Setup navigation buttons
-document.getElementById("carousel-next")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  if (currentCarouselFiles.length > 0) {
-    currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
-    displayCarouselItem(currentCarouselIndex);
-  }
-});
-
-document.getElementById("carousel-prev")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  if (currentCarouselFiles.length > 0) {
-    currentCarouselIndex =
-      (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
-    displayCarouselItem(currentCarouselIndex);
-  }
-});
-
-// ✅ Close button logic
-document.getElementById("close-carousel")?.addEventListener("click", () => {
-  closeCarousel();
-});
-
-// ✅ Optional: Delete button
-document.getElementById("delete-current-attachment")?.addEventListener("click", async (e) => {
-  e.preventDefault(); // ✅ STOP form from submitting
-  e.stopPropagation(); // ✅ (Optional but helps if inside a form)
-
-  console.log("🗑️ Delete button clicked in carousel.");
-
-  if (!currentWarrantyId) {
-    console.error("❌ currentWarrantyId is missing.");
-    alert("Missing warranty ID. Cannot proceed with deletion.");
-    return;
-  }
-
-  if (!currentCarouselField) {
-    console.error("❌ currentCarouselField is missing.");
-    alert("Missing image field name. Cannot proceed with deletion.");
-    return;
-  }
-
-  if (!currentCarouselFiles || !currentCarouselFiles[currentCarouselIndex]) {
-    console.error("❌ No current file selected or invalid index.");
-    alert("No file selected. Cannot delete.");
-    return;
-  }
-
-  const fileToDelete = currentCarouselFiles[currentCarouselIndex];
-  console.log("📁 Attempting to delete file:", fileToDelete);
-
-  if (!fileToDelete.id) {
-    console.warn("⚠️ File missing 'id'. Cannot remove from Airtable:", fileToDelete);
-    alert("File is missing a valid ID. Cannot delete.");
-    return;
-  }
-
-  if (!confirm(`Delete ${fileToDelete.filename}?`)) {
-    console.log("❌ Deletion canceled by user.");
-    return;
-  }
-
-  try {
-    const existing = await fetchCurrentImagesFromAirtable(currentWarrantyId, currentCarouselField);
-    console.log("📦 Existing images fetched:", existing);
-
-    const updated = existing.filter(file => file.id !== fileToDelete.id);
-    console.log("🧹 Images after filtering out deleted file:", updated);
-
-    await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, currentWarrantyId, {
-      [currentCarouselField]: updated
-    });
-
-    console.log("✅ Airtable field updated successfully.");
-
-    currentCarouselFiles = updated;
-
-    if (currentCarouselFiles.length === 0) {
-      closeCarousel();
-    } else {
-      currentCarouselIndex = Math.min(currentCarouselIndex, currentCarouselFiles.length - 1);
-      displayCarouselItem(currentCarouselIndex);
-    }
-
-    showToast("✅ File deleted successfully.", "success");
-
-  } catch (error) {
-    console.error("❌ Error deleting file from Airtable:", error);
-    showToast("❌ Failed to delete file. Try again.", "error");
-  }
-});
-
-
-
-
 
 document.addEventListener("DOMContentLoaded", () => {
   const carouselOverlay = document.getElementById("attachment-carousel");
   if (!carouselOverlay) return;
 
   let touchStartX = 0;
+  let touchStartY = 0;
+  let touchMoved = false;
 
-  carouselOverlay.addEventListener("touchstart", e => {
+  carouselOverlay.addEventListener("touchstart", (e) => {
     touchStartX = e.changedTouches[0].screenX;
-  }, false);
+    touchStartY = e.changedTouches[0].screenY;
+    touchMoved = false;
+  }, { passive: false }); // ⛔ Required to allow preventDefault()
 
-  carouselOverlay.addEventListener("touchend", e => {
+  carouselOverlay.addEventListener("touchmove", (e) => {
+    const touchX = e.changedTouches[0].screenX;
+    const touchY = e.changedTouches[0].screenY;
+
+    const diffX = Math.abs(touchX - touchStartX);
+    const diffY = Math.abs(touchY - touchStartY);
+
+    if (diffX > diffY) {
+      // 🚫 Prevent scrolling if horizontal swipe is detected
+      e.preventDefault();
+      touchMoved = true;
+    }
+  }, { passive: false });
+
+  carouselOverlay.addEventListener("touchend", (e) => {
+    if (!touchMoved) return;
+
     const touchEndX = e.changedTouches[0].screenX;
     const diffX = touchEndX - touchStartX;
 
@@ -1186,6 +1210,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }, false);
 });
+
+
 
 
 
