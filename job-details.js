@@ -1020,8 +1020,14 @@ if (window.materialDropdownValue) {
     console.error("❌ Warranty ID is missing.");
     return;
 }
+
 if (window.materialDropdownValue) {
     jobData["Material/Not needed"] = window.materialDropdownValue;
+
+    if (window.materialDropdownValue === "Do Not Need Materials") {
+        jobData["Material Vendor"] = []; // 🧹 Clear vendor
+        console.log("🧹 Cleared Material Vendor due to 'Do Not Need Materials' selection");
+    }
 }
 
                 // ✅ Save to Airtable
@@ -1718,18 +1724,41 @@ function updateMaterialsTextareaVisibility() {
 
 document.getElementById("material-needed-select")?.addEventListener("change", function () {
     const value = this.value;
+    const textarea = document.getElementById("materials-needed");
+    const materialsNeededContainer = document.getElementById("materials-needed-container");
+    const vendorDropdown = document.getElementById("vendor-dropdown");
+
     window.materialDropdownValue = value;
     console.log("🔄 Dropdown changed to:", value);
-  
-    const materialsNeededContainer = document.getElementById("materials-needed-container");
-    if (materialsNeededContainer) {
-      if (value === "Needs Materials") {
-        materialsNeededContainer.style.display = "block";
-      } else {
-        materialsNeededContainer.style.display = "none";
-      }
+
+    if (value === "Needs Materials") {
+        if (materialsNeededContainer) materialsNeededContainer.style.display = "block";
+    } else {
+        // Confirm before clearing materials
+        if (textarea?.value.trim()) {
+            const confirmClear = confirm("You have entered materials. Do you want to clear them?");
+            if (confirmClear) {
+                textarea.value = "";
+                console.log("🧹 Materials textarea cleared.");
+            } else {
+                // Stay on "Needs Materials"
+                this.value = "Needs Materials";
+                window.materialDropdownValue = "Needs Materials";
+                return;
+            }
+        }
+
+        // ✅ Clear vendor dropdown selection
+        if (vendorDropdown && vendorDropdown.value.trim()) {
+            vendorDropdown.value = "";
+            console.log("🧹 Vendor dropdown cleared.");
+        }
+
+        if (materialsNeededContainer) materialsNeededContainer.style.display = "none";
     }
-  });
+});
+
+
   
 
 // Function to hide an element safely
