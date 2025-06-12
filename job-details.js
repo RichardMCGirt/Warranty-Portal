@@ -1009,7 +1009,10 @@ if (subcontractorCheckbox.checked) {
 } else if (selectedSub !== "") {
     jobData["Subcontractor"] = selectedSub;
 }
-        
+if (window.materialDropdownValue) {
+    updatedFields["Material/Not needed"] = window.materialDropdownValue;
+    console.log("📦 Material/Not needed set to:", window.materialDropdownValue);
+  }
                 console.log("📤 Sending updated fields to Airtable:", jobData);
                 console.log("🔎 Sending Billable value:", updatedFields["Billable/ Non Billable"]);
 
@@ -1017,6 +1020,10 @@ if (subcontractorCheckbox.checked) {
     console.error("❌ Warranty ID is missing.");
     return;
 }
+if (window.materialDropdownValue) {
+    jobData["Material/Not needed"] = window.materialDropdownValue;
+}
+
                 // ✅ Save to Airtable
                 await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, jobData);
         
@@ -1425,6 +1432,11 @@ async function populatePrimaryFields(job) {
     setInputValue("EndDate", convertUTCToLocalInput(job["EndDate"]));
     setInputValue("subcontractor", safeValue(job["Subcontractor"]));
     setInputValue("subcontractor-payment", safeValue(job["Subcontractor Payment"])); 
+    setInputValue("material-needed-select", safeValue(job["Material/Not needed"]));
+
+    setInputValue("material-needed-select", safeValue(job["Material/Not needed"]));
+
+
 
   // HIDE the job completed container if Status is "Field Tech Review Needed"
   const jobCompletedContainer = document.querySelector(".job-completed-container");
@@ -1475,7 +1487,33 @@ if (Array.isArray(originalSub) && originalSub.length > 0) {
   setTimeout(() => {
     const materialsTextarea = document.getElementById("materials-needed");
     const materialSelect = document.getElementById("material-needed-select");
+    const materialValue = job["Material/Not needed"] || "";
+    if (materialSelect) {
+      materialSelect.value = materialValue;
+      window.materialDropdownValue = materialValue;
+      console.log("📦 Material dropdown populated with:", materialValue);
+    }
+    
 
+    console.log("📦 Material/Not needed field value:", materialValue);
+
+    setTimeout(() => {
+        materialSelect.value = materialValue;
+        console.log("🧪 Select value after setting (delayed):", materialSelect.value);
+    }, 100);
+    if (materialSelect) {
+        console.log("📦 Material/Not needed field value:", materialValue);
+
+        materialSelect.value = materialValue;
+    
+        if (materialSelect.value !== materialValue) {
+            console.warn("❗ Dropdown option not found for:", materialValue);
+            [...materialSelect.options].forEach(opt => {
+                console.log("🧾 Option:", opt.value);
+            });
+        }
+    }
+    
     if (materialsTextarea && materialsTextarea.value.trim() !== "") {
         let exists = Array.from(materialSelect.options).some(opt => opt.value === "Needs Materials");
         if (!exists) {
@@ -1496,6 +1534,20 @@ const materialSelect = document.getElementById("material-needed-select");
 const textareaContainer = document.getElementById("materials-needed-container");
 const homeownerBuilderSelect = document.getElementById("homeowner-builder");
 const homeownerBuilderContainer = homeownerBuilderSelect?.parentElement;
+
+if (materialSelect && textareaContainer) {
+    const dropdownValue = safeValue(job["Material/Not needed"]);
+    console.log("📦 Material/Not needed field value:", dropdownValue);
+
+    materialSelect.value = dropdownValue;
+
+    // Show/hide the materials textarea
+    if (dropdownValue === "Needs Materials") {
+        textareaContainer.style.display = "block";
+    } else {
+        textareaContainer.style.display = "none";
+    }
+}
 
 if (materialsTextarea && materialSelect && textareaContainer) {
     const value = materialsTextarea.value.trim();
@@ -1625,7 +1677,22 @@ if (materialsTextarea && materialSelect && textareaContainer) {
     
 }
 
-
+document.getElementById("material-needed-select")?.addEventListener("change", (e) => {
+    const value = e.target.value;
+    console.log("🔄 Dropdown changed to:", value);
+  
+    // show or hide textarea
+    const textarea = document.getElementById("materials-needed-textarea");
+    if (value === "Needs Materials") {
+      textarea?.classList.remove("hidden");
+    } else {
+      textarea?.classList.add("hidden");
+    }
+  
+    // store this value for later save
+    window.materialDropdownValue = value;
+  });
+  
 
 function hideParentFormGroup(elementId) {
     const el = document.getElementById(elementId);
@@ -1648,6 +1715,22 @@ function updateMaterialsTextareaVisibility() {
         textareaContainer.style.display = "none";
     }
 }
+
+document.getElementById("material-needed-select")?.addEventListener("change", function () {
+    const value = this.value;
+    window.materialDropdownValue = value;
+    console.log("🔄 Dropdown changed to:", value);
+  
+    const materialsNeededContainer = document.getElementById("materials-needed-container");
+    if (materialsNeededContainer) {
+      if (value === "Needs Materials") {
+        materialsNeededContainer.style.display = "block";
+      } else {
+        materialsNeededContainer.style.display = "none";
+      }
+    }
+  });
+  
 
 // Function to hide an element safely
 function hideElementById(elementId) {
@@ -2843,17 +2926,21 @@ async function fetchVendors() {
             }
         }
 
-        await populateVendorDropdownWithSelection(resolvedRecordId);
+        const vendorDropdown = document.getElementById("vendor-dropdown");
+        const selectedVendorId = vendorDropdown?.value?.trim();
+
+        if (selectedVendorId && selectedVendorId.startsWith("rec")) {
+            fields["Material Vendor"] = [selectedVendorId];
+        }
 
         const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${resolvedRecordId}`;
         console.log("📡 Sending API Request to Airtable:", url);
 
         const sanitizedFields = Object.fromEntries(
             Object.entries(fields).filter(([key]) =>
-                key !== "Warranty Record ID" && key !== "Material Vendor"
+                key !== "Warranty Record ID"
             )
         );
-        
 
         const response = await fetch(url, {
             method: "PATCH",
@@ -2888,7 +2975,7 @@ async function fetchVendors() {
             return;
         }
 
-        console.log("✅ Airtable record updated successfully:", fields);
+        console.log("✅ Airtable record updated successfully:", sanitizedFields);
         showToast("✅ Record updated successfully!", "success");
 
     } catch (error) {
