@@ -611,80 +611,6 @@ function showToast(message, type = "success", duration = 3000) {
     }, duration);
 }
 
-async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
-    console.log("📡 Updating Airtable record for:", lotNameOrRecordId);
-
-    const saveButton = document.getElementById("save-job");
-    if (saveButton) saveButton.disabled = true;
-
-    if (!navigator.onLine) {
-        console.error("❌ No internet connection detected.");
-        showToast("❌ You are offline. Please check your internet connection and try again.", "error");
-        if (saveButton) saveButton.disabled = false;
-        return;
-    }
-
-    try {
-        let resolvedRecordId = lotNameOrRecordId;
-        if (!resolvedRecordId.startsWith("rec")) {
-            resolvedRecordId = await getRecordIdByWarrantyId(lotNameOrRecordId);
-            if (!resolvedRecordId) {
-                console.error("❌ Could not resolve Record ID for:", lotNameOrRecordId);
-                return;
-            }
-        }
-
-        await populateVendorDropdownWithSelection(resolvedRecordId);
-
-        const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${resolvedRecordId}`;
-        console.log("📡 Sending API Request to Airtable:", url);
-
-        const sanitizedFields = Object.fromEntries(
-            Object.entries(fields).filter(([key]) => key !== "Warranty Record ID")
-        );
-
-        const response = await fetch(url, {
-            method: "PATCH",
-            headers: {
-                Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ fields: sanitizedFields })
-        });
-
-        if (!response.ok) {
-            let errorDetails;
-            try {
-                errorDetails = await response.json();
-            } catch (jsonErr) {
-                console.error("❌ Failed to parse Airtable error JSON:", jsonErr);
-                const text = await response.text();
-                console.error("📄 Raw response body:", text);
-                showToast("❌ Error updating Airtable: Unable to parse error response", "error");
-                return;
-            }
-
-            console.group("📛 Airtable Update Error Details");
-            console.error("❌ Status Code:", response.status);
-            console.error("❌ Status Text:", response.statusText);
-            console.error("❌ Error Type:", errorDetails.error?.type || "Unknown");
-            console.error("❌ Error Message:", errorDetails.error?.message || "No message provided");
-            console.error("📦 Full Error Object:", errorDetails);
-            console.groupEnd();
-
-            showToast(`❌ Airtable error: ${errorDetails.error?.message || 'Unknown error'}`, "error");
-            return;
-        }
-
-        console.log("✅ Airtable record updated successfully:", fields);
-        showToast("✅ Record updated successfully!", "success");
-
-    } catch (error) {
-        console.error("❌ Error updating Airtable:", error);
-    } finally {
-        if (saveButton) saveButton.disabled = false;
-    }
-}
 
 
 function openMapApp() {
@@ -952,7 +878,6 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
             checkImagesVisibility(); // Re-check visibility after deletion
         });
 
-        // Initialize subcontractor checkbox and dropdown state from job data
   
         
         
@@ -2078,20 +2003,6 @@ if (subcontractorPaymentInput) {
         updatedFields["Subcontractor Payment"] = null; // or 0 if you prefer
     }
 }
-// ✅ Vendor patch (already exists in your code)
-const vendorDropdown = document.getElementById("vendor-dropdown");
-const selectedVendorName = vendorDropdown?.value?.trim();
-const selectedVendorId = vendorIdMap[selectedVendorName];
-
-if (selectedVendorName && selectedVendorId) {
-  updatedFields["Material Vendor"] = [selectedVendorId]; // 🔗 Link record
-} else if (selectedVendorName) {
-  console.warn("⚠️ Vendor selected but not found in vendorIdMap:", selectedVendorName);
-}
-
-// ✅ ⬇️ Place this logging block here
-console.log("🧪 Material Vendor ID:", selectedVendorId);
-console.log("🧪 Vendor Field Value Being Sent:", updatedFields["Material Vendor"]);
 
 // ⬇️ Airtable update happens after logging
 await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFields);
@@ -2909,4 +2820,80 @@ async function fetchVendors() {
   }
   
   
-  
+  async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
+    console.log("📡 Updating Airtable record for:", lotNameOrRecordId);
+
+    const saveButton = document.getElementById("save-job");
+    if (saveButton) saveButton.disabled = true;
+
+    if (!navigator.onLine) {
+        console.error("❌ No internet connection detected.");
+        showToast("❌ You are offline. Please check your internet connection and try again.", "error");
+        if (saveButton) saveButton.disabled = false;
+        return;
+    }
+
+    try {
+        let resolvedRecordId = lotNameOrRecordId;
+        if (!resolvedRecordId.startsWith("rec")) {
+            resolvedRecordId = await getRecordIdByWarrantyId(lotNameOrRecordId);
+            if (!resolvedRecordId) {
+                console.error("❌ Could not resolve Record ID for:", lotNameOrRecordId);
+                return;
+            }
+        }
+
+        await populateVendorDropdownWithSelection(resolvedRecordId);
+
+        const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${resolvedRecordId}`;
+        console.log("📡 Sending API Request to Airtable:", url);
+
+        const sanitizedFields = Object.fromEntries(
+            Object.entries(fields).filter(([key]) =>
+                key !== "Warranty Record ID" && key !== "Material Vendor"
+            )
+        );
+        
+
+        const response = await fetch(url, {
+            method: "PATCH",
+            headers: {
+                Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ fields: sanitizedFields })
+        });
+
+        if (!response.ok) {
+            let errorDetails;
+            try {
+                errorDetails = await response.json();
+            } catch (jsonErr) {
+                console.error("❌ Failed to parse Airtable error JSON:", jsonErr);
+                const text = await response.text();
+                console.error("📄 Raw response body:", text);
+                showToast("❌ Error updating Airtable: Unable to parse error response", "error");
+                return;
+            }
+
+            console.group("📛 Airtable Update Error Details");
+            console.error("❌ Status Code:", response.status);
+            console.error("❌ Status Text:", response.statusText);
+            console.error("❌ Error Type:", errorDetails.error?.type || "Unknown");
+            console.error("❌ Error Message:", errorDetails.error?.message || "No message provided");
+            console.error("📦 Full Error Object:", errorDetails);
+            console.groupEnd();
+
+            showToast(`❌ Airtable error: ${errorDetails.error?.message || 'Unknown error'}`, "error");
+            return;
+        }
+
+        console.log("✅ Airtable record updated successfully:", fields);
+        showToast("✅ Record updated successfully!", "success");
+
+    } catch (error) {
+        console.error("❌ Error updating Airtable:", error);
+    } finally {
+        if (saveButton) saveButton.disabled = false;
+    }
+}
