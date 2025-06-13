@@ -276,8 +276,6 @@ if (previewModal) {
     }
   });
 }
-
-
         let previewElement;
 
         if (file.type && file.type === "application/pdf") {
@@ -2414,7 +2412,6 @@ async function getExistingDropboxLink(filePath) {
   }
 }
 
-    
     function convertToDirectLink(sharedUrl) {
         if (sharedUrl.includes("dropbox.com")) {
             return sharedUrl.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "?raw=1");
