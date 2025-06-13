@@ -243,32 +243,25 @@ function applyAlternatingColors(selector) {
   console.log(`🎯 Found ${rows.length} rows in ${selector}`);
 
   let colorToggle = false;
-  const darkBg = '#888888';
-  const lightBg = '#ffffff';
-  const darkText = '#000000';
-  const lightText = '#ffffff';
+const evenColor = '#ffffff';  // Stronger professional contrast
+const oddColor = '#ffffff';   // White
 
   rows.forEach((row, index) => {
     const firstCell = row.cells[0];
     const isMerged = !firstCell || firstCell.style.display === 'none';
-    const bgColor = colorToggle ? darkBg : lightBg;
-    const textColor = colorToggle ? lightText : darkText;
+    const color = colorToggle ? evenColor : oddColor;
 
     if (isMerged) {
-      row.style.setProperty('background-color', bgColor, 'important');
-      row.style.setProperty('color', textColor, 'important');
-      console.log(`🔁 Row ${index} (merged): backgroundColor = ${bgColor}, textColor = ${textColor}`);
+      row.style.setProperty('background-color', color, 'important');
+      console.log(`🔁 Row ${index} (merged): backgroundColor = ${color}`);
     } else {
       colorToggle = !colorToggle;
-      const toggleBg = colorToggle ? darkBg : lightBg;
-      const toggleText = colorToggle ? lightText : darkText;
-      row.style.setProperty('background-color', toggleBg, 'important');
-      row.style.setProperty('color', toggleText, 'important');
-      console.log(`✅ Row ${index}: toggled to ${toggleBg}, textColor = ${toggleText}`);
+      const toggleColor = colorToggle ? evenColor : oddColor;
+      row.style.setProperty('background-color', toggleColor, 'important');
+      console.log(`✅ Row ${index}: toggled to ${toggleColor}`);
     }
   });
 }
-
 
   async function displayRecords(records, tableSelector) {
   const table = document.querySelector(tableSelector);
