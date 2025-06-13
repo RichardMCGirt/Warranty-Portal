@@ -213,45 +213,56 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function displayRecords(records, tableSelector) {
-    const table = document.querySelector(tableSelector);
-    const tbody = table.querySelector('tbody');
-    const thead = table.querySelector('thead');
-    const h2 = table.closest('.scrollable-div')?.previousElementSibling;
+  const table = document.querySelector(tableSelector);
+  const tbody = table.querySelector('tbody');
+  const thead = table.querySelector('thead');
+  const h2 = table.closest('.scrollable-div')?.previousElementSibling;
 
-    tbody.innerHTML = '';
+  tbody.innerHTML = '';
 
-    if (!records.length) {
-      if (thead) thead.style.display = 'none';
-      if (table) table.style.display = 'none';
-      if (h2) h2.style.display = 'none';
-      return;
-    }
+  if (!records.length) {
+    if (thead) thead.style.display = 'none';
+    if (table) table.style.display = 'none';
+    if (h2) h2.style.display = 'none';
+    return;
+  }
 
-    records.forEach(record => {
-      const row = document.createElement('tr');
-      const tech = record.fields['field tech'] || 'N/A';
-      const lot = record.fields['Lot Number and Community/Neighborhood'] || record.fields['Street Address'] || 'N/A';
+  // 🔤 Sort by 'field tech' alphabetically (case-insensitive)
+  records.sort((a, b) => {
+    const nameA = (a.fields['field tech'] || '').toLowerCase();
+    const nameB = (b.fields['field tech'] || '').toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
 
-      row.innerHTML = `
-        <td data-field="field tech">${tech}</td>
-        <td data-field="Lot Number and Community/Neighborhood" style="cursor:pointer;color:blue;text-decoration:underline">${lot}</td>
-        <td data-field="b" style="display:none">${record.fields['b'] || ''}</td>
-      `;
+  records.forEach(record => {
+    const row = document.createElement('tr');
+    const tech = record.fields['field tech'] || 'N/A';
+    const lot = record.fields['Lot Number and Community/Neighborhood'] || record.fields['Street Address'] || 'N/A';
 
-      row.querySelector('[data-field="Lot Number and Community/Neighborhood"]').addEventListener('click', () => {
-        const id = record.fields['Warranty Record ID'];
-        if (!id) return;
-        localStorage.setItem("selectedJobId", id);
-        window.location.href = `job-details.html?id=${id}`;
-      });
+    row.innerHTML = `
+      <td data-field="field tech">${tech}</td>
+      <td data-field="Lot Number and Community/Neighborhood" style="cursor:pointer;color:blue;text-decoration:underline">${lot}</td>
+      <td data-field="b" style="display:none">${record.fields['b'] || ''}</td>
+    `;
 
-      tbody.appendChild(row);
+    row.querySelector('[data-field="Lot Number and Community/Neighborhood"]').addEventListener('click', () => {
+      const id = record.fields['Warranty Record ID'];
+      if (!id) return;
+      localStorage.setItem("selectedJobId", id);
+      window.location.href = `job-details.html?id=${id}`;
     });
 
-    if (thead) thead.style.display = 'table-header-group';
-    if (table) table.style.display = 'table';
-    if (h2) h2.style.display = 'block';
-  }
+    tbody.appendChild(row);
+  });
+
+  // ✅ Merge sorted duplicate values in column 1
+  mergeTableCells(tableSelector, 0);
+
+  if (thead) thead.style.display = 'table-header-group';
+  if (table) table.style.display = 'table';
+  if (h2) h2.style.display = 'block';
+}
+
 
   function mergeTableCells(selector, columnIndex) {
     const table = document.querySelector(selector);

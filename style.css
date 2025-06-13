@@ -95,7 +95,7 @@ th, td {
     padding: 8px;
     text-align: center;
     font-size: 22px;
-    word-break: keep-all;
+  word-break: break-word; /* or 'normal' */
     white-space: normal;
 }
 
