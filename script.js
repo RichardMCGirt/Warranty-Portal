@@ -169,19 +169,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  function applyFilters() {
-    const selected = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
-    const isAll = selected.includes('All') || selected.length === 0;
+function applyFilters() {
+  const selected = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
+  const isAll = selected.includes('All') || selected.length === 0;
 
-    ['#airtable-data', '#feild-data'].forEach(selector => {
-      const rows = document.querySelectorAll(`${selector} tbody tr`);
-      rows.forEach(row => {
-        const tech = row.cells[0]?.textContent.trim() || '';
-        const techNames = tech.split(',').map(n => n.trim());
-        row.style.display = isAll || selected.some(name => techNames.includes(name)) ? '' : 'none';
-      });
+  ['#airtable-data', '#feild-data'].forEach(selector => {
+    const table = document.querySelector(selector);
+    const rows = table.querySelectorAll('tbody tr');
+    const thead = table.querySelector('thead');
+    const h2 = table.closest('.scrollable-div')?.previousElementSibling;
+
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const tech = row.cells[0]?.textContent.trim() || '';
+      const techNames = tech.split(',').map(n => n.trim());
+      const shouldShow = isAll || selected.some(name => techNames.includes(name));
+      row.style.display = shouldShow ? '' : 'none';
+      if (shouldShow) visibleCount++;
     });
-  }
+
+    // Hide table/h2/thead if no visible rows
+    if (visibleCount === 0) {
+      table.style.display = 'none';
+      if (thead) thead.style.display = 'none';
+      if (h2) h2.style.display = 'none';
+    } else {
+      table.style.display = 'table';
+      if (thead) thead.style.display = 'table-header-group';
+      if (h2) h2.style.display = 'block';
+    }
+  });
+}
+
 
   function updateURLWithFilters(selected) {
     const params = new URLSearchParams(window.location.search);

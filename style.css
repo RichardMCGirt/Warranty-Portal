@@ -94,16 +94,19 @@ th, td {
     border: 3px solid #131010;
     padding: 8px;
     text-align: center;
-    font-size: 22px;
   word-break: break-word; /* or 'normal' */
     white-space: normal;
+}
+
+td {
+    font-size: 24px;
 }
 
 th {
     background-color: #002244;
     color: white;
     font-weight: bold;
-    font-size: 19px;
+    font-size: 25px;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -486,7 +489,7 @@ td[data-field="b"], .hidden-column {
     }
 
     table {
-        font-size: 14px;
+        font-size: 20px;
         width: 100%;
         display: block;
         overflow-x: auto;
@@ -494,7 +497,7 @@ td[data-field="b"], .hidden-column {
     }
 
     th, td {
-        font-size: 13px;
+        font-size: 18px;
         padding: 6px;
     }
 
@@ -545,3 +548,7 @@ td[data-field="b"], .hidden-column {
     }
 }
 
+html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
