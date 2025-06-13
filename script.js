@@ -232,6 +232,42 @@ function applyFilters() {
     }
   }
 
+function applyAlternatingColors(selector) {
+  const table = document.querySelector(selector);
+  if (!table) {
+    console.warn(`⚠️ No table found for selector: ${selector}`);
+    return;
+  }
+
+  const rows = table.querySelectorAll('tbody tr');
+  console.log(`🎯 Found ${rows.length} rows in ${selector}`);
+
+  let colorToggle = false;
+  const evenColor = '#e0e0e0'; // light blue
+  const oddColor = '#ffffff';  // white
+
+  rows.forEach((row, index) => {
+    const firstCell = row.cells[0];
+    const isMerged = !firstCell || firstCell.style.display === 'none';
+    const color = colorToggle ? evenColor : oddColor;
+
+    if (isMerged) {
+      row.style.setProperty('background-color', color, 'important');
+      console.log(`🔁 Row ${index} (merged): backgroundColor = ${color}`);
+    } else {
+      colorToggle = !colorToggle;
+      const toggleColor = colorToggle ? evenColor : oddColor;
+      row.style.setProperty('background-color', toggleColor, 'important');
+      console.log(`✅ Row ${index}: toggled to ${toggleColor}`);
+    }
+  });
+}
+
+
+
+
+
+
   async function displayRecords(records, tableSelector) {
   const table = document.querySelector(tableSelector);
   const tbody = table.querySelector('tbody');
@@ -277,6 +313,7 @@ function applyFilters() {
 
   // ✅ Merge sorted duplicate values in column 1
   mergeTableCells(tableSelector, 0);
+applyAlternatingColors(tableSelector);
 
   if (thead) thead.style.display = 'table-header-group';
   if (table) table.style.display = 'table';

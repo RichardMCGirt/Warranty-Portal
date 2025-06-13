@@ -113,12 +113,7 @@ th {
     height: 3.5em;
 }
 
-tbody tr:nth-child(odd) {
-    background-color: #f2f2f2;
-}
-tbody tr:nth-child(even) {
-    background-color: #e6e6e6;
-}
+
 
 td[contenteditable="true"] {
     cursor: text;
