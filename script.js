@@ -1,5 +1,3 @@
-// main.js (merged script.js + filter.js)
-
 document.addEventListener('DOMContentLoaded', async () => {
   const env = window.env || {};
   const airtableApiKey = env.AIRTABLE_API_KEY;
@@ -215,22 +213,25 @@ function applyFilters() {
   }
 
   async function fetchAllRecords(offset = null, collected = []) {
-    const url = `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableName}${offset ? `?offset=${offset}` : ''}`;
+  const viewName = 'viw6ak9NqjR7r0A4g'; // 👈 REPLACE with your actual view name
+  const encodedView = encodeURIComponent(viewName);
+  const url = `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableName}?view=${encodedView}${offset ? `&offset=${offset}` : ''}`;
 
-    try {
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${airtableApiKey}` }
-      });
+  try {
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${airtableApiKey}` }
+    });
 
-      const data = await response.json();
-      const records = collected.concat(data.records);
-      if (data.offset) return fetchAllRecords(data.offset, records);
-      return records;
-    } catch (err) {
-      console.error("❌ Error fetching records:", err);
-      return collected;
-    }
+    const data = await response.json();
+    const records = collected.concat(data.records);
+    if (data.offset) return fetchAllRecords(data.offset, records);
+    return records;
+  } catch (err) {
+    console.error("❌ Error fetching records:", err);
+    return collected;
   }
+}
+
 
 function applyAlternatingColors(selector) {
   const table = document.querySelector(selector);

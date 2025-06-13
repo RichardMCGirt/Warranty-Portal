@@ -265,12 +265,19 @@ async function displayImages(files, containerId, fieldName = "") {
         // Add this once outside the function
 const previewModal = document.getElementById("previewModal");
 const previewContent = document.getElementById("previewContent");
-const closePreview = document.getElementById("closePreview");
 
-closePreview.addEventListener("click", () => {
-    previewModal.style.display = "none";
-    previewContent.innerHTML = '<span id="closePreview" style="position:absolute; top:20px; right:30px; font-size:30px; cursor:pointer; color:white;">&times;</span>';
-});
+if (previewModal) {
+  previewModal.addEventListener("click", (e) => {
+    if (e.target?.id === "closePreview") {
+      previewModal.style.display = "none";
+      previewContent.innerHTML = `
+        <span id="closePreview" style="position:absolute; top:20px; right:30px; font-size:30px; cursor:pointer; color:white;">&times;</span>
+      `;
+    }
+  });
+}
+
+
         let previewElement;
 
         if (file.type && file.type === "application/pdf") {
