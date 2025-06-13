@@ -1,441 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warranty</title>
-    <link rel="stylesheet" href="detail.css">
-<script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
+  <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Warranty</title>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="detail.css">
+
+  <!-- External JS Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
 </head>
 <body>
 
-    <nav>
-        <a href="index.html" class="back-button"> Back to Job List</a>
-        <a href="backcharge.html" class="back-button"> Back charge Form</a>
+  <!-- Navigation -->
+  <nav>
+    <a href="index.html" class="back-button">Back to Job List</a>
+    <a href="backcharge.html" class="back-button">Back charge Form</a>
+  </nav>
 
-    </nav>
-    <div class="scrollable-content">
+  <!-- Main Content -->
+  <div class="scrollable-content">
     <div class="job-details-container">
-        <form id="job-form">
-            <label for="field-status">Status</label>
-            <input type="text" id="field-status" name="field-status" readonly>
+      <form id="job-form">
 
-            <input type="text" id="job-name" readonly>
-       
-            <label>Field Technician:</label>
-            <input type="text" id="field-tech" readonly>
-            
-            <label for="warranty-id">Warranty ID</label>
-            <input type="text" id="warranty-id" readonly>
-            <label for="StartDate">Start Date</label>
-            <input type="datetime-local" id="StartDate" name="StartDate">
-            <br>
-            
-            <label for="EndDate">End Date</label>
-            <input type="datetime-local" id="EndDate" name="EndDate">
+        <!-- Basic Job Info -->
+        <label for="field-status">Status</label>
+        <input type="text" id="field-status" name="field-status" readonly>
 
-            
-            <label>Address:</label>
-            <div style="display: flex; align-items: center; justify-content: left; gap: 10px;">
-                <input type="text" id="address" readonly 
-                    style="
-                        cursor: pointer; 
-                        background-color: #f8f9fa; 
-                        border: 2px solid #007BFF; 
-                        border-radius: 10px; 
-                        font-size: 18px; 
-                        text-align: center; 
-                        padding: 14px; 
-                        width: 100%; 
-                        max-width: 600px; 
-                        outline: none;
-                        font-weight: bold;
-                        color: #333;
-                        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-                        transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out;"
-                    onclick="openMapApp()"
-                    onmouseover="this.style.backgroundColor='#e0f2ff'; this.style.boxShadow='0px 4px 12px rgba(0, 123, 255, 0.3)'; this.style.transform='scale(1.02)';"
-                    onmouseout="this.style.backgroundColor='#f8f9fa'; this.style.boxShadow='0px 4px 8px rgba(0, 0, 0, 0.1)'; this.style.transform='scale(1)';"
-                    placeholder="Click for Directions">
-            </div>
-            <br>
+        <input type="text" id="job-name" readonly>
 
-            <div id="original-sub-container">
-              <label>Original Subcontractor:</label>
-              <div id="original-subcontractor" class="clickable-call">Loading...</div>
-            </div>
-            
-            <br>
-            <label>Homeowner Name:</label>
-            <input type="text" id="homeowner-name" readonly>
+        <label>Field Technician:</label>
+        <input type="text" id="field-tech" readonly>
 
-            <label>Contact Email:</label>
-<input type="email" id="contact-email" data-field="Contact Email" readonly>
+        <label for="warranty-id">Warranty ID</label>
+        <input type="text" id="warranty-id" readonly>
 
-<label>Description:</label>
-<textarea id="description" data-field="Description of Issue" readonly ></textarea>
+        <!-- Date Fields -->
+        <label for="StartDate">Start Date</label>
+        <input type="datetime-local" id="StartDate" name="StartDate">
 
-<label>DOW to be Completed:</label>
-<textarea id="dow-completed" data-field="DOW to be Completed"
-    style="width: 100%; font-size: 16px; padding: 10px;
-           box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;
-           min-height: 80px; resize: vertical; display: block;"
-    autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"></textarea>
+        <label for="EndDate">End Date</label>
+        <input type="datetime-local" id="EndDate" name="EndDate">
 
-<label id="subcontractor-dropdown1-label" for="subcontractor-dropdown1">Select a Subcontractor:</label>
-<select id="subcontractor-dropdown" data-field="Subcontractor">
-    <option value="">Select a Subcontractor...</option>
-</select>
+        <!-- Address Field -->
+        <label>Address:</label>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="text" id="address" readonly onclick="openMapApp()"
+            onmouseover="this.style.backgroundColor='#e0f2ff'; this.style.boxShadow='0px 4px 12px rgba(0, 123, 255, 0.3)'; this.style.transform='scale(1.02)';"
+            onmouseout="this.style.backgroundColor='#f8f9fa'; this.style.boxShadow='0px 4px 8px rgba(0, 0, 0, 0.1)'; this.style.transform='scale(1)';"
+            placeholder="Click for Directions">
+        </div>
 
-<div class="sub-completed-container">
-    <label for="sub-not-needed">Sub not needed:</label>
-    <input type="checkbox" id="sub-not-needed" data-field="Subcontractor Not Needed">
-    
-</div>
+        <!-- Original Subcontractor -->
+        <div id="original-sub-container">
+          <label>Original Subcontractor:</label>
+          <div id="original-subcontractor" class="clickable-call">Loading...</div>
+        </div>
 <br>
+        <!-- Contact Info -->
+        <label>Homeowner Name:</label>
+        <input type="text" id="homeowner-name" readonly>
 
-<div id="subcontractor-payment-container">
-  <label for="subcontractor-payment">Subcontractor Payment</label>
-  <input type="text" id="subcontractor-payment" name="subcontractor-payment" placeholder="$0.00" data-field="Subcontractor Payment" inputmode="decimal">
-</div>
+        <label>Contact Email:</label>
+        <input type="email" id="contact-email" data-field="Contact Email" readonly>
 
+        <!-- Issue Description -->
+        <label>Description:</label>
+        <textarea id="description" data-field="Description of Issue" readonly></textarea>
 
-<div id="previewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-    background-color:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:1000;">
-  <div id="previewContent" style="background:#fff; padding:20px; border-radius:10px; max-width:90%; max-height:90%; overflow:auto;">
-    <span id="closePreview" style="position:absolute; top:20px; right:30px; font-size:30px; cursor:pointer; color:white;">&times;</span>
-  </div>
-</div>
+        <label>DOW to be Completed:</label>
+        <textarea id="dow-completed" data-field="DOW to be Completed" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"></textarea>
 
-<div id="additional-fields-container" style="padding: 16px;">
-    <div class="form-group">
-      <label for="billable-status" style="font-size: 18px; font-weight: 600; display: block; margin-bottom: 8px;">
-        Billable Status
-      </label>
-      <div id="billable-status-container">
-        <label class="billable-label">
-          <input type="radio" name="billable-status" value="Billable" data-field="Billable/ Non Billable" />
-          Billable
-        </label>
-        <label class="billable-label">
-          <input type="radio" name="billable-status" value="Non Billable" data-field="Billable/ Non Billable" />
-          Non-Billable
-        </label>
-      </div>
-    </div>
- 
-        <div class="form-group" id="homeowner-builder-container" style="display: none;">
+        <!-- Subcontractor Selection -->
+        <label id="subcontractor-dropdown1-label" for="subcontractor-dropdown1">Select a Subcontractor:</label>
+        <select id="subcontractor-dropdown" data-field="Subcontractor">
+          <option value="">Select a Subcontractor...</option>
+        </select>
+
+        <div class="sub-completed-container">
+          <label for="sub-not-needed">Sub not needed:</label>
+          <input type="checkbox" id="sub-not-needed" data-field="Subcontractor Not Needed">
+        </div>
+
+        <!-- Payment Info -->
+        <div id="subcontractor-payment-container">
+          <label for="subcontractor-payment">Subcontractor Payment</label>
+          <input type="text" id="subcontractor-payment" name="subcontractor-payment" placeholder="$0.00" data-field="Subcontractor Payment" inputmode="decimal">
+        </div>
+
+        <!-- Billable Section -->
+        <div id="additional-fields-container" style="padding: 16px;">
+          <div class="form-group">
+            <label for="billable-status" style="font-size: 18px; font-weight: 600;">Billable Status</label>
+            <div id="billable-status-container">
+              <label class="billable-label">
+                <input type="radio" name="billable-status" value="Billable" data-field="Billable/ Non Billable" />
+                Billable
+              </label>
+              <label class="billable-label">
+                <input type="radio" name="billable-status" value="Non Billable" data-field="Billable/ Non Billable" />
+                Non-Billable
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group" id="homeowner-builder-container" style="display: none;">
             <label for="homeowner-builder">Homeowner/Builder Pay</label>
             <select id="homeowner-builder" name="homeowner-builder" data-field="Homeowner Builder pay">
-                <option value="Homeowner">Homeowner</option>
-                <option value="Builder">Builder</option>
-                <option value=""></option>
-
+              <option value="Homeowner">Homeowner</option>
+              <option value="Builder">Builder</option>
+              <option value=""></option>
             </select>
-        </div>  
-</div>
+          </div>
+        </div>
 
-<div class="form-group" id="billable-reason-container" style="display: none;">
-    <label for="billable-reason">Billable Reason</label>
-    <select id="billable-reason" name="billable-reason" data-field="Billable Reason (If Billable)">
-        <option value="Another Trade Damaged Work">Another Trade Damaged Work</option>
-        <option value="Homeowner Damage">Homeowner Damage</option>
-        <option value="Framing Issue">Framing Issue</option>
-        <option value="Weather">Weather</option>
-        <option value="Builder after close repair">Builder after close repair</option>
-        <option value=""></option>
-
-    </select>
-</div>
-
-    <div id="message-container"></div>
-    <div class="form-group" style="display: none;">
-        <label>Field Review Not Needed:</label>
-        <input type="checkbox" id="field-review-needed" data-field="Field Review Not Needed">
-    </div>
-    
-    <div class="form-group" style="display: none;">
-        <label>Field Review Needed:</label>
-        <input type="checkbox" id="field-review-not-needed" data-field="Field Review Needed">
-    </div>
-
-
-
-    <div id="material-needed-container" class="material-needed-container"
-    style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px 0;">
-
-    
-
-
-    <select id="material-needed-select">
-      <option value="">Select an option</option>
-      <option value="Needs Materials">Needs Materials</option>
-      <option value="Do Not Need Materials">Do Not Need Materials</option>
-    </select>
-    
-
-    <br>
-  
-
-
-    <div class="form-group" id="materials-needed-container">
-        <label for="materials-needed" id="materials-needed-label">Materials Needed</label>
-        <textarea id="materials-needed" name="materials-needed" data-field="Materials Needed"
-        style="width: 100%; font-size: 20px; padding: 10px;
-               box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;
-               min-height: 80px; resize: vertical; display: block;"
-        autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
-        <div id="vendor-dropdown-container">
-          <label for="vendor-dropdown">Select a Vendor:</label>
-          <select id="vendor-dropdown" data-field="Material Vendor">
-            <option value="">Select a Vendor...</option>
-            <!-- Options will be populated dynamically by JavaScript -->
+        <!-- Billable Reason -->
+        <div class="form-group" id="billable-reason-container" style="display: none;">
+          <label for="billable-reason">Billable Reason</label>
+          <select id="billable-reason" name="billable-reason" data-field="Billable Reason (If Billable)">
+            <option value="Another Trade Damaged Work">Another Trade Damaged Work</option>
+            <option value="Homeowner Damage">Homeowner Damage</option>
+            <option value="Framing Issue">Framing Issue</option>
+            <option value="Weather">Weather</option>
+            <option value="Builder after close repair">Builder after close repair</option>
+            <option value=""></option>
           </select>
         </div>
-    </div>
-    
-</div>
 
-<div id="attachment-carousel" class="carousel-overlay" style="display: none;">
-  <div class="carousel-content">
-    <span id="close-carousel" class="carousel-close">&times;</span>
-    
-    <div id="carousel-body"></div>
-    
-    <div class="carousel-controls">
-    <span id="carousel-close-button" style="
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    font-size: 64px;
-    color: red;
-    font-weight: bold;
-    cursor: pointer;
-    z-index: 9999;
-    display: none;
-    user-select: none;
-    text-shadow: 1px 1px 4px black;
-">&times;</span>
-
-
-      <button id="carousel-prev" class="carousel-nav">&lt;</button>
-      <button id="carousel-next" class="carousel-nav">&gt;</button>
-      <button id="delete-current-attachment" type="button">Delete</button>
-    </div>
-  </div>
-</div>
-
-        <div class="file-input-container">
-         <!--   <label id="upload-issue-picture-label" class="custom-file-label" for="upload-issue-picture">
-                Upload Issue Pictures
-              </label> -->
-              <input
-              type="file"
-              id="upload-issue-picture"
-              multiple
-              accept="image/*"
-              style="display: none;"
-            >
-            <button id="trigger-issue-upload" type="button" style="margin: 10px; padding: 10px 15px; font-size: 16px;">
-               Upload Issue Image
-            </button>       
-                 <div id="issue-file-list"></div>
+        <!-- Hidden Field Review Flags -->
+        <div class="form-group" style="display: none;">
+          <label>Field Review Not Needed:</label>
+          <input type="checkbox" id="field-review-needed" data-field="Field Review Not Needed">
         </div>
 
+        <div class="form-group" style="display: none;">
+          <label>Field Review Needed:</label>
+          <input type="checkbox" id="field-review-not-needed" data-field="Field Review Needed">
+        </div>
+
+        <!-- Materials Section -->
+        <div id="material-needed-container" class="material-needed-container">
+          <select id="material-needed-select">
+            <option value="">Select an option</option>
+            <option value="Needs Materials">Needs Materials</option>
+            <option value="Do Not Need Materials">Do Not Need Materials</option>
+          </select>
+
+          <div class="form-group" id="materials-needed-container">
+            <label for="materials-needed" id="materials-needed-label">Materials Needed</label>
+            <textarea id="materials-needed" name="materials-needed" data-field="Materials Needed" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
+
+            <!-- Vendor Dropdown -->
+            <div id="vendor-dropdown-container">
+              <label for="vendor-dropdown">Select a Vendor:</label>
+              <select id="vendor-dropdown" data-field="Material Vendor">
+                <option value="">Select a Vendor...</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Uploads -->
+        <div class="file-input-container">
+          <input type="file" id="upload-issue-picture" multiple accept="image/*" style="display: none;">
+          <button id="trigger-issue-upload" type="button">Upload Issue Image</button>
+          <div id="issue-file-list"></div>
+        </div>
         <div id="issue-pictures" style="display: none;"></div>
+
+        <div id="file-input-container">
+          <input type="file" id="upload-completed-picture" multiple accept="image/*" style="display: none;">
+          <button id="trigger-completed-upload" type="button">Upload Completed Image</button>
+          <div id="file-list"></div>
+        </div>
+        <div id="completed-pictures" class="file-preview" style="display: none;"></div>
+
+        <!-- Image Carousel Viewer -->
+        <div id="attachment-carousel" class="carousel-overlay" style="display: none;">
+          <div class="carousel-content">
+            <span id="close-carousel" class="carousel-close">&times;</span>
+            <div id="carousel-body"></div>
+            <div class="carousel-controls">
+              <span id="carousel-close-button">&times;</span>
+              <button id="carousel-prev" class="carousel-nav">&lt;</button>
+              <button id="carousel-next" class="carousel-nav">&gt;</button>
+              <button id="delete-current-attachment" type="button">Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Miscellaneous Checkboxes -->
+        <div class="form-group centered-checkbox">
+          <label id="field-tech-reviewed-label" for="field-tech-reviewed">Field Tech Reviewed:</label>
+          <input type="checkbox" id="field-tech-reviewed" data-field="Field Tech Reviewed">
+        </div>
+
+        <div class="job-completed-container">
+          <label for="job-completed-checkbox">Job Completed:</label>
+          <input type="checkbox" id="job-completed-checkbox" data-field="Job Completed">
+        </div>
 <br>
+<br>
+        <!-- Action Buttons -->
+        <button type="button" id="save-job">Save Changes</button>
+        <button id="delete-images-btn">Delete Selected Images</button>
 
-<div class="form-group centered-checkbox">
-    <label id="field-tech-reviewed-label" for="field-tech-reviewed">Field Tech Reviewed:</label>
-    <input type="checkbox" id="field-tech-reviewed" data-field="Field Tech Reviewed">
-</div>
+        <!-- Upload Progress Bar -->
+        <div id="upload-progress-container">
+          <label id="upload-progress-label">Uploading...</label>
+          <div>
+            <div id="upload-progress-bar"></div>
+          </div>
+        </div>
 
-    <!-- Preview area for uploaded images -->
-    <div id="file-preview" class="file-preview"></div>
-
-
-    <div id="file-input-container">
-      <!--  <label class="custom-file-label" for="upload-completed-picture">Upload Completed Pictures</label> -->
-        <input
-        type="file"
-        id="upload-completed-picture"
-        multiple
-        accept="image/*"
-        style="display: none;"
-      >
-      <button id="trigger-completed-upload" type="button" style="margin: 10px; padding: 10px 15px; font-size: 16px;">
-        Upload Completed Image
-      </button>        
-      <div id="file-list"></div>
+      </form>
     </div>
-    
-
-<!-- Preview area for uploaded images -->
-<div id="completed-pictures" class="file-preview" style="display: none;"></div>
-
-<button id="delete-images-btn" 
-    style="background:red; color:white; padding:10px; border:none; cursor:pointer; display: none;">
-    Delete Selected Images
-</button>
-
-<div class="job-completed-container">
-  <label for="job-completed-checkbox">Job Completed:</label>
-  <input type="checkbox" id="job-completed-checkbox" data-field="Job Completed">
-</div>
-
-<div id="file-preview" class="file-preview"></div>
-
-
-
-        </form>
-    </div>
-<button type="button" id="save-job">Save Changes</button>
-
-<div id="upload-progress-container" style="
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 75%;
-  max-width: 600px;
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  z-index: 9999;
-  text-align: center;
-">
-  <label id="upload-progress-label" style="display: block; margin-bottom: 10px;">Uploading...</label>
-  <div style="width: 100%; background: #eee; border-radius: 5px;">
-    <div id="upload-progress-bar" style="
-      height: 16px;
-      width: 0%;
-      background: #4caf50;
-      border-radius: 5px;
-      transition: width 0.3s ease;
-    "></div>
   </div>
-</div>
 
-
-    <script>
-        window.env = {
-           AIRTABLE_API_KEY: 'patM49mmBDFbP6y2n.545e1307aae93d7bd5fd579bc395039d43fece72fa6df5085bae343817d614ff',
-           AIRTABLE_BASE_ID: 'appO21PVRA4Qa087I',
-           AIRTABLE_TABLE_NAME: 'tbl6EeKPsNuEvt5yJ',
-           AIRTABLE_TABLE_NAME2: 'tbl9SgC5wUi2TQuF7',
-
-           AIRTABLE_SUBCONTRACTOR_TABLE_NAME: 'tbl9SgC5wUi2TQuF7' 
-        };
-    </script>
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-          const jobNameElement = document.getElementById("field-tech");
-          if (jobNameElement) {
-            document.getElementById("field-tech").addEventListener("click", function () {
-    const techName = document.getElementById("field-tech")?.value?.trim();
-    if (!techName) {
-        alert("⚠️ No field tech name available.");
-        return;
-    }
-    const encodedName = encodeURIComponent(techName);
-    window.location.href = `http://localhost:5501/index.html?techs=${encodedName}`;
-});
-
-          } else {
-              console.warn("⚠️ 'field-tech' element not found.");
-          }
-      });
-      </script>
-      
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const materialSelect = document.getElementById("material-needed-select");
-  const materialsTextarea = document.getElementById("materials-needed");
-  const textareaContainer = document.getElementById("materials-needed-container");
-
-  const placeholderOption = materialSelect.querySelector('option[value=""]');
-
-    // Show/hide textarea when user changes selection with confirmation
-    materialSelect.addEventListener("change", function () {
-    console.log("🔄 Dropdown changed to:", this.value);
-
-    if (this.value === "Needs Materials") {
-      console.log("📂 Showing materials-needed textarea");
-      textareaContainer.style.display = "block";
-    } else if (this.value === "Do Not Need Materials") {
-      if (materialsTextarea.value.trim() !== "") {
-        const confirmed = confirm("⚠️ You have entered materials. Do you want to clear them?");
-        if (confirmed) {
-          console.log("🧹 User confirmed clearing materials textarea.");
-          materialsTextarea.value = "";
-          textareaContainer.style.display = "none";
-        } else {
-          console.log("❌ User canceled. Reverting dropdown to 'Needs Materials'");
-          this.value = "Needs Materials";
-          textareaContainer.style.display = "block"; // show again in case it was hidden
-        }
-      } else {
-        console.log("📁 Hiding textarea (no content to clear)");
-        textareaContainer.style.display = "none";
-      }
-    }
-  });
-
-});
-
-    document.getElementById("trigger-issue-upload").addEventListener("click", () => {
-      document.getElementById("upload-issue-picture").click();
-    });
-  
-    document.getElementById("trigger-completed-upload").addEventListener("click", () => {
-      document.getElementById("upload-completed-picture").click();
-    });
-
-    document.addEventListener("DOMContentLoaded", function () {
-    const subcontractorPaymentInput = document.getElementById("subcontractor-payment");
-
-    if (subcontractorPaymentInput) {
-        subcontractorPaymentInput.addEventListener("input", function (e) {
-            let value = e.target.value;
-
-            // 🧹 Allow user to type $ but clean extra $ if multiple
-            value = value.replace(/[^\d.]/g, ""); // remove everything except digits and decimal
-
-            // 🛡 Prevent multiple decimals
-            const parts = value.split(".");
-            if (parts.length > 2) {
-                value = parts[0] + "." + parts[1];
-            }
-
-            // 🌟 Always format with a single $
-            e.target.value = value ? `$${value}` : "";
-        });
-
-        subcontractorPaymentInput.addEventListener("blur", function (e) {
-            let value = e.target.value.replace(/[^\d.]/g, ""); // Remove $ and commas
-
-            if (value) {
-                value = parseFloat(value).toFixed(2);
-                e.target.value = `$${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            } else {
-                e.target.value = "";
-            }
-        });
-
-        subcontractorPaymentInput.addEventListener("focus", function (e) {
-            let value = e.target.value.replace(/[^\d.]/g, ""); // Remove $ when focusing
-            e.target.value = value;
-        });
-    }
-});
-
+  <!-- Environment Config -->
+  <script>
+    window.env = {
+      AIRTABLE_API_KEY: 'patM49mmBDFbP6y2n.545e1307aae93d7bd5fd579bc395039d43fece72fa6df5085bae343817d614ff',
+      AIRTABLE_BASE_ID: 'appO21PVRA4Qa087I',
+      AIRTABLE_TABLE_NAME: 'tbl6EeKPsNuEvt5yJ',
+      AIRTABLE_TABLE_NAME2: 'tbl9SgC5wUi2TQuF7',
+      AIRTABLE_SUBCONTRACTOR_TABLE_NAME: 'tbl9SgC5wUi2TQuF7'
+    };
   </script>
-      
-    <script src="job-details.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
-    <script src="vendor.js"></script>
+
+  <!-- JS Scripts -->
+  <script src="job-details.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+  <script src="vendor.js"></script>
 
 </body>
 </html>
