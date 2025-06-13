@@ -19,27 +19,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupClearFilters();
   fetchDataAndInitialize();
 
-  function setupFilterMenu() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlTechs = urlParams.get('techs');
-    if (urlTechs) {
-      const techArray = urlTechs.split(',').map(t => t.trim());
-      localStorage.setItem("selectedFilters", JSON.stringify(techArray));
-    }
-
-    const menuToggle = document.getElementById('menu-toggle');
-    const checkboxContainer = document.getElementById('checkbox-container');
-
-    menuToggle.addEventListener('click', () => {
-      checkboxContainer.classList.toggle('show');
-    });
-
-    document.addEventListener('click', (event) => {
-      if (!checkboxContainer.contains(event.target) && !menuToggle.contains(event.target)) {
-        checkboxContainer.classList.remove('show');
-      }
-    });
+function setupFilterMenu() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlTechs = urlParams.get('techs');
+  if (urlTechs) {
+    const techArray = urlTechs.split(',').map(t => t.trim());
+    localStorage.setItem("selectedFilters", JSON.stringify(techArray));
   }
+
+  const menuToggle = document.getElementById('menu-toggle');
+  const checkboxContainer = document.getElementById('checkbox-container');
+
+  // 🔄 Toggle visibility on button click
+  menuToggle.addEventListener('click', () => {
+    checkboxContainer.classList.toggle('show');
+  });
+
+  // ❌ Close on click outside
+  document.addEventListener('click', (event) => {
+    if (!checkboxContainer.contains(event.target) && !menuToggle.contains(event.target)) {
+      checkboxContainer.classList.remove('show');
+    }
+  });
+
+  // ❌ Close on scroll
+  window.addEventListener('scroll', () => {
+    if (checkboxContainer.classList.contains('show')) {
+      checkboxContainer.classList.remove('show');
+    }
+  });
+}
+
 
   function setupSearchInput() {
     const input = document.getElementById('search-input');
