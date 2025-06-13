@@ -1,158 +1,12 @@
-/* General Reset */
+/* ============================= */
+/* Reset & Base Styles          */
+/* ============================= */
 body {
     font-family: Arial, sans-serif;
     background-color: lightgray;
     color: #333;
     margin: 0;
     padding: 0;
-}
-
-/* Target the "Lot Number" cells */
-td[data-field="Lot Number and Community/Neighborhood"]:hover {
-    transform: scale(1.05);
-    transition: transform 0.2s ease-in-out;
-    cursor: pointer;
-}
-
-/* Make the cell easier to tap on mobile */
-td[data-field="Lot Number and Community/Neighborhood"] {
-    padding: 12px 16px; /* Add enough space for tapping */
-    touch-action: manipulation;
-    font-size: 20px;
-}
-
-/* Visual feedback on tap (for mobile) */
-td[data-field="Lot Number and Community/Neighborhood"]:active {
-    background-color: #f0f0f0; /* Light highlight */
-    transform: scale(1.05);
-    transition: transform 0.1s ease-in-out;
-}
-
-.carousel-overlay {
-  position: fixed; top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  z-index: 9999;
-  display: flex; align-items: center; justify-content: center;
-}
-
-.carousel-content {
-  position: relative;
-  max-width: 90%;
-  max-height: 90%;
-  text-align: center;
-}
-
-.carousel-close, .carousel-nav, .carousel-delete {
-  position: absolute;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  background: none;
-  border: none;
-}
-
-.carousel-close { top: 20px; right: 30px; font-size: 32px; }
-.carousel-nav { top: 50%; transform: translateY(-50%); font-size: 40px; }
-#carousel-prev { left: 10px; }
-#carousel-next { right: 10px; }
-.carousel-delete { bottom: 20px; left: 50%; transform: translateX(-50%); background: red; padding: 10px; }
-
-
-#menu-toggle {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-#menu-toggle:hover {
-    background-color: #0056b3;
-}
-
-/* Initially Hidden */
-#checkbox-container {
-    position: absolute;
-    top: 40px;
-    left: 0;
-    background: white;
-    border: 1px solid #ccc;
-    padding: 10px;
-    display: none; /* Hide initially */
-    z-index: 1000;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-    max-height: 300px;
-    overflow-y: auto;
-    white-space: nowrap; /* Prevents text from wrapping */
-    width: max-content; /* Adapts width based on content */
-    min-width: 180px; /* Ensures a minimum width */
-    max-width: 100%; /* Prevents overflowing container */
-}
-
-#checkbox-container.show {
-    display: block; /* Show when toggled */
-}
-
-.checkbox-row {
-    display: flex;
-    flex-direction: column;
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-/* Navigation Link Styles */
-.nav-link {
-    display: inline-block;
-    padding: 10px 20px;
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: bold;
-    color: #fff;
-    background-color: #003366; /* Matches your button color */
-    border-radius: 5px;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-/* Container to align the filter button and search bar */
-#filter-search-container {
-    display: flex;
-    align-items: center; /* Align items vertically */
-    gap: 10px; /* Space between elements */
-}
-
-/* Ensure the button and input have proper spacing */
-#checkbox-menu {
-    display: flex;
-    align-items: center;
-}
-
-#menu-toggle {
-    padding: 8px 12px;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-#search-input {
-    flex: 1; /* Makes the search input take available space */
-    padding: 8px;
-    font-size: 16px;
-    min-width: 200px;
-}
-
-.nav-link:hover {
-    background-color: #002244; /* Darker shade for hover effect */
-    transform: translateY(-2px); /* Slight lift effect */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for hover */
-}
-
-.nav-link.active {
-    background-color: #002244; /* Highlight active state */
-    color: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 h2 {
@@ -162,120 +16,6 @@ h2 {
     margin: 20px 0;
 }
 
-td {
-    max-height: 100px;
-}
-
-.table-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch; /* Stretch container to fit */
-    height: 30vh !important /* Make sure it takes full viewport */
-}
-
-.single-table-view .scrollable-div {
-        max-height: 90vh; 
-        overflow-y: auto;
-        overflow-x: auto;
-        position: relative; 
-    }
-    
-        /* Add styles to make divs scrollable */
-        .scrollable-div {
-            max-height: none !important;
-            overflow: visible !important;
-        }
-        
-/* Header Styles */
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 10px;
-    cursor: pointer;
-    position: fixed;
-}
-
-/* Main Content Styles */
-#main-content, #secoundary-content {
-    display: none;
-    opacity: 0;
-    transition: opacity 1s ease-in-out;
-}
-
-td[data-field="b"] {
-    display: none !important;
-  }
-  
-
-/* Table Styles */
-table {
-    table-layout: fixed;
-    min-width: 90%;
-
-    width: 90%;
-    margin: 10px auto;
-    border-collapse: collapse;
-    background-color: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    border: 2px solid #8B0000;
-}
-
-th, td {
-    border: 3px solid #131010;
-    padding: 8px;
-    text-align: center;
-    white-space: normal;
-    overflow-wrap: break-word;
-    word-break: keep-all;
-    width: auto;
-    font-size: 22px;
-    white-space: normal;
-}
-
-.hidden-column {
-    display: none !important;
-  }
-  
-th {
-    background-color: #002244;
-    color: white;
-    font-weight: bold;
-    font-size: 19px;
-    position: sticky;
-    top: 0; /* Stick to the top */
-    z-index: 100; /* Ensure headers are above other content */
-    height: 3.5em;
-}
-
-.single-table-view .scrollable-div {
-    width: 100%;
-    overflow-y: auto;
-}
-.scrollable-div {
-    overflow-y: auto;
-}
-
-/* Alternate row colors */
-tbody tr:nth-child(odd) {
-    background-color: #f2f2f2;
-}
-
-tbody tr:nth-child(even) {
-    background-color: #e6e6e6;
-}
-
-/* Editable Cell Styles */
-td[contenteditable="true"] {
-   
-    cursor: text;
-}
-
-td.edited {
-    background-color: rgb(85, 82, 82) !important;
-}
-
-/* Button Styles */
 button {
     display: block;
     width: 180px;
@@ -296,29 +36,25 @@ button:hover {
     transform: translateY(-4px);
 }
 
-/* Search Input */
-.search-container {
-   left: 50%;
+
+/* ============================= */
+/* Loader                       */
+/* ============================= */
+#loader {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    z-index: 9999;
 }
 
-#search-input {
-    padding: 8px;
-    width: 80%;
-    max-width: 500px;
-    border-radius: 4px;
-    font-size: 16px;
-    border: 2px solid #8B0000;
-    display: block;
-    margin: 0 auto; /* This centers the element horizontally */
-}
-
-@media (max-width: 768px) {
-    .checkbox-container label {
-        flex: 1 1 100%; /* Full width on smaller screens */
-    }
-}
-
-/* Toast Notification */
+/* ============================= */
+/* Toast Notification           */
+/* ============================= */
 #toast {
     visibility: hidden;
     min-width: 15%;
@@ -341,391 +77,74 @@ button:hover {
     transition: opacity 0.5s;
 }
 
-/* Base adjustments for tablets and mobile devices */
-@media screen and (max-width: 1024px) {
-    /* Navigation */
-    .nav-link {
-        font-size: 14px;
-        padding: 8px 16px;
-    }
-
-    /* Responsive mobile-first styling */
-#checkbox-container {
-    position: absolute;
-    top: 40px;
-    left: 0;
-    background: white;
-    border: 1px solid #ccc;
-    padding: 10px;
-    display: none;
-    z-index: 1000;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-    max-height: 300px;
-    overflow-y: auto;
-    white-space: nowrap;
-    width: max-content;
-    min-width: 180px;
-    max-width: 90vw; /* Prevent it from overflowing iPhone screens */
+/* ============================= */
+/* Table Styles                 */
+/* ============================= */
+table {
+    table-layout: fixed;
+    width: 90%;
+    margin: 10px auto;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border: 2px solid #8B0000;
 }
 
-/* Show when toggled */
-#checkbox-container.show {
-    display: block;
+th, td {
+    border: 3px solid #131010;
+    padding: 8px;
+    text-align: center;
+    font-size: 22px;
+    word-break: keep-all;
+    white-space: normal;
 }
 
-/* Flex column for stacking checkboxes */
-.checkbox-row {
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* Spacing between checkboxes */
-    max-height: 200px;
-    overflow-y: auto;
+th {
+    background-color: #002244;
+    color: white;
+    font-weight: bold;
+    font-size: 19px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: 3.5em;
 }
 
-/* Improve checkbox tap area */
-.checkbox-row label {
-    display: flex;
-    align-items: center;
-    font-size: 16px; /* Bigger text for readability */
-    padding: 10px 8px;
-    border-radius: 5px;
-    transition: background 0.2s;
+tbody tr:nth-child(odd) {
+    background-color: #f2f2f2;
+}
+tbody tr:nth-child(even) {
+    background-color: #e6e6e6;
 }
 
-.checkbox-row label:hover {
-    background: #f0f0f0;
+td[contenteditable="true"] {
+    cursor: text;
+}
+td.edited {
+    background-color: rgb(85, 82, 82) !important;
 }
 
-/* Make checkbox itself bigger */
-.checkbox-row input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
+td[data-field="Lot Number and Community/Neighborhood"] {
+    padding: 12px 16px;
+    touch-action: manipulation;
+    font-size: 20px;
+}
+td[data-field="Lot Number and Community/Neighborhood"]:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
+}
+td[data-field="Lot Number and Community/Neighborhood"]:active {
+    background-color: #f0f0f0;
+    transform: scale(1.05);
+    transition: transform 0.1s ease-in-out;
 }
 
-    /* Table */
-    table {
-        width: 100%;
-    }
-
-    th, td {
-        font-size: 20px !important;
-        padding: 6px;
-    }
-
-    .table-wrapper {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch; /* Stretch container to fit */
-        height: 30vh !important; /* Make sure it takes full viewport */
-        margin: 0 auto; /* ✅ center horizontally */
-
-    }
-    
-    /* Default style for both tables */
-    .scrollable-div {
-        max-height: none !important;
-        overflow: visible !important;
-        
-    }
-
-    html {
-        scroll-behavior: smooth;
-      }
-      
-    
-    .single-table-view .scrollable-div {
-        width: calc(100% - 0px); /* Adjust to match your desired width */
-        margin: 0 auto;
-        height: auto;
-    }
-    
-    /* Search input */
-    #search-input {
-        width: 90%;
-        font-size: 14px;
-    }
-
-    /* Modal */
-    .modal-content {
-        width: 90%; /* Adjust modal to fit mobile screens */
-    }
+td[data-field="b"], .hidden-column {
+    display: none !important;
 }
 
-@media screen and (max-width: 950px) {
-    /* Header and Logo */
-    .header {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    /* Responsive mobile-first styling */
-#checkbox-container {
-    position: absolute;
-    top: 40px;
-    left: 0;
-    background: white;
-    border: 1px solid #ccc;
-    padding: 10px;
-    display: none;
-    z-index: 1000;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-    max-height: 300px;
-    overflow-y: auto;
-    white-space: nowrap;
-    width: max-content;
-    min-width: 180px;
-    max-width: 90vw; /* Prevent it from overflowing iPhone screens */
-}
-
-/* Show when toggled */
-#checkbox-container.show {
-    display: block;
-}
-
-/* Flex column for stacking checkboxes */
-.checkbox-row {
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* Spacing between checkboxes */
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-/* Improve checkbox tap area */
-.checkbox-row label {
-    display: flex;
-    align-items: center;
-    font-size: 16px; /* Bigger text for readability */
-    padding: 10px 8px;
-    border-radius: 5px;
-    transition: background 0.2s;
-}
-
-.checkbox-row label:hover {
-    background: #f0f0f0;
-}
-
-/* Make checkbox itself bigger */
-.checkbox-row input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-}
-
-    /* Navigation */
-    .nav-link {
-        font-size: 12px;
-        padding: 6px 12px;
-    }
-
-    /* Search input */
-    #search-input {
-        width: 100%;
-    }
-
-    /* Tables */
-    th, td {
-        font-size: 12px;
-    }
-
-    /* Buttons */
-    button {
-        width: 140px;
-        font-size: 12px;
-    }
-}
-
-@media screen and (max-width: 430px) {
-    /* Navigation */
-    .nav-link {
-        display: block;
-        width: 100%;
-        margin-bottom: 10px;
-        text-align: center;
-    }
-
-   
-    /* Responsive mobile-first styling */
-#checkbox-container {
-    position: absolute;
-    top: 40px;
-    left: 0;
-    background: white;
-    border: 1px solid #ccc;
-    padding: 10px;
-    display: none;
-    z-index: 1000;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-    max-height: 300px;
-    overflow-y: auto;
-    white-space: nowrap;
-    width: max-content;
-    min-width: 180px;
-    max-width: 90vw; /* Prevent it from overflowing iPhone screens */
-}
-
-/* Show when toggled */
-#checkbox-container.show {
-    display: block;
-}
-
-/* Flex column for stacking checkboxes */
-.checkbox-row {
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* Spacing between checkboxes */
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-/* Improve checkbox tap area */
-.checkbox-row label {
-    display: flex;
-    align-items: center;
-    font-size: 16px; /* Bigger text for readability */
-    padding: 10px 8px;
-    border-radius: 5px;
-    transition: background 0.2s;
-}
-
-.checkbox-row label:hover {
-    background: #f0f0f0;
-}
-
-/* Make checkbox itself bigger */
-.checkbox-row input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-}
-
-    th, td {
-        font-size: 15px;
-        padding: 6px;
-        max-height: fit-content;
-    }
-
-    /* Modal */
-    .modal-content {
-        width: 95%;
-    }
-
-    /* Toast */
-    #toast {
-        font-size: 12px;
-        padding: 8px;
-    }
-}
-/* Responsive Styles */
-@media (max-width: 768px) {
-    .checkbox-container label {
-        flex: 1 1 100%; /* Stack items on smaller screens */
-    }
-
-    .search-container {
-        padding: 10px;
-    }
-
-    /* Responsive mobile-first styling */
-#checkbox-container {
-    position: absolute;
-    top: 40px;
-    left: 0;
-    background: white;
-    border: 1px solid #ccc;
-    padding: 10px;
-    display: none;
-    z-index: 1000;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-    max-height: 600px;
-    overflow-y: auto;
-    white-space: nowrap;
-    width: max-content;
-    min-width: 180px;
-    max-width: 90vw; /* Prevent it from overflowing iPhone screens */
-}
-
-/* Show when toggled */
-#checkbox-container.show {
-    display: block;
-}
-
-/* Flex column for stacking checkboxes */
-.checkbox-row {
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* Spacing between checkboxes */
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-/* Improve checkbox tap area */
-.checkbox-row label {
-    display: flex;
-    align-items: center;
-    font-size: 16px; /* Bigger text for readability */
-    padding: 10px 8px;
-    border-radius: 5px;
-    transition: background 0.2s;
-}
-
-.checkbox-row label:hover {
-    background: #f0f0f0;
-}
-
-/* Make checkbox itself bigger */
-.checkbox-row input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-}
-
-    .filter-label {
-        font-size: 1rem;
-    }
-
-    #search-input {
-        font-size: 0.9rem;
-        padding: 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    .checkbox-container label {
-        font-size: 0.9rem;
-    }
-
-    /* Responsive mobile-first styling */
-#checkbox-container {
-    position: absolute;
-    top: 40px;
-    left: 0;
-    background: white;
-    border: 1px solid #ccc;
-    padding: 10px;
-    display: none;
-    z-index: 1000;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-    max-height: 600px;
-    overflow-y: auto;
-    white-space: nowrap;
-    width: max-content;
-    min-width: 80px;
-    max-width: 90vw; /* Prevent it from overflowing iPhone screens */
-}
-
-/* Show when toggled */
-#checkbox-container.show {
-    display: block;
-}
-
-/* Permanently hide column 3 in both tables */
+/* Hide 3rd column in both tables */
 #airtable-data td:nth-child(3),
 #airtable-data th:nth-child(3),
 #feild-data td:nth-child(3),
@@ -733,62 +152,150 @@ button:hover {
     display: none;
 }
 
-/* Flex column for stacking checkboxes */
+
+/* ============================= */
+/* Scrollable Areas             */
+/* ============================= */
+.scrollable-div {
+    overflow-y: auto;
+}
+.scrollable-div::after {
+    content: '';
+    display: block;
+    height: 40px;
+}
+
+/* ============================= */
+/* Filter / Search              */
+/* ============================= */
+#filter-search-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#search-input {
+    flex: 1;
+    padding: 8px;
+    font-size: 16px;
+    min-width: 200px;
+    width: 80%;
+    max-width: 500px;
+    margin: 0 auto;
+    display: block;
+    border: 2px solid #8B0000;
+    border-radius: 4px;
+}
+
+/* ============================= */
+/* Filter Checkbox Dropdown     */
+/* ============================= */
+#menu-toggle {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#menu-toggle:hover {
+    background-color: #0056b3;
+}
+
+#checkbox-container {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: nowrap;
+    width: max-content;
+    min-width: 180px;
+    max-width: 100%;
+}
+
+#checkbox-container.show {
+    display: block;
+}
+
 .checkbox-row {
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Spacing between checkboxes */
     max-height: 200px;
     overflow-y: auto;
 }
 
-/* Improve checkbox tap area */
 .checkbox-row label {
     display: flex;
     align-items: center;
-    font-size: 16px; /* Bigger text for readability */
+    font-size: 16px;
     padding: 10px 8px;
     border-radius: 5px;
     transition: background 0.2s;
 }
-
 .checkbox-row label:hover {
     background: #f0f0f0;
 }
-
-/* Make checkbox itself bigger */
 .checkbox-row input[type="checkbox"] {
     width: 20px;
     height: 20px;
     margin-right: 10px;
 }
 
-    #search-input {
-        font-size: 0.8rem;
-        padding: 6px;
-    }
+/* ============================= */
+/* Carousel Overlay             */
+/* ============================= */
+.carousel-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-@media screen and (max-width: 768px) {
-    .scrollable-div {
-        max-height: none !important;
-        overflow: visible !important;
-        width: 90% !important;
-        margin: 0 auto; /* ✅ center horizontally */
-    }
+.carousel-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    text-align: center;
+}
+
+.carousel-close, .carousel-nav, .carousel-delete {
+    position: absolute;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+.carousel-close { top: 20px; right: 30px; font-size: 32px; }
+.carousel-nav { top: 50%; transform: translateY(-50%); font-size: 40px; }
+#carousel-prev { left: 10px; }
+#carousel-next { right: 10px; }
+.carousel-delete {
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: red;
+    padding: 10px;
 }
 
 
-.scrollable-div::after {
-    content: '';
-    display: block;
-    height: 40px; /* space from bottom */
-}
-@media (max-width: 768px) {
-    .scrollable-div::after {
-        height: 20px;
-    }
-}
+/* ============================= */
+/* Utility & Navigation         */
+/* ============================= */
 .jump-link {
     display: inline-block;
     margin-left: 10px;
@@ -800,7 +307,241 @@ button:hover {
     font-size: 14px;
     transition: background-color 0.3s ease;
 }
-
 .jump-link:hover {
     background-color: #002244;
 }
+
+
+/* ============================= */
+/* Media Query: max-width 950px */
+/* ============================= */
+@media screen and (max-width: 950px) {
+    .header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .nav-link {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    #search-input {
+        width: 100%;
+    }
+
+    th, td {
+        font-size: 12px;
+    }
+
+    button {
+        width: 140px;
+        font-size: 12px;
+    }
+
+    .modal-content {
+        width: 95%;
+    }
+}
+
+/* ============================= */
+/* Media Query: max-width 768px */
+/* ============================= */
+@media screen and (max-width: 768px) {
+    .checkbox-container label {
+        flex: 1 1 100%;
+    }
+
+    .search-container {
+        padding: 10px;
+    }
+
+    .scrollable-div {
+        max-height: none !important;
+        overflow: visible !important;
+        width: 90% !important;
+        margin: 0 auto;
+    }
+
+    .scrollable-div::after {
+        height: 20px;
+    }
+
+    .nav-link {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+
+    #checkbox-container {
+        max-width: 90vw;
+    }
+
+    .filter-label {
+        font-size: 1rem;
+    }
+
+    #search-input {
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+
+    .modal-content {
+        width: 90%;
+    }
+}
+
+/* ============================= */
+/* Media Query: max-width 480px */
+/* ============================= */
+@media screen and (max-width: 480px) {
+    .checkbox-container label {
+        font-size: 0.9rem;
+    }
+
+    #checkbox-container {
+        min-width: 80px;
+        max-width: 90vw;
+    }
+
+    #search-input {
+        font-size: 0.8rem;
+        padding: 6px;
+    }
+}
+
+/* ============================= */
+/* Media Query: max-width 430px */
+/* ============================= */
+@media screen and (max-width: 430px) {
+    .nav-link {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    th, td {
+        font-size: 15px;
+        padding: 6px;
+        max-height: fit-content;
+    }
+
+    .modal-content {
+        width: 95%;
+    }
+
+    #toast {
+        font-size: 12px;
+        padding: 8px;
+    }
+}
+
+/* ============================= */
+/* Enhanced iPhone/Mobile Styles */
+/* ============================= */
+@media screen and (max-width: 600px) {
+    body {
+        font-size: 14px;
+        padding: 0 10px;
+    }
+
+    h2 {
+        font-size: 1.2rem;
+        margin: 15px 0;
+    }
+
+    button,
+    #menu-toggle,
+    #clear-filters {
+        width: 100%;
+        font-size: 14px;
+        padding: 10px;
+        margin: 6px 0;
+    }
+
+    .jump-link {
+        width: 100%;
+        text-align: center;
+        margin: 10px 0;
+        display: block;
+        font-size: 14px;
+    }
+
+    #filter-search-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 0 5px;
+    }
+
+    #search-input {
+        font-size: 14px;
+        width: 100%;
+    }
+
+    .scrollable-div {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 20px;
+    }
+
+    table {
+        font-size: 14px;
+        width: 100%;
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    th, td {
+        font-size: 13px;
+        padding: 6px;
+    }
+
+    .carousel-close,
+    .carousel-nav,
+    .carousel-delete {
+        font-size: 20px;
+    }
+
+    .carousel-delete {
+        padding: 8px;
+    }
+
+    .checkbox-row label {
+        font-size: 14px;
+        padding: 8px 6px;
+    }
+
+    #checkbox-container {
+        width: 100%;
+        left: 0;
+        right: 0;
+        max-height: 250px;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 10px;
+    }
+
+    #toast {
+        font-size: 13px;
+        padding: 10px;
+        max-width: 80%;
+        min-width: auto;
+    }
+
+    .table-container-padding {
+        padding: 0;
+    }
+
+    .header,
+    .nav-link {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        font-size: 14px;
+    }
+}
+

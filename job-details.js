@@ -4,10 +4,8 @@ function getWarrantyId() {
     const id = document.getElementById("warranty-id")?.value?.trim();
     if (id) return id;
     if (currentWarrantyId) {
-        console.warn("⚠️ Using fallback warranty ID from global context.");
         return currentWarrantyId;
     }
-    console.warn("⚠️ Warranty ID is missing from both DOM and fallback.");
     return null;
 }
 
@@ -67,7 +65,6 @@ function displayCarouselItem(index) {
     index < 0 ||
     index >= currentCarouselFiles.length
   ) {
-    console.warn("⚠️ Invalid carousel state or index:", index, "Files:", currentCarouselFiles);
     return; // Do NOT close overlay
   }
 
@@ -166,7 +163,6 @@ document.getElementById("delete-current-attachment")?.addEventListener("click", 
   const fileToDelete = currentCarouselFiles[currentCarouselIndex];
 
   if (!fileToDelete.id) {
-    console.warn("⚠️ File missing 'id'. Cannot remove from Airtable:", fileToDelete);
     alert("File is missing a valid ID. Cannot delete.");
     return;
   }
@@ -208,14 +204,12 @@ document.getElementById("delete-current-attachment")?.addEventListener("click", 
 async function displayImages(files, containerId, fieldName = "") {
     const container = document.getElementById(containerId);
     if (!container) {
-        console.warn(`⚠️ Container not found: ${containerId}`);
         return;
     }
 
     container.innerHTML = ""; // Clear existing content
 
     if (!files || files.length === 0) {
-        console.warn(`⚠️ No files found in ${containerId}`);
         container.innerHTML = "<p></p>";
         
         // ✅ Hide delete button if both are empty
@@ -377,7 +371,6 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
         const data = await response.json();
 
         if (data.records.length === 0) {
-            console.warn(`⚠️ No records found for Warranty ID: ${warrantyId}`);
             return [];
         }
 
@@ -386,7 +379,6 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
         if (record.fields && record.fields[imageField]) {
             return record.fields[imageField];
         } else {
-            console.warn(`⚠️ No images found in field '${imageField}' for '${warrantyId}'`);
             return [];
         }
     } catch (error) {
@@ -430,7 +422,6 @@ const completedImages = await fetchCurrentImagesFromAirtable(warrantyId, "Comple
         completedPicturesSection.innerHTML = hasCompletedImages ? "" : "";
 
 if (!hasIssueImages && !hasCompletedImages) {
-    console.warn("⚠️ No images found, hiding sections.");
     checkAndHideDeleteButton();
     return;
 }
@@ -483,7 +474,6 @@ async function refreshImageContainers() {
 function setInputValue(id, value) {
     const element = document.getElementById(id);
     if (!element) {
-        console.warn(`⚠️ Element with ID '${id}' not found.`);
         return;
     }
 
@@ -527,7 +517,6 @@ async function getRecordIdByWarrantyId(warrantyId) {
             return data.records[0].id;
         }
 
-        console.warn("❌ No record found with Warranty Record ID:", warrantyId);
         return null;
     } catch (error) {
         console.error("❌ Error fetching by Warranty Record ID:", error);
@@ -745,11 +734,9 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
  const deleteButton = document.getElementById("delete-images-btn");
 
  if (!deleteButton) {
-     console.warn("⚠️ Warning: Delete button not found in the DOM. Skipping event listener setup.");
      return; // Exit to prevent errors
  }
         if (!subcontractorCheckbox || !subcontractorDropdown || !saveButton) {
-            console.warn("⚠️ Subcontractor checkbox, dropdown, or save button not found in the DOM!");
             return;
         }
 
@@ -870,7 +857,6 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                 if (value === "Billable" || value === "Non Billable") {
                     updatedFields["Billable/ Non Billable"] = value.trim();
                 } else {
-                    console.warn("⚠️ Invalid Billable value. Not updating field:", value);
                 }
                     let jobData = {
                     "DOW to be Completed": document.getElementById("dow-completed").value,
@@ -1085,7 +1071,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateDeleteButtonLabel() {
         const deleteButton = document.getElementById("delete-images-btn");
         if (!deleteButton) {
-            console.warn("⚠️ Delete button not found in the DOM.");
             return;
         }
     
@@ -1195,7 +1180,6 @@ document.addEventListener("DOMContentLoaded", () => {
             recordId = await getRecordIdByWarrantyId(recordId);
             
             if (!recordId) {
-                console.warn(`⚠️ No record found for Lot Name: "${lotNameOrRecordId}"`);
                 return null;
             }
         }
@@ -1215,7 +1199,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
     
             if (data.fields && !data.fields["Completed  Pictures"]) {
-                console.warn("⚠️ 'Completed  Pictures' field is missing. Initializing as empty array.");
                 data.fields["Completed  Pictures"] = []; 
             }
     
@@ -1370,7 +1353,6 @@ if (Array.isArray(originalSub) && originalSub.length > 0) {
         materialSelect.value = materialValue;
     
         if (materialSelect.value !== materialValue) {
-            console.warn("❗ Dropdown option not found for:", materialValue);
             [...materialSelect.options].forEach(opt => {
             });
         }
@@ -1601,7 +1583,6 @@ document.getElementById("material-needed-select")?.addEventListener("change", fu
 function hideElementById(elementId) {
     const element = document.getElementById(elementId);
     if (!element) {
-        console.warn(`⚠️ Cannot hide — Element not found: ${elementId}`);
         return;
     }
     element.style.display = "none";
@@ -1631,7 +1612,6 @@ function showElement(elementId) {
     if (element) {
         element.style.display = "block";
     } else {
-        console.warn(`⚠️ Element not found: ${elementId}`);
     }
 }
 
@@ -1639,7 +1619,6 @@ function checkAndHideDeleteButton() {
     const deleteButton = document.getElementById("delete-images-btn");
 
     if (!deleteButton) {
-        console.warn("⚠️ Delete button not found.");
         return;
     }
 
@@ -1667,7 +1646,6 @@ document.getElementById("delete-images-btn").addEventListener("click", async fun
     const imageIdsToDelete = Array.from(checkboxes).map(cb => cb.dataset.imageId).filter(id => id);
 
     if (imageIdsToDelete.length === 0) {
-        console.warn("⚠️ No valid image IDs found for deletion.");
         return;
     }
 
@@ -1689,7 +1667,6 @@ async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
     }
 
     if (!Array.isArray(imageIdsToDelete) || imageIdsToDelete.length === 0) {
-        console.warn("⚠️ No image IDs provided for deletion. Skipping process.");
         return;
     }
 
@@ -1702,7 +1679,6 @@ async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
         let existingImages = await fetchCurrentImagesFromAirtable(warrantyId, imageField);
         
         if (!existingImages || existingImages.length === 0) {
-            console.warn(`⚠️ No images found in '${imageField}'. Nothing to delete.`);
             return;
         }
 
@@ -1711,7 +1687,6 @@ async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
 
         // Check if anything was deleted
         if (updatedImages.length === existingImages.length) {
-            console.warn("⚠️ No matching images found for deletion. Skipping Airtable update.");
             return;
         }
 
@@ -1736,7 +1711,6 @@ async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
             if (recordData.fields["Picture(s) of Issue"]) {
               
             } else {
-                console.warn("⚠️ 'Picture(s) of Issue' field is empty or missing.");
             }
         } catch (error) {
             console.error("❌ Error fetching test images from Airtable:", error);
@@ -1756,8 +1730,6 @@ function saveRecordIdToLocal(recordId) {
 function getSavedRecordId() {
     return localStorage.getItem("currentRecordId");
 }
-
-
 
 // ✅ Set the record ID on page load
 document.addEventListener("DOMContentLoaded", () => {
@@ -1915,7 +1887,6 @@ await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFi
         }
             
         if (Object.keys(updatedFields).length === 0) {
-            console.warn("⚠️ No valid fields found to update.");
             alert("No changes detected.");
             return;
         }
@@ -2026,7 +1997,6 @@ async function fetchDropboxToken() {
             return await refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxAppSecret);
         }
 
-        console.warn("⚠️ No Dropbox token or refresh token found.");
         return null;
 
     } catch (error) {
@@ -2072,7 +2042,6 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
         const recordId = tokenData.records?.[0]?.id;
 
         if (!recordId) {
-            console.warn("⚠️ Could not find Dropbox credentials record ID to update.");
             return dropboxAccessToken;
         }
 
@@ -2236,7 +2205,6 @@ async function uploadFileToDropbox(file, token, creds = {}, attempt = 1) {
 
         if (response.status === 429) {
             const delayMs = Math.pow(2, attempt) * 1000; // exponential backoff
-            console.warn(`⏳ Rate limit hit. Retrying in ${delayMs / 1000}s (Attempt ${attempt})`);
 
             if (attempt <= 5) {
                 await new Promise(res => setTimeout(res, delayMs));
@@ -2256,7 +2224,6 @@ async function uploadFileToDropbox(file, token, creds = {}, attempt = 1) {
                 tag === "expired_access_token" ||
                 errorResponse?.error_summary?.startsWith("expired_access_token")
             ) {
-                console.warn("⚠️ Dropbox token expired. Refreshing...");
 
                 // Refresh the token
                 await refreshDropboxAccessToken(creds.refreshToken, creds.appKey, creds.appSecret);
@@ -2307,7 +2274,6 @@ async function uploadFileToDropbox(file, token, creds = {}, attempt = 1) {
     });
 
     if (response.status === 409) {
-      console.warn("⚠️ Shared link already exists. Fetching existing link...");
       return await getExistingDropboxLink(filePath); // 🧠 Fallback handler
     }
 
@@ -2353,7 +2319,6 @@ async function uploadFileToDropbox(file, token, creds = {}, attempt = 1) {
             const currentSubcontractor = primaryData.fields?.Subcontractor;
     
             if (!branchB) {
-                console.warn("⚠️ No branch `b` found for this record.");
                 return;
             }
         
@@ -2434,7 +2399,6 @@ async function getExistingDropboxLink(filePath) {
     if (data.links && data.links.length > 0) {
       return convertToDirectLink(data.links[0].url);
     } else {
-      console.warn("⚠️ No shared links found for:", filePath);
       return null;
     }
   } catch (error) {
@@ -2581,7 +2545,6 @@ async function fetchVendors() {
   async function populateVendorDropdownWithSelection(recordId) {
     const dropdown = document.getElementById("vendor-dropdown");
     if (!dropdown) {
-      console.warn("⚠️ Vendor dropdown element not found.");
       return;
     }
     
@@ -2806,6 +2769,5 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
           } else {
-              console.warn("⚠️ 'field-tech' element not found.");
           }
       });

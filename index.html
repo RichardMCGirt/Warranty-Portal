@@ -1,94 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Warranty</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="style.css"> 
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div id="loader" style="
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    z-index: 9999;
-">
-    Loading jobs, please wait...
-</div>
+
+    <!-- Loader -->
+    <div id="loader" class="loader">
+        Loading jobs, please wait...
+    </div>
 
     <!-- Toast Notification -->
-    <div id="toast">
-        Changes submitted successfully!
-    </div>
-    <br>
-   
-<!-- Container for filter menu and search input -->
-<div id="filter-search-container">
-    <!-- Hamburger Menu -->
-    <div id="checkbox-menu">
-        <button id="menu-toggle" type="button">☰ Filter</button>
-        <div id="checkbox-container" class="hidden">
-            <label for="filter-branch" class="filter-label">Filter by Field Technician:</label>
-            <div id="filter-branch" class="checkbox-container"></div>
-            <button id="clear-filters">Clear Filters</button>
+    <div id="toast">Changes submitted successfully!</div>
 
+    <!-- Filter + Search Container -->
+    <div id="filter-search-container">
+        <!-- Filter Menu -->
+        <div id="checkbox-menu">
+            <button id="menu-toggle" type="button">☰ Filter</button>
+            <div id="checkbox-container" class="hidden">
+                <label for="filter-branch" class="filter-label">Filter by Field Technician:</label>
+                <div id="filter-branch" class="checkbox-container"></div>
+                <button id="clear-filters">Clear Filters</button>
+            </div>
         </div>
+
+        <!-- Search Input -->
+        <input type="text" id="search-input" placeholder="Search..." />
+
+        <!-- Jump Link -->
+        <a href="#secoundary-content" class="jump-link">Jump to Scheduled Awaiting</a>
     </div>
 
-<!-- Search Input -->
-<input type="text" id="search-input" placeholder="Search..." />
-
-<!-- Jump Link -->
-</div>
-<a href="#secoundary-content" class="jump-link">Jump to Scheduled Awaiting</a>
-
+    <!-- Main Table Wrapper -->
     <div class="table-wrapper">
         <div class="table-container-padding">
 
-    <div id="main-content" style="display: none;">
-        <h2>Field Tech Review Needed</h2>
-        <div class="scrollable-div">
-            <table id="airtable-data">
-                <thead>
-                    <tr>
-                        <th>Field Tech Assigned</th>
-                        <th>Lot Number and Community</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data will be injected here by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-        
-    <div class="trash-can" id="trash-can"></div>
+            <!-- Primary Table -->
+            <div id="main-content" style="display: none;">
+                <h2>Field Tech Review Needed</h2>
+                <div class="scrollable-div">
+                    <table id="airtable-data">
+                        <thead>
+                            <tr>
+                                <th>Field Tech Assigned</th>
+                                <th>Lot Number and Community</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-    <div id="secoundary-content" style="display: none;">
-        <h2>Scheduled Awaiting Field Technician</h2>
-        <div class="scrollable-div">
-            <table id="feild-data">
-                <thead>
-                    <tr>
-                        <th>Field Tech Assigned</th>
-                        <th>Lot Number and Community</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data will be injected here by JavaScript -->
-                </tbody>
-            </table>
+            <!-- Trash Can -->
+            <div class="trash-can" id="trash-can"></div>
+
+            <!-- Secondary Table -->
+            <div id="secoundary-content" style="display: none;">
+                <h2>Scheduled Awaiting Field Technician</h2>
+                <div class="scrollable-div">
+                    <table id="feild-data">
+                        <thead>
+                            <tr>
+                                <th>Field Tech Assigned</th>
+                                <th>Lot Number and Community</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
-</div>
-</div>
-    <!-- Configuration for Airtable -->
+
+    <!-- Airtable Config -->
     <script>
         window.env = {
             AIRTABLE_API_KEY: 'patXTUS9m8os14OO1.6a81b7bc4dd88871072fe71f28b568070cc79035bc988de3d4228d52239c8238',
@@ -96,56 +90,11 @@
             AIRTABLE_TABLE_NAME: 'tbl6EeKPsNuEvt5yJ',
             AIRTABLE_TABLE_NAME2: 'tbl9SgC5wUi2TQuF7',
         };
+    </script>
+
+    <!-- Scripts -->
+<script src="./script.js"></script>
 
 
-function toggleJumpLinkVisibility() {
-  const secondaryContent = document.getElementById("secoundary-content");
-  const jumpLink = document.querySelector(".jump-link");
-
-  if (!secondaryContent) {
-    console.warn("⚠️ Element with ID 'secoundary-content' not found.");
-    return;
-  }
-
-  if (!jumpLink) {
-    console.warn("⚠️ Element with class 'jump-link' not found.");
-    return;
-  }
-
-  const isHidden = !secondaryContent.offsetParent; // Better than getComputedStyle
-
-  console.log(`📦 #secoundary-content is currently ${isHidden ? "hidden" : "visible"} (offsetParent check)`);
-  console.log(`🔍 Should hide jump link? ${isHidden}`);
-
-  jumpLink.style.display = isHidden ? "none" : "inline";
-  console.log(`✅ .jump-link is now ${jumpLink.style.display === "none" ? "hidden" : "visible"}`);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  toggleJumpLinkVisibility();
-
-  const secondaryContent = document.getElementById("secoundary-content");
-
-  if (secondaryContent) {
-    const observer = new MutationObserver(() => {
-      console.log("👁️ Detected attribute change on #secoundary-content");
-      toggleJumpLinkVisibility();
-    });
-
-    observer.observe(secondaryContent, {
-      attributes: true,
-      attributeFilter: ['style', 'class'] // Watch for both class and style changes
-    });
-  } else {
-    console.warn("⚠️ #secoundary-content not found for observer setup.");
-  }
-});
-        </script>
-
-
-        
-    <!-- JavaScript for interactivity -->
-    <script src="script.js"></script>
-      <script src="filter.js"></script> 
 </body>
 </html>
