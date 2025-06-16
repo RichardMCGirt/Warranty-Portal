@@ -264,12 +264,10 @@ const oddColor = '#ffffff';   // White
 
     if (isMerged) {
       row.style.setProperty('background-color', color, 'important');
-      console.log(`🔁 Row ${index} (merged): backgroundColor = ${color}`);
     } else {
       colorToggle = !colorToggle;
       const toggleColor = colorToggle ? evenColor : oddColor;
       row.style.setProperty('background-color', toggleColor, 'important');
-      console.log(`✅ Row ${index}: toggled to ${toggleColor}`);
     }
   });
 }

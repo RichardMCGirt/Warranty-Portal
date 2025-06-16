@@ -2296,6 +2296,33 @@ async function uploadFileToDropbox(file, token, creds = {}, attempt = 1) {
   }
 }
 
+function updateCalendarSpanWithDivision() {
+  const span = document.getElementById('divisionNameSpan');
+  const link = document.getElementById('calendarLink');
+
+  if (!span || !link) {
+    console.warn("⚠️ Missing required DOM elements: span or link not found.");
+    return;
+  }
+
+  const savedDivision = localStorage.getItem('selectedWorkerCalendar');
+  console.log("📦 Retrieved 'selectedWorkerCalendar' from localStorage:", savedDivision);
+
+  if (savedDivision && savedDivision !== '__show_all__') {
+    span.textContent = `(${savedDivision})`;
+    const encodedDivision = encodeURIComponent(savedDivision);
+    link.href = `https://calendar.vanirinstalledsales.info/personal-calendars.html?division=${encodedDivision}`;
+    console.log(`🔗 Updated link href to: ${link.href}`);
+  } else {
+    span.textContent = '';
+    link.href = `https://calendar.vanirinstalledsales.info/personal-calendars.html`;
+    console.log("ℹ️ Reset link to default href (no division).");
+  }
+}
+
+
+
+
     async function fetchAndPopulateSubcontractors(resolvedRecordId) {
     
         const airtableBaseId = window.env.AIRTABLE_BASE_ID;
@@ -2340,7 +2367,11 @@ async function uploadFileToDropbox(file, token, creds = {}, attempt = 1) {
             }
     
             // 4️⃣ Populate dropdown with updated list
-            populateSubcontractorDropdown(allSubcontractors, currentSubcontractor);
+// 4️⃣ Populate dropdown with updated list
+populateSubcontractorDropdown(allSubcontractors, currentSubcontractor);
+
+// ✅ Update the calendar span with division
+updateCalendarSpanWithDivision();
     
         } catch (error) {
             console.error("❌ Error fetching subcontractors:", error);
