@@ -231,6 +231,15 @@ button:hover {
   background-color: #0056b3;
 }
 
+/* 🔴 Red style for delete button */
+#delete-images-btn {
+  background-color: #cc0000; /* red */
+}
+
+#delete-images-btn:hover {
+  background-color: #990000; /* darker red on hover */
+}
+
 #save-job {
   position: sticky;
   bottom: 0;
