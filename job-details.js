@@ -1322,11 +1322,35 @@ if (Array.isArray(originalSub) && originalSub.length > 0) {
   const originalSubId = originalSub[0];
 
   fetchSubcontractorNameById(originalSubId).then(name => {
-    if (name && originalPhone) {
+    let phone = originalPhone;
+    if (Array.isArray(originalPhone)) {
+      phone = originalPhone[0];
+    }
+
+    console.log("📞 Original Subcontractor Phone Number:", phone);
+
+    if (name && phone) {
       originalSubElement.textContent = name;
+      originalSubElement.style.cursor = "pointer";
+      originalSubElement.style.color = "#007bff";
+      originalSubElement.style.textDecoration = "underline";
       originalSubElement.onclick = () => {
-        window.location.href = `tel:${originalPhone}`;
+        const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+        if (isMobile) {
+          window.location.href = `tel:${phone}`;
+        } else {
+          alert(`📞 ${name}\n${phone}`);
+        }
       };
+
+      // ✅ Add visible phone number below name
+      const phoneLine = document.createElement("div");
+      phoneLine.textContent = phone;
+      phoneLine.style.fontSize = "0.85rem";
+      phoneLine.style.color = "#555";
+      phoneLine.style.marginTop = "4px";
+      originalSubContainer.appendChild(phoneLine);
+
       originalSubContainer.style.display = "";
     } else {
       originalSubElement.textContent = "";
@@ -1334,11 +1358,10 @@ if (Array.isArray(originalSub) && originalSub.length > 0) {
       originalSubContainer.style.display = "none";
     }
   });
-} else {
-  originalSubElement.textContent = "";
-  originalSubElement.onclick = null;
-  originalSubContainer.style.display = "none";
 }
+
+
+
 
   //  setCheckboxValue("material-not-needed", job["Material Not Needed"] || false);
   setTimeout(() => {
