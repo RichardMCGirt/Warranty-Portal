@@ -2138,9 +2138,20 @@ async function uploadToDropbox(files, targetField) {
     showToast(`❌ Failed to upload ${file.name}`, "error");
   }
 }
-   await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, {
-    [targetField]: uploadedUrls
+   const latestFromAirtable = await fetchCurrentImagesFromAirtable(warrantyId, targetField);
+const combinedList = [...latestFromAirtable];
+
+// Add only unique new files (by URL)
+for (const newFile of uploadedUrls) {
+  if (!combinedList.some(f => f.url === newFile.url)) {
+    combinedList.push(newFile);
+  }
+}
+
+await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, {
+  [targetField]: combinedList
 });
+
 
 uploadInProgress = false;
 checkAndHideDeleteButton();
@@ -2296,21 +2307,17 @@ async function uploadFileToDropbox(file, token, creds = {}, attempt = 1) {
   }
 }
 
-function updateCalendarSpanWithDivision() {
+function updateCalendarSpanWithDivision(division) {
   const span = document.getElementById('divisionNameSpan');
   const link = document.getElementById('calendarLink');
 
-  if (!span || !link) {
-    console.warn("⚠️ Missing required DOM elements: span or link not found.");
-    return;
-  }
+  if (!span || !link) return;
 
-  const savedDivision = localStorage.getItem('selectedWorkerCalendar');
-  console.log("📦 Retrieved 'selectedWorkerCalendar' from localStorage:", savedDivision);
+  console.log("📦 Division passed to function:", division);
 
-  if (savedDivision && savedDivision !== '__show_all__') {
-    span.textContent = `(${savedDivision})`;
-    const encodedDivision = encodeURIComponent(savedDivision);
+  if (division && division !== '__show_all__') {
+    span.textContent = `${division}`; // ✅ no parentheses
+    const encodedDivision = encodeURIComponent(division);
     link.href = `https://calendar.vanirinstalledsales.info/personal-calendars.html?division=${encodedDivision}`;
     console.log(`🔗 Updated link href to: ${link.href}`);
   } else {
@@ -2319,9 +2326,6 @@ function updateCalendarSpanWithDivision() {
     console.log("ℹ️ Reset link to default href (no division).");
   }
 }
-
-
-
 
     async function fetchAndPopulateSubcontractors(resolvedRecordId) {
     
@@ -2348,6 +2352,8 @@ function updateCalendarSpanWithDivision() {
     
             const primaryData = await primaryResponse.json();
             const branchB = primaryData.fields?.b;
+            updateCalendarSpanWithDivision(branchB); // ✅ Add this here
+
             const currentSubcontractor = primaryData.fields?.Subcontractor;
     
             if (!branchB) {
@@ -2366,12 +2372,10 @@ function updateCalendarSpanWithDivision() {
                 });
             }
     
-            // 4️⃣ Populate dropdown with updated list
 // 4️⃣ Populate dropdown with updated list
 populateSubcontractorDropdown(allSubcontractors, currentSubcontractor);
 
 // ✅ Update the calendar span with division
-updateCalendarSpanWithDivision();
     
         } catch (error) {
             console.error("❌ Error fetching subcontractors:", error);
