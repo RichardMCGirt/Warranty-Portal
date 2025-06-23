@@ -184,12 +184,16 @@ input[type="checkbox"] {
   width: 24px;
   height: 24px;
 }
+.form-group label {
+  margin-bottom: 6px; /* optional spacing between label and textarea */
+}
 
 .form-group {
   display: flex;
-  align-items: center;
+    flex-direction: column;
+  align-items: left;
   gap: 20px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .centered-checkbox {
@@ -402,6 +406,12 @@ button:hover {
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
+}
+
+.material-needed-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Adds spacing between direct children */
 }
 
 #carousel-body img,
