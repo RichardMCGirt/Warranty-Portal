@@ -9,6 +9,25 @@ function getWarrantyId() {
     return null;
 }
 
+function updateMaterialVisibility() {
+  const materialSelect = document.getElementById('material-needed-select');
+  const vendorDropdownContainer = document.getElementById('vendor-dropdown-container');
+  const materialsContainer = document.getElementById('materials-needed-container');
+
+  if (!materialSelect || !vendorDropdownContainer || !materialsContainer) return;
+
+  const selected = materialSelect.value;
+
+  if (selected === 'Do Not Need Materials' || selected === '') {
+    vendorDropdownContainer.style.display = 'none';
+    materialsContainer.style.display = 'none';
+  } else {
+    vendorDropdownContainer.style.display = '';
+    materialsContainer.style.display = '';
+  }
+}
+
+
 function checkAndHideDeleteButton() {
     const deleteButton = document.getElementById("delete-images-btn");
     const issueContainer = document.getElementById("issue-pictures");
@@ -566,6 +585,9 @@ function showToast(message, type = "success", duration = 3000) {
         document.removeEventListener("click", toastClickAwayHandler);
     }, duration);
 }
+
+
+
 
 function openMapApp() {
     const addressInput = document.getElementById("address");
@@ -1311,26 +1333,40 @@ function populateMaterialSection(job) {
     const materialsTextarea = document.getElementById("materials-needed");
     const textareaContainer = document.getElementById("materials-needed-container");
     const value = job["Material/Not needed"] ?? "";
+    const materialsValue = job["Materials Needed"] ?? "";
 
     if (materialSelect) {
         materialSelect.value = value;
         window.materialDropdownValue = value;
     }
 
-    if (materialsTextarea && materialsTextarea.value.trim() !== "") {
+    if (materialsTextarea) {
+        materialsTextarea.value = materialsValue; // ✅ set value first
+    }
+
+    if (materialsValue.trim() !== "") {
         addOptionIfMissing(materialSelect, "Needs Materials");
         materialSelect.value = "Needs Materials";
         textareaContainer.style.display = "block";
     } else {
         if (materialSelect?.value === "Needs Materials") {
-            materialSelect.value = "89"; // Or default
+            materialSelect.value = "89"; // fallback default
         }
         textareaContainer.style.display = "none";
     }
+
+    // ✅ Ensure visibility updates AFTER value is set
+    updateMaterialVisibility();
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+  const materialSelect = document.getElementById('material-needed-select');
+  materialSelect?.addEventListener('change', updateMaterialVisibility);
+});
+
+
 function toggleJobCompletedVisibility(job) {
-    const container = document.querySelector(".job-completed-container");
+    const container = document.getElementById("job-completed-container");
     const statusRaw = job["Status"];
     const status = (statusRaw || "").toLowerCase().trim();
 
@@ -1338,29 +1374,30 @@ function toggleJobCompletedVisibility(job) {
     console.log("📦 Raw Status:", statusRaw);
     console.log("📦 Normalized Status:", status);
 
-    if (status === "field tech review needed") {
-        console.log("🚫 Hiding job-completed related elements because status is 'Field Tech Review Needed'");
-        [
-            "completed-pictures",
-            "job-completed-container",
-            "upload-completed-picture",
-            "completed-pictures-heading",
-            "file-input-container",
-            "job-completed",
-            "job-completed-check"
-        ].forEach(id => {
-            console.log(`⛔ Hiding element: ${id}`);
-            hideElementById(id);
-        });
-    } else {
-        console.log("✅ Showing job-completed-container");
-        if (container) {
-            container.style.display = "block";
-        } else {
-            console.warn("⚠️ job-completed-container not found in DOM");
-        }
+    const shouldHide = status === "field tech review needed";
+
+    if (container) {
+        container.style.display = shouldHide ? "none" : "block";
+    }
+
+    // ✅ Also force hide the checkbox and label
+    hideElementById("job-completed");
+    hideElementById("job-completed-check");
+    hideElementById("completed-pictures");
+    hideElementById("upload-completed-picture");
+    hideElementById("completed-pictures-heading");
+    hideElementById("file-input-container");
+
+    if (!shouldHide) {
+        showElement("job-completed");
+        showElement("job-completed-check");
+        showElement("completed-pictures");
+        showElement("upload-completed-picture");
+        showElement("completed-pictures-heading");
+        showElement("file-input-container");
     }
 }
+
 
 
 function updateConditionalFieldVisibility(job) {
@@ -2791,26 +2828,4 @@ document.addEventListener("DOMContentLoaded", function () {
           }
       });
       
-      document.addEventListener("DOMContentLoaded", function () {
-  const materialSelect = document.getElementById('material-needed-select');
-  const vendorDropdownContainer = document.getElementById('vendor-dropdown-container');
-  const materialsContainer = document.getElementById('materials-needed-container');
-
-  function updateMaterialVisibility() {
-    const selected = materialSelect.value;
-
-    if (selected === 'Do Not Need Materials' || selected === '') {
-      vendorDropdownContainer.style.display = 'none';
-      materialsContainer.style.display = 'none';
-    } else {
-      vendorDropdownContainer.style.display = '';
-      materialsContainer.style.display = '';
-    }
-  }
-
-  // Initial check on page load
-  updateMaterialVisibility();
-
-  // Listen for changes
-  materialSelect.addEventListener('change', updateMaterialVisibility);
-});
+      
