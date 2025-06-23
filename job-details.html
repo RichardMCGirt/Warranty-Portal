@@ -243,6 +243,39 @@
   <script src="job-details.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
   <script src="vendor.js"></script>
+<script>
+let hasUnsavedChanges = false;
+
+// Mark form as dirty if anything changes
+document.getElementById('job-form').addEventListener('input', () => {
+  hasUnsavedChanges = true;
+});
+
+// Swipe detection
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', function (e) {
+  touchStartX = e.changedTouches[0].screenX;
+}, false);
+
+document.addEventListener('touchend', function (e) {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipeGesture();
+}, false);
+
+function handleSwipeGesture() {
+  const swipeThreshold = 100; // Minimum distance to be a valid swipe
+  if (touchStartX - touchEndX > swipeThreshold) {
+    // Swipe left detected
+    if (hasUnsavedChanges) {
+      const confirmLeave = confirm('Swiped left, You have unsaved changes. Are you sure you want to leave this page?');
+      if (!confirmLeave) return;
+    }
+    window.location.href = 'index.html';
+  }
+}
+</script>
 
 </body>
 </html>
