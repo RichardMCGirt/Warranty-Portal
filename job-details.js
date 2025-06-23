@@ -669,7 +669,7 @@ if (!resolvedRecordId.startsWith("rec")) {
   }
 }
 
-await populateVendorDropdownWithSelection(resolvedRecordId);
+populateVendorDropdownWithSelection(resolvedRecordId); // don’t await
 
            // ✅ Populate UI with Primary Fields
 populatePrimaryFields(primaryData.fields);
@@ -987,10 +987,7 @@ if (!isNaN(paymentValue)) {
                 "job-completed-check"
             ];  
         });
-                
-        // ✅ Fetch and Populate Subcontractor Dropdown
-        await fetchAndPopulateSubcontractors(resolvedRecordId);
-        
+                        
     } catch (error) {
         const timestamp = new Date().toISOString();
         console.groupCollapsed(`❌ Error occurred [${timestamp}]`);
@@ -1236,26 +1233,35 @@ document.querySelectorAll(".job-link").forEach(link => {
     });
 });
 
-    document.addEventListener("DOMContentLoaded", function () {
-        const subcontractorDropdown = document.getElementById("subcontractor-dropdown");
-        const paymentContainer = document.getElementById("subcontractor-payment-container");
-        const subNotNeededCheckbox = document.getElementById("sub-not-needed");
-    
-        subcontractorDropdown.addEventListener("change", function () {
-            const selectedValue = subcontractorDropdown.value.trim().toLowerCase();
-    
-            if (selectedValue === "sub not needed") {
-                // Hide payment input and check the box
-                paymentContainer.style.display = "none";
-                if (subNotNeededCheckbox) subNotNeededCheckbox.checked = true;
-            } else {
-                // Show payment input and uncheck the box
-                paymentContainer.style.display = "";
-                if (subNotNeededCheckbox) subNotNeededCheckbox.checked = false;
-            }
-        });
-    });
-    
+document.addEventListener("DOMContentLoaded", function () {
+  const subcontractorCheckbox = document.getElementById("sub-not-needed");
+  const subcontractorDropdown = document.getElementById("subcontractor-dropdown");
+  const subcontractorLabel = document.getElementById("subcontractor-dropdown1-label");
+  const paymentContainer = document.getElementById("subcontractor-payment-container");
+
+  function toggleSubcontractorFields() {
+    const shouldHide = subcontractorCheckbox.checked;
+
+    if (subcontractorDropdown) {
+      subcontractorDropdown.style.display = shouldHide ? "none" : "";
+    }
+
+    if (subcontractorLabel) {
+      subcontractorLabel.style.display = shouldHide ? "none" : "";
+    }
+
+    if (paymentContainer) {
+      paymentContainer.style.display = shouldHide ? "none" : "";
+    }
+  }
+
+  // Initial toggle on page load
+  toggleSubcontractorFields();
+
+  // Watch for checkbox change
+  subcontractorCheckbox.addEventListener("change", toggleSubcontractorFields);
+});
+
     async function fetchSubcontractorNameById(recordId) {
         const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl9SgC5wUi2TQuF7/${recordId}`;
       
@@ -1271,273 +1277,211 @@ document.querySelectorAll(".job-link").forEach(link => {
         }
       
         const data = await response.json();
-        return data.fields["Subcontractor Company Name"] || ""; // adjust "Name" to your actual field
+        return data.fields["Subcontractor Company Name"] || ""; 
       }
       
-// 🔹 Populate Primary Fields
 async function populatePrimaryFields(job) {
+  populateStaticInputs(job);
+  populateMaterialSection(job);
+  toggleJobCompletedVisibility(job);
+  updateConditionalFieldVisibility(job);
+  updateBillableFields(job);
+  setReviewCheckboxes(job);
+  showElement("save-job");
 
-    function safeValue(value) {
-        return value === undefined || value === null ? "" : value;
-    }
-    setInputValue("warranty-id", job["Warranty Record ID"]);
-    setInputValue("job-name", safeValue(job["Lot Number and Community/Neighborhood"]));
-    setInputValue("field-tech", safeValue(job["field tech"]));
-    setInputValue("address", safeValue(job["Address"]));
-    setInputValue("homeowner-name", safeValue(job["Homeowner Name"]));
-    setInputValue("contact-email", safeValue(job["Contact Email"]));
-    setInputValue("description", safeValue(job["Description of Issue"]));
-    setInputValue("dow-completed", safeValue(job["DOW to be Completed"])); 
-    setInputValue("materials-needed", safeValue(job["Materials Needed"]));
-    setInputValue("field-status", safeValue(job["Status"]));
-    setCheckboxValue("sub-not-needed", job["Subcontractor Not Needed"] || false);
-    setInputValue("StartDate", convertUTCToLocalInput(job["StartDate"]));
-    setInputValue("EndDate", convertUTCToLocalInput(job["EndDate"]));
-    setInputValue("subcontractor", safeValue(job["Subcontractor"]));
-    setInputValue("subcontractor-payment", safeValue(job["Subcontractor Payment"])); 
-    setInputValue("material-needed-select", safeValue(job["Material/Not needed"]));
+  // Async vendor + subcontractor in parallel
+  requestIdleCallback(() => populateVendorDropdownWithSelection(job["Warranty Record ID"]));
+  populateSubcontractorSection(job).then(() => {
+    console.log("✅ Subcontractor loaded");
+  });
 
-  // HIDE the job completed container if Status is "Field Tech Review Needed"
-  const jobCompletedContainer = document.querySelector(".job-completed-container");
-  if (job["Status"] === "Field Tech Review Needed") {
-    jobCompletedContainer.style.display = "none";
-  } else {
-    jobCompletedContainer.style.display = "block";
-  }
+  // Adjust large textareas without blocking
+  ["description", "dow-completed", "materials-needed"].forEach(id => {
+    requestIdleCallback(() => adjustTextareaSize(id));
+  });
 
-    const subNotNeededCheckbox = document.getElementById("sub-not-needed");
-if (subNotNeededCheckbox) {
-    const isChecked = !!job["Subcontractor Not Needed"];
-    subNotNeededCheckbox.checked = isChecked;
-}
-
-    document.getElementById("original-subcontractor").textContent = job["Original Subcontractor"] || "";
-    const originalSubElement = document.getElementById("original-subcontractor");
-const originalSubContainer = originalSubElement?.parentElement;
-
-const originalPhone = job["Original Subcontractor Phone Number"];
-const originalSub = job["Original Subcontractor"];
-
-if (Array.isArray(originalSub) && originalSub.length > 0) {
-  const originalSubId = originalSub[0];
-
-  fetchSubcontractorNameById(originalSubId).then(name => {
-    let phone = originalPhone;
-    if (Array.isArray(originalPhone)) {
-      phone = originalPhone[0];
-    }
-
-    console.log("📞 Original Subcontractor Phone Number:", phone);
-
-    if (name && phone) {
-      originalSubElement.textContent = name;
-      originalSubElement.style.cursor = "pointer";
-      originalSubElement.style.color = "#007bff";
-      originalSubElement.style.textDecoration = "underline";
-      originalSubElement.onclick = () => {
-        const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-        if (isMobile) {
-          window.location.href = `tel:${phone}`;
-        } else {
-          alert(`📞 ${name}\n${phone}`);
-        }
-      };
-
-      // ✅ Add visible phone number below name
-      const phoneLine = document.createElement("div");
-      phoneLine.textContent = phone;
-      phoneLine.style.fontSize = "0.85rem";
-      phoneLine.style.color = "#555";
-      phoneLine.style.marginTop = "4px";
-      originalSubContainer.appendChild(phoneLine);
-
-      originalSubContainer.style.display = "";
-    } else {
-      originalSubElement.textContent = "";
-      originalSubElement.onclick = null;
-      originalSubContainer.style.display = "none";
-    }
+  // Reveal the full form once background tasks are started
+  requestIdleCallback(() => {
+    document.getElementById("job-form")?.style.setProperty("opacity", "1", "important");
   });
 }
 
-
-
-
-  //  setCheckboxValue("material-not-needed", job["Material Not Needed"] || false);
-  setTimeout(() => {
-    const materialsTextarea = document.getElementById("materials-needed");
+function populateMaterialSection(job) {
     const materialSelect = document.getElementById("material-needed-select");
-    const materialValue = job["Material/Not needed"] || "";
-    if (materialSelect) {
-      materialSelect.value = materialValue;
-      window.materialDropdownValue = materialValue;
-    }
-    
-    setTimeout(() => {
-        materialSelect.value = materialValue;
-    }, 100);
-    if (materialSelect) {
+    const materialsTextarea = document.getElementById("materials-needed");
+    const textareaContainer = document.getElementById("materials-needed-container");
+    const value = job["Material/Not needed"] ?? "";
 
-        materialSelect.value = materialValue;
-    
-        if (materialSelect.value !== materialValue) {
-            [...materialSelect.options].forEach(opt => {
-            });
-        }
+    if (materialSelect) {
+        materialSelect.value = value;
+        window.materialDropdownValue = value;
     }
-    
+
     if (materialsTextarea && materialsTextarea.value.trim() !== "") {
-        let exists = Array.from(materialSelect.options).some(opt => opt.value === "Needs Materials");
-        if (!exists) {
-            const option = document.createElement("option");
-            option.value = "Needs Materials";
-            option.textContent = "Needs Materials";
-            materialSelect.appendChild(option);
-        }
-        materialSelect.value = "Needs Materials";
-    }
-
-    updateMaterialsTextareaVisibility(); // ← ✅ toggle visibility after value is set
-}, 50); // slight delay to ensure dropdown is in DOM
-
-  // 🔄 Auto-set dropdown to "Needs Materials" if textarea has content
-const materialsTextarea = document.getElementById("materials-needed");
-const materialSelect = document.getElementById("material-needed-select");
-const textareaContainer = document.getElementById("materials-needed-container");
-const homeownerBuilderSelect = document.getElementById("homeowner-builder");
-const homeownerBuilderContainer = homeownerBuilderSelect?.parentElement;
-
-if (materialSelect && textareaContainer) {
-    const dropdownValue = safeValue(job["Material/Not needed"]);
-
-    materialSelect.value = dropdownValue;
-
-    // Show/hide the materials textarea
-    if (dropdownValue === "Needs Materials") {
-        textareaContainer.style.display = "block";
-    } else {
-        textareaContainer.style.display = "none";
-    }
-}
-
-if (materialsTextarea && materialSelect && textareaContainer) {
-    const value = materialsTextarea.value.trim();
-
-    if (value !== "") {
-        // Ensure "Needs Materials" option exists
-        let hasNeedsMaterials = Array.from(materialSelect.options).some(opt => opt.value === "Needs Materials");
-        if (!hasNeedsMaterials) {
-            const option = document.createElement("option");
-            option.value = "Needs Materials";
-            option.textContent = "Needs Materials";
-            materialSelect.appendChild(option);
-        }
-
+        addOptionIfMissing(materialSelect, "Needs Materials");
         materialSelect.value = "Needs Materials";
         textareaContainer.style.display = "block";
     } else {
-        // 🔽 Hide the materials-needed container when textarea is empty
-        if (materialSelect.value === "Needs Materials") {
-            materialSelect.value = "89"; // Or another default value if you want
+        if (materialSelect?.value === "Needs Materials") {
+            materialSelect.value = "89"; // Or default
         }
         textareaContainer.style.display = "none";
     }
 }
 
-    // ✅ Set dropdown's data-selected attribute for use in dropdown population
-    const subDropdown = document.getElementById("subcontractor-dropdown");
-    if (subDropdown) {
-        subDropdown.setAttribute("data-selected", safeValue(job["Subcontractor"]));
-    }
+function toggleJobCompletedVisibility(job) {
+    const container = document.querySelector(".job-completed-container");
+    const statusRaw = job["Status"];
+    const status = (statusRaw || "").toLowerCase().trim();
 
-    adjustTextareaSize("description");
-    adjustTextareaSize("dow-completed");
-    adjustTextareaSize("materials-needed");
+    console.log("🔍 toggleJobCompletedVisibility called");
+    console.log("📦 Raw Status:", statusRaw);
+    console.log("📦 Normalized Status:", status);
 
-    if (job["Status"] === "Scheduled- Awaiting Field") {
-    
-        [
-            "billable-status",
-            "homeowner-builder",
-            "subcontractor",
-            "vendor-dropdown-container",
-            "materials-needed",
-            "billable-reason",
-            "field-review-not-needed",
-            "field-review-needed",
-            "field-tech-reviewed",
-            "additional-fields-container",
-            "message-container",
-            "materials-needed-label",
-            "upload-issue-picture-label",
-            "field-tech-reviewed-label",
-            "materials-needed-container",
-            "material-needed-container",
-            "issue-pictures",                
-            "upload-issue-picture",         
-            "trigger-issue-upload", 
-            "issue-file-list"              
-        ].forEach(hideElementById);
-          if (job["Status"] !== "Field Tech Review Needed") {
-            hideParentFormGroup("field-tech-reviewed");
-        }
-        
-    } else {
-
-        showElement("job-completed");
-        showElement("job-completed-label");
-
-        const billableValue = safeValue(job["Billable/ Non Billable"]);
-        document.querySelectorAll('label.billable-label').forEach(label => {
-            const radio = label.querySelector('input[name="billable-status"]');
-            if (!radio) return;
-        
-            if (radio.value === billableValue) {
-                radio.checked = true;
-                label.classList.add("selected");
-            } else {
-                label.classList.remove("selected");
-                radio.checked = false;
-            }
-        
-            // 🔄 Show or hide the Billable Reason dropdown
-            const billableReasonDiv = document.getElementById("billable-reason-container");
-            if (radio.checked) {
-                if (radio.value === "Billable") {
-                    billableReasonDiv.style.display = "block";
-                    homeownerBuilderContainer.style.display = "block";
-                } else {
-                    billableReasonDiv.style.display = "none";
-                    homeownerBuilderContainer.style.display = "none";
-                }
-            }
-        });
-        setInputValue("homeowner-builder", safeValue(job["Homeowner Builder pay"]));
-        setInputValue("billable-reason", safeValue(job["Billable Reason (If Billable)"]));
-        setCheckboxValue("field-tech-reviewed", job["Field Tech Reviewed"]);
-    }
-
-    setCheckboxValue("job-completed-checkbox", job["Job Completed"]);
-
-    const status = (job["Status"] || "").trim().toLowerCase();
-
-    // 🚨 Hide completed job section if status is "Field Tech Review Needed"
     if (status === "field tech review needed") {
+        console.log("🚫 Hiding job-completed related elements because status is 'Field Tech Review Needed'");
         [
             "completed-pictures",
+            "job-completed-container",
             "upload-completed-picture",
             "completed-pictures-heading",
             "file-input-container",
-            "job-completed-container",
             "job-completed",
             "job-completed-check"
-        ].forEach(hideElementById);
+        ].forEach(id => {
+            console.log(`⛔ Hiding element: ${id}`);
+            hideElementById(id);
+        });
+    } else {
+        console.log("✅ Showing job-completed-container");
+        if (container) {
+            container.style.display = "block";
+        } else {
+            console.warn("⚠️ job-completed-container not found in DOM");
+        }
     }
-       
-    // Always show save button
-    showElement("save-job");
-    
 }
+
+
+function updateConditionalFieldVisibility(job) {
+    const status = job["Status"];
+    if (status === "Scheduled- Awaiting Field") {
+        [
+            "billable-status", "homeowner-builder", "subcontractor", "vendor-dropdown-container",
+            "materials-needed", "billable-reason", "field-review-not-needed", "field-review-needed",
+            "field-tech-reviewed", "additional-fields-container", "message-container",
+            "materials-needed-label", "upload-issue-picture-label", "field-tech-reviewed-label",
+            "materials-needed-container", "material-needed-container", "issue-pictures",
+            "upload-issue-picture", "trigger-issue-upload", "issue-file-list"
+        ].forEach(hideElementById);
+
+        if (status !== "Field Tech Review Needed") {
+            hideParentFormGroup("field-tech-reviewed");
+        }
+    } else {
+        showElement("job-completed");
+        showElement("job-completed-label");
+    }
+}
+
+function updateBillableFields(job) {
+    const billableValue = job["Billable/ Non Billable"] ?? "";
+    const container = document.getElementById("billable-reason-container");
+    const homeownerBuilderContainer = document.getElementById("homeowner-builder")?.parentElement;
+
+    document.querySelectorAll('label.billable-label').forEach(label => {
+        const radio = label.querySelector('input[name="billable-status"]');
+        if (!radio) return;
+
+        radio.checked = radio.value === billableValue;
+        label.classList.toggle("selected", radio.checked);
+
+        if (radio.checked) {
+            container.style.display = radio.value === "Billable" ? "block" : "none";
+            homeownerBuilderContainer.style.display = radio.value === "Billable" ? "block" : "none";
+        }
+    });
+
+    setInputValue("homeowner-builder", job["Homeowner Builder pay"] ?? "");
+    setInputValue("billable-reason", job["Billable Reason (If Billable)"] ?? "");
+}
+
+function setReviewCheckboxes(job) {
+    setCheckboxValue("field-tech-reviewed", job["Field Tech Reviewed"]);
+    setCheckboxValue("job-completed-checkbox", job["Job Completed"]);
+}
+
+
+function addOptionIfMissing(select, value) {
+    if (!select) return;
+    const exists = Array.from(select.options).some(opt => opt.value === value);
+    if (!exists) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+    }
+}
+
+
+async function populateSubcontractorSection(job) {
+    const subElement = document.getElementById("original-subcontractor");
+    const container = subElement?.parentElement;
+    const originalSub = job["Original Subcontractor"];
+    let phone = job["Original Subcontractor Phone Number"];
+
+    if (!Array.isArray(originalSub) || originalSub.length === 0) return;
+
+    const id = originalSub[0];
+    const name = await fetchSubcontractorNameById(id);
+    if (!name) return;
+
+    if (Array.isArray(phone)) phone = phone[0];
+
+    subElement.textContent = name;
+    subElement.style.cursor = "pointer";
+    subElement.style.color = "#007bff";
+    subElement.style.textDecoration = "underline";
+    subElement.onclick = () => {
+        const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+        isMobile ? window.location.href = `tel:${phone}` : alert(`📞 ${name}\n${phone}`);
+    };
+
+    const phoneLine = document.createElement("div");
+    phoneLine.textContent = phone;
+    phoneLine.style.fontSize = "0.85rem";
+    phoneLine.style.color = "#555";
+    phoneLine.style.marginTop = "4px";
+    container.appendChild(phoneLine);
+
+    container.style.display = "";
+}
+
+
+function populateStaticInputs(job) {
+    const safe = val => val ?? "";
+
+    setInputValue("warranty-id", job["Warranty Record ID"]);
+    setInputValue("job-name", safe(job["Lot Number and Community/Neighborhood"]));
+    setInputValue("field-tech", safe(job["field tech"]));
+    setInputValue("address", safe(job["Address"]));
+    setInputValue("homeowner-name", safe(job["Homeowner Name"]));
+    setInputValue("contact-email", safe(job["Contact Email"]));
+    setInputValue("description", safe(job["Description of Issue"]));
+    setInputValue("dow-completed", safe(job["DOW to be Completed"]));
+    setInputValue("StartDate", convertUTCToLocalInput(job["StartDate"]));
+    setInputValue("EndDate", convertUTCToLocalInput(job["EndDate"]));
+    setInputValue("subcontractor", safe(job["Subcontractor"]));
+    setInputValue("subcontractor-payment", safe(job["Subcontractor Payment"]));
+    setInputValue("material-needed-select", safe(job["Material/Not needed"]));
+    setCheckboxValue("sub-not-needed", job["Subcontractor Not Needed"] || false);
+
+    const subDropdown = document.getElementById("subcontractor-dropdown");
+    if (subDropdown) subDropdown.setAttribute("data-selected", safe(job["Subcontractor"]));
+
+    ["description", "dow-completed", "materials-needed"].forEach(adjustTextareaSize);
+}
+
 
 document.getElementById("material-needed-select")?.addEventListener("change", (e) => {
     const value = e.target.value;
@@ -2604,14 +2548,27 @@ async function fetchVendors() {
     }
   }
   
-  async function populateVendorDropdownWithSelection(recordId) {
-    const dropdown = document.getElementById("vendor-dropdown");
-    if (!dropdown) {
+async function populateVendorDropdownWithSelection(possibleId) {
+  const dropdown = document.getElementById("vendor-dropdown");
+  if (!dropdown) return;
+
+  let recordId = String(possibleId || "").trim();
+
+  if (!recordId) {
+    console.error("❌ No record ID or Warranty ID provided.");
+    return;
+  }
+
+  if (!recordId.startsWith("rec")) {
+    recordId = await getRecordIdByWarrantyId(recordId);
+    if (!recordId) {
+      console.error("❌ Could not resolve Record ID from Warranty ID:", possibleId);
       return;
     }
-    
-    // 1. Fetch current record to get linked vendor
-    const currentRecordUrl = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl6EeKPsNuEvt5yJ/${recordId}`;
+  }
+
+  // Now proceed with the fetch...
+  const currentRecordUrl = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl6EeKPsNuEvt5yJ/${recordId}`;
     const headers = {
       Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`
     };
@@ -2833,3 +2790,27 @@ document.addEventListener("DOMContentLoaded", function () {
           } else {
           }
       });
+      
+      document.addEventListener("DOMContentLoaded", function () {
+  const materialSelect = document.getElementById('material-needed-select');
+  const vendorDropdownContainer = document.getElementById('vendor-dropdown-container');
+  const materialsContainer = document.getElementById('materials-needed-container');
+
+  function updateMaterialVisibility() {
+    const selected = materialSelect.value;
+
+    if (selected === 'Do Not Need Materials' || selected === '') {
+      vendorDropdownContainer.style.display = 'none';
+      materialsContainer.style.display = 'none';
+    } else {
+      vendorDropdownContainer.style.display = '';
+      materialsContainer.style.display = '';
+    }
+  }
+
+  // Initial check on page load
+  updateMaterialVisibility();
+
+  // Listen for changes
+  materialSelect.addEventListener('change', updateMaterialVisibility);
+});

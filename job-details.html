@@ -59,7 +59,7 @@
         <!-- Original Subcontractor -->
         <div id="original-sub-container">
           <label>Original Subcontractor:</label>
-          <div id="original-subcontractor" class="clickable-call">Loading...</div>
+          <div id="original-subcontractor" class="clickable-call">N/A</div>
         </div>
 <br>
         <!-- Contact Info -->
@@ -77,10 +77,13 @@
         <textarea id="dow-completed" data-field="DOW to be Completed" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"></textarea>
 
         <!-- Subcontractor Selection -->
-        <label id="subcontractor-dropdown1-label" for="subcontractor-dropdown1">Select a Subcontractor:</label>
-        <select id="subcontractor-dropdown" data-field="Subcontractor">
-          <option value="">Select a Subcontractor...</option>
-        </select>
+    <div class="subcontractor-select-wrapper">
+  <label id="subcontractor-dropdown1-label" for="subcontractor-dropdown1">Select a Subcontractor:</label>
+  <select id="subcontractor-dropdown" data-field="Subcontractor">
+    <option value="">Select a Subcontractor...</option>
+  </select>
+</div>
+
 
         <div class="sub-completed-container">
           <label for="sub-not-needed">Sub not needed:</label>
@@ -144,16 +147,19 @@
         </div>
 
         <!-- Materials Section -->
-        <div id="material-needed-container" class="material-needed-container">
-          <select id="material-needed-select">
-            <option value="">Select an option</option>
-            <option value="Needs Materials">Needs Materials</option>
-            <option value="Do Not Need Materials">Do Not Need Materials</option>
-          </select>
+      <div id="material-needed-container" class="material-needed-container">
+  <label for="material-needed-select">Are any materials needed:</label>
+  <select id="material-needed-select">
+    <option value="">Select an option</option>
+    <option value="Needs Materials">Needs Materials</option>
+    <option value="Do Not Need Materials">Do Not Need Materials</option>
+  </select>
 
-          <div class="form-group" id="materials-needed-container">
-            <label for="materials-needed" id="materials-needed-label">Materials Needed</label>
-            <textarea id="materials-needed" name="materials-needed" data-field="Materials Needed" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
+  <div class="form-group" id="materials-needed-container">
+    <label for="materials-needed" id="materials-needed-label">Materials Needed</label>
+    <textarea id="materials-needed" name="materials-needed" data-field="Materials Needed" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
+  </div>
+</div>
 
             <!-- Vendor Dropdown -->
             <div id="vendor-dropdown-container">
@@ -162,8 +168,7 @@
                 <option value="">Select a Vendor...</option>
               </select>
             </div>
-          </div>
-        </div>
+          
 
         <!-- Image Uploads -->
         <div class="file-input-container">
@@ -200,7 +205,7 @@
           <input type="checkbox" id="field-tech-reviewed" data-field="Field Tech Reviewed">
         </div>
 
-        <div class="job-completed-container">
+<div class="job-completed-container" id="job-completed-container">
           <label for="job-completed-checkbox">Job Completed:</label>
           <input type="checkbox" id="job-completed-checkbox" data-field="Job Completed">
         </div>
