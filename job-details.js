@@ -897,7 +897,7 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                     "Materials Needed": document.getElementById("materials-needed").value,
                     "Field Tech Reviewed": document.getElementById("field-tech-reviewed")?.checked || false,
                     "Job Completed": document.getElementById("job-completed")?.checked || false,
-             //       "Material Not Needed": document.getElementById("material-not-needed").checked,
+                    "Material Not Needed": document.getElementById("material-not-needed").checked,
                 };
                 const fieldTechReviewedEl = document.getElementById("field-tech-reviewed");
                 const jobCompletedEl = document.getElementById("job-completed");
@@ -1332,8 +1332,11 @@ function populateMaterialSection(job) {
     const materialSelect = document.getElementById("material-needed-select");
     const materialsTextarea = document.getElementById("materials-needed");
     const textareaContainer = document.getElementById("materials-needed-container");
+
     const value = job["Material/Not needed"] ?? "";
     const materialsValue = job["Materials Needed"] ?? "";
+
+    console.log("🎯 Populating Material/Not needed dropdown with:", value);
 
     if (materialSelect) {
         materialSelect.value = value;
@@ -1341,23 +1344,24 @@ function populateMaterialSection(job) {
     }
 
     if (materialsTextarea) {
-        materialsTextarea.value = materialsValue; // ✅ set value first
+        materialsTextarea.value = materialsValue;
     }
 
-    if (materialsValue.trim() !== "") {
-        addOptionIfMissing(materialSelect, "Needs Materials");
-        materialSelect.value = "Needs Materials";
-        textareaContainer.style.display = "block";
-    } else {
-        if (materialSelect?.value === "Needs Materials") {
-            materialSelect.value = "89"; // fallback default
-        }
-        textareaContainer.style.display = "none";
+    // ✅ Fallback if value is unexpected
+    if (!value || (value !== "Needs Materials" && value !== "Do Not Need Materials")) {
+        if (materialSelect) materialSelect.value = "";
+        if (textareaContainer) textareaContainer.style.display = "none";
     }
 
-    // ✅ Ensure visibility updates AFTER value is set
-    updateMaterialVisibility();
+    // ✅ Show or hide materials textarea depending on input
+    if (value === "Needs Materials" || materialsValue.trim() !== "") {
+        if (textareaContainer) textareaContainer.style.display = "block";
+    }
+
+    updateMaterialVisibility(); // sync vendor/materials visibility
 }
+
+
 
 document.addEventListener("DOMContentLoaded", function () {
   const materialSelect = document.getElementById('material-needed-select');
@@ -1800,7 +1804,8 @@ const currentRecord = await fetchAirtableRecord(airtableTableName, recordId);
         const currentEndLocal = document.getElementById("EndDate")?.value;
         const subNotNeededCheckbox = document.getElementById("sub-not-needed");
 const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
-        
+   const materialSelect = document.getElementById("material-needed-select");
+     
         const updatedFields = {}; // begin fresh field collection
 
         if (!currentRecord || !currentRecord.fields) {
@@ -1815,6 +1820,15 @@ const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
             updatedFields["StartDate"] = convertedStartUTC;
         } else {
         }
+        if (!materialSelect) {
+  console.warn("⚠️ #material-needed-select not found in DOM.");
+} else {
+  console.log("🔽 Selected Material value:", materialSelect.value);
+}
+
+        if (materialSelect) {
+  updatedFields["Material/Not needed"] = materialSelect.value.trim() || null;
+}
         
         const convertedEndUTC = safeToISOString(currentEndLocal);
         if (convertedEndUTC && convertedEndUTC !== originalEndUTC) {
@@ -1850,6 +1864,8 @@ if (subcontractorPaymentInput) {
 
 // ⬇️ Airtable update happens after logging
 await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFields);
+console.log("📦 Saving to Airtable with Material/Not needed:", updatedFields["Material/Not needed"]);
+console.log("📤 Full updatedFields payload:", updatedFields);
 
         const inputs = document.querySelectorAll("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
 
@@ -1941,7 +1957,6 @@ await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFi
            }
         } catch (error) {
             console.error("❌ Error updating Airtable:", error);
-            showToast("❌ Error saving job details. Please try again.", "error");
         }
     });
     
