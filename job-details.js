@@ -305,8 +305,9 @@ if (previewModal) {
             previewElement.style.cursor = "pointer";
 
 previewElement.addEventListener("click", () => {
-  const fileIndex = currentCarouselFiles.findIndex(f => f.url === file.url);
-openCarousel(currentCarouselFiles, fileIndex >= 0 ? fileIndex : 0, getWarrantyId(), fieldName);
+const fileIndex = files.findIndex(f => f.url === file.url);
+openCarousel(files, fileIndex >= 0 ? fileIndex : 0, getWarrantyId(), fieldName);
+
 });
 
             try {
@@ -342,9 +343,10 @@ openCarousel(currentCarouselFiles, fileIndex >= 0 ? fileIndex : 0, getWarrantyId
             previewElement.style.cursor = "pointer";
 
 previewElement.addEventListener("click", () => {
-  const index = files.findIndex(f => f.url === file.url);
-openCarousel(files, index >= 0 ? index : 0, getWarrantyId(), fieldName);
+  const fileIndex = files.findIndex(f => f.url === file.url);
+  openCarousel(files, fileIndex >= 0 ? fileIndex : 0, getWarrantyId(), fieldName);
 });
+
         } else {
             previewElement = document.createElement("a");
             previewElement.href = file.url;
@@ -410,6 +412,10 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
         return [];
     }
 }
+
+ document.getElementById("nav-toggle").addEventListener("click", function () {
+    document.querySelector("nav").classList.toggle("collapsed");
+  });
 
 async function loadImagesForLot(warrantyId, status) {
 

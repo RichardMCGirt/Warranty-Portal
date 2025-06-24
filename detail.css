@@ -54,27 +54,53 @@ body {
 nav {
   background-color: #01070c;
   padding: 10px;
-  position: sticky;
+  position: relative; /* ✅ Needed for absolute positioning inside */
   top: 0;
-  left: 0;
   width: 100%;
+    padding: 10px 50px 10px 10px; /* Add right padding to prevent overlap */
   z-index: 1000;
-  text-align: left;
+  text-align: center;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }
 
 nav a.back-button {
   color: white;
   text-decoration: none;
   font-size: 16px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-radius: 5px;
+  background-color: #1a1a1a;
   display: inline-block;
+  white-space: nowrap;
 }
 
 nav a.back-button:hover {
   background-color: #0056b3;
 }
+
+#nav-toggle {
+  background-color: #333;
+  color: white;
+  font-size: 28px;
+  border: none;
+  cursor: pointer;
+  display: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  position: absolute;
+  top: 10px;
+  right: 10px; /* ✅ Correct way to position in right corner */
+  z-index: 1001;
+  width: auto; /* or a fixed size like 44px */
+  max-width: 50px;
+}
+
+
 
 /* ============================= */
 /* Forms and Input              */
@@ -777,3 +803,27 @@ button:hover {
     gap: 8px;
   }
 }
+@media (max-width: 600px) {
+  #nav-toggle {
+    display: block;
+    position: absolute;
+    top: 10px;
+    right: 85px; /* ✅ Right aligned */
+    z-index: 1001;
+  }
+
+  nav {
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  nav.collapsed {
+    background-color: #111;
+  }
+
+  nav.collapsed a.back-button {
+    display: none;
+  }
+}
+
