@@ -153,7 +153,7 @@
 
         <!-- Materials Section -->
 <div id="material-needed-container" class="material-needed-container">
-  <label for="material-needed-select">Are any materials needed:</label>
+  <label for="material-needed-select">Are any materials needed ?</label>
   <select id="material-needed-select">
     <option value="">Select an option</option>
     <option value="Needs Materials">Needs Materials</option>
@@ -189,7 +189,7 @@
           <button id="trigger-completed-upload" type="button">Upload Completed Image</button>
           <div id="file-list"></div>
         </div>
-        <br>
+         <br>
         <br>
         <br>
         <br>
@@ -227,12 +227,13 @@
       <br>
       <br>
       <br>
-<div class="job-completed-container" id="job-completed-container">
-          <label for="job-completed-checkbox">Job Completed:</label>
-          <br>
-          <input type="checkbox" id="job-completed-checkbox" data-field="Job Completed">
-        </div>
-<br>
+<div class="job-completed-container clickable-checkbox"  id="job-completed-container">
+  <label for="job-completed-checkbox">
+    Job Completed:
+    <input type="checkbox" id="job-completed-checkbox" data-field="Job Completed" />
+  </label>
+</div>
+
 <br>
         <!-- Action Buttons -->
         <button type="button" id="save-job">Save Changes</button>
