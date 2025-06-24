@@ -189,7 +189,12 @@
           <button id="trigger-completed-upload" type="button">Upload Completed Image</button>
           <div id="file-list"></div>
         </div>
+        <br>
+        <br>
+        <br>
+        <br>
         <div id="completed-pictures" class="file-preview" style="display: none;"></div>
+        <button id="delete-images-btn">Delete Selected Images</button>
 
         <!-- Image Carousel Viewer -->
         <div id="attachment-carousel" class="carousel-overlay" style="display: none;">
@@ -212,32 +217,31 @@
     Field Tech Reviewed
   </label>
 </div>
-
+ <div id="upload-progress-container">
+          <label id="upload-progress-label">Uploading...</label>
+          <div>
+            <div id="upload-progress-bar"></div>
+          </div>
+        </div>
       <br>
       <br>
       <br>
       <br>
 <div class="job-completed-container" id="job-completed-container">
           <label for="job-completed-checkbox">Job Completed:</label>
+          <br>
           <input type="checkbox" id="job-completed-checkbox" data-field="Job Completed">
         </div>
 <br>
 <br>
         <!-- Action Buttons -->
         <button type="button" id="save-job">Save Changes</button>
-        <button id="delete-images-btn">Delete Selected Images</button>
 
         <!-- Upload Progress Bar -->
-        <div id="upload-progress-container">
-          <label id="upload-progress-label">Uploading...</label>
-          <div>
-            <div id="upload-progress-bar"></div>
-          </div>
-        </div>
-
+      
       </form>
-    </div>
-  </div>
+  
+
 
   <!-- Environment Config -->
   <script>

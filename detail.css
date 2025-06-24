@@ -372,6 +372,14 @@ button:hover {
   margin-top: 5px;
 }
 
+#completed-pictures.file-preview:empty::before {
+  content: "No completed photos uploaded yet.";
+  font-style: italic;
+  color: #666;
+}
+
+
+
 .file-preview,
 #issue-pictures,
 #completed-pictures {
@@ -380,29 +388,53 @@ button:hover {
   justify-content: center;
   align-items: center;
   gap: 10px;
-  padding: 5px;
-  width: 100%;
+   margin-top: 160px;
+  z-index: 1; /* ensure it's behind sticky elements */
+  padding-bottom: 20px;
   max-width: 100%;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   text-align: center;
+  max-height: max-content;
+  height: auto !important;
 }
 
 .file-preview::-webkit-scrollbar {
   display: none;
 }
 
+/* Parent container (you may already have one; update as needed) */
+.file-preview {
+  display: flex;
+  flex-wrap: wrap; /* Allows images to wrap to the next line */
+  gap: 16px; /* Space between images */
+  justify-content: center;
+/* Parent container (you may already have one; update as needed) */
+.file-preview {
+  display: flex;
+  flex-wrap: wrap; /* Allows images to wrap to the next line */
+  gap: 16px; /* Space between images */
+  justify-content: center;
+  overflow: hidden; /* Prevents children from spilling out */
+  padding: 10px;
+}
+
+/* Individual file wrapper */
 .file-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
   scroll-snap-align: start;
-  min-width: 220px;
-  max-width: 180px;
+  max-width: auto;
+  max-width: max-content;
   position: relative;
   text-align: center;
+  box-sizing: border-box;
+  margin: 8px 0; /* Prevents vertical overlap */
+  z-index: 1;
 }
 
+/* Image or iframe inside the wrapper */
 .file-wrapper img,
 .file-wrapper iframe {
   max-width: 100%;
@@ -410,7 +442,39 @@ button:hover {
   border-radius: 10px;
   border: 1px solid #ddd;
   cursor: pointer;
+  display: block; /* Ensures no unexpected inline spacing */
+  box-sizing: border-box;
 }
+  padding: 10px;
+}
+
+/* Individual file wrapper */
+.file-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  scroll-snap-align: start;
+  min-width: 180px;
+  max-width: 220px;
+  position: relative;
+  text-align: center;
+  box-sizing: border-box;
+  margin: 8px 0; /* Prevents vertical overlap */
+  z-index: 1;
+}
+
+/* Image or iframe inside the wrapper */
+.file-wrapper img,
+.file-wrapper iframe {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  display: block; /* Ensures no unexpected inline spacing */
+  box-sizing: border-box;
+}
+
 
 .file-checkbox {
   appearance: none;

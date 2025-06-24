@@ -1399,6 +1399,7 @@ function toggleJobCompletedVisibility(job) {
 }
 
 
+document.getElementById("completed-pictures").style.display = "flex";
 
 function updateConditionalFieldVisibility(job) {
     const status = job["Status"];
