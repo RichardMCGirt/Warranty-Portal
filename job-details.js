@@ -1409,7 +1409,7 @@ function updateConditionalFieldVisibility(job) {
             "field-tech-reviewed", "additional-fields-container", "message-container",
             "materials-needed-label", "upload-issue-picture-label", "field-tech-reviewed-label",
             "materials-needed-container", "material-needed-container", "issue-pictures",
-            "upload-issue-picture", "trigger-issue-upload", "issue-file-list", "billable-reason-label", "issue-pictures"
+            "upload-issue-picture", "trigger-issue-upload", "issue-file-list"
         ].forEach(hideElementById);
 
         if (status !== "Field Tech Review Needed") {
@@ -1793,18 +1793,7 @@ let recordId = new URLSearchParams(window.location.search).get("id") || getSaved
             return;
         }
         
-        // ✅ Require materials-needed textarea if "Needs Materials" selected
-const materialSelect = document.getElementById("material-needed-select");
-const materialsTextarea = document.getElementById("materials-needed");
-
-if (materialSelect && materialsTextarea) {
-    if (materialSelect.value === "Needs Materials" && (!materialsTextarea.value.trim())) {
-        materialsTextarea.focus();
-        showToast("⚠️ Please list the materials needed before saving.", "error");
-        return; // ⛔ Prevent saving
-    }
-}
-        const currentRecord = await fetchAirtableRecord(airtableTableName, recordId);
+const currentRecord = await fetchAirtableRecord(airtableTableName, recordId);
         const originalStartUTC = currentRecord?.fields?.["StartDate"];
         const originalEndUTC = currentRecord?.fields?.["EndDate"];    
         const currentStartLocal = document.getElementById("StartDate")?.value;
@@ -1835,11 +1824,17 @@ const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
         
         
         // ✅ Manually handle radio buttons for Billable/Non Billable
-        const selectedRadio = document.querySelector('input[name="billable-status"]:checked');
-        const billableField = selectedRadio?.getAttribute("data-field") || "Billable/ Non Billable";
-        
-        // Handle toggle-off logic
-        updatedFields[billableField] = selectedRadio ? selectedRadio.value.trim() : ""; // send empty string to Airtable
+      // ✅ Manually handle radio buttons for Billable/Non Billable
+const selectedRadio = document.querySelector('input[name="billable-status"]:checked');
+const billableField = selectedRadio?.getAttribute("data-field") || "Billable/ Non Billable";
+
+if (selectedRadio && selectedRadio.value.trim()) {
+    updatedFields[billableField] = selectedRadio.value.trim();
+} else {
+    // skip updating or clear the field safely
+    updatedFields[billableField] = null; // or use `delete updatedFields[billableField];` if you want to omit it
+}
+
         
         const subcontractorPaymentInput = document.getElementById("subcontractor-payment");
 if (subcontractorPaymentInput) {
@@ -1946,7 +1941,7 @@ await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFi
            }
         } catch (error) {
             console.error("❌ Error updating Airtable:", error);
-            showToast("❌ Error saving job details.");
+            showToast("❌ Error saving job details. Please try again.", "error");
         }
     });
     

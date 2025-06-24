@@ -85,11 +85,10 @@
 </div>
 
 
-    <label class="sub-completed-container" for="sub-not-needed">
-  <span>Sub not needed:</span>
-  <input type="checkbox" id="sub-not-needed" data-field="Subcontractor Not Needed">
-</label>
-
+        <div class="sub-completed-container">
+          <label for="sub-not-needed">Sub not needed:</label>
+          <input type="checkbox" id="sub-not-needed" data-field="Subcontractor Not Needed">
+        </div>
 
         <!-- Payment Info -->
         <div id="subcontractor-payment-container">
@@ -98,24 +97,20 @@
         </div>
 
         <!-- Billable Section -->
-  <div id="additional-fields-container" style="padding: 16px;">
-  <div class="form-group">
-    <label for="billable-status" style="font-size: 18px; font-weight: 600;">Billable Status</label>
-
-    <div id="billable-status-container">
-  <label class="billable-label">
-    <input type="radio" id="billable" name="billable-status" value="Billable" data-field="Billable/ Non Billable" hidden />
-    Billable
-  </label>
-  <label class="billable-label">
-    <input type="radio" id="non-billable" name="billable-status" value="Non Billable" data-field="Billable/ Non Billable" hidden />
-    Non-Billable
-  </label>
-</div>
-
-  </div>
-
-
+        <div id="additional-fields-container" style="padding: 16px;">
+          <div class="form-group">
+            <label for="billable-status" style="font-size: 18px; font-weight: 600;">Billable Status</label>
+            <div id="billable-status-container">
+              <label class="billable-label">
+                <input type="radio" name="billable-status" value="Billable" data-field="Billable/ Non Billable" />
+                Billable
+              </label>
+              <label class="billable-label">
+                <input type="radio" name="billable-status" value="Non Billable" data-field="Billable/ Non Billable" />
+                Non-Billable
+              </label>
+            </div>
+          </div>
 
           <div class="form-group" id="homeowner-builder-container" style="display: none;">
             <label for="homeowner-builder">Homeowner/Builder Pay</label>
@@ -129,7 +124,7 @@
 
         <!-- Billable Reason -->
         <div class="form-group" id="billable-reason-container" style="display: none;">
-<label for="billable-reason" id="billable-reason-label">Billable Reason</label>
+          <label for="billable-reason">Billable Reason</label>
           <select id="billable-reason" name="billable-reason" data-field="Billable Reason (If Billable)">
             <option value="Another Trade Damaged Work">Another Trade Damaged Work</option>
             <option value="Homeowner Damage">Homeowner Damage</option>
@@ -153,7 +148,7 @@
 
         <!-- Materials Section -->
 <div id="material-needed-container" class="material-needed-container">
-  <label for="material-needed-select">Are any materials needed ?</label>
+  <label for="material-needed-select">Are any materials needed:</label>
   <select id="material-needed-select">
     <option value="">Select an option</option>
     <option value="Needs Materials">Needs Materials</option>
@@ -184,20 +179,12 @@
         </div>
         <div id="issue-pictures" style="display: none;"></div>
 
-          <div class="file-input-container">
+        <div id="file-input-container">
           <input type="file" id="upload-completed-picture" multiple accept="image/*" style="display: none;">
           <button id="trigger-completed-upload" type="button">Upload Completed Image</button>
-                  <div id="completed-pictures" class="file-preview" style="display: none;"></div>
-
           <div id="file-list"></div>
         </div>
-        
-         <br>
-        <br>
-        <br>
-        <br>
         <div id="completed-pictures" class="file-preview" style="display: none;"></div>
-        <button id="delete-images-btn">Delete Selected Images</button>
 
         <!-- Image Carousel Viewer -->
         <div id="attachment-carousel" class="carousel-overlay" style="display: none;">
@@ -214,42 +201,35 @@
         </div>
 
         <!-- Miscellaneous Checkboxes -->
-<div class="form-group centered-checkbox">
-  <label id="field-tech-reviewed-label" for="field-tech-reviewed" class="clickable-checkbox-label">
-    <input type="checkbox" id="field-tech-reviewed" data-field="Field Tech Reviewed">
+       <div class="form-group centered-checkbox clickable-checkbox" id="field-tech-reviewed-container">
+  <label id="field-tech-reviewed-label" for="field-tech-reviewed">
+    <input type="checkbox" id="field-tech-reviewed" data-field="Field Tech Reviewed" />
     Field Tech Reviewed
   </label>
 </div>
- <div id="upload-progress-container">
+
+
+<div class="job-completed-container" id="job-completed-container">
+          <label for="job-completed-checkbox">Job Completed:</label>
+          <input type="checkbox" id="job-completed-checkbox" data-field="Job Completed">
+        </div>
+<br>
+<br>
+        <!-- Action Buttons -->
+        <button type="button" id="save-job">Save Changes</button>
+        <button id="delete-images-btn">Delete Selected Images</button>
+
+        <!-- Upload Progress Bar -->
+        <div id="upload-progress-container">
           <label id="upload-progress-label">Uploading...</label>
           <div>
             <div id="upload-progress-bar"></div>
           </div>
         </div>
-      <br>
-      <br>
-      <br>
-      <br>
-<div class="job-completed-container clickable-checkbox"  id="job-completed-container">
-  <label for="job-completed-checkbox">
-    Job Completed:
-    <input type="checkbox" id="job-completed-checkbox" data-field="Job Completed" />
-  </label>
 
-
-<br>
-        <!-- Action Buttons -->
-        <button type="button" id="save-job">Save Changes</button>
-
-        <!-- Upload Progress Bar -->
-      
       </form>
-  
-<div id="upload-progress-container" style="display:none;">
-  <div id="upload-progress-label">Uploading...</div>
-  <div id="upload-progress-bar" style="width: 0%; height: 5px; background-color: green;"></div>
-</div>
-
+    </div>
+  </div>
 
   <!-- Environment Config -->
   <script>
