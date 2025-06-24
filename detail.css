@@ -420,7 +420,6 @@ button:hover {
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   text-align: center;
-  max-height: max-content;
   height: auto !important;
 }
 
