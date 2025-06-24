@@ -85,10 +85,11 @@
 </div>
 
 
-        <div class="sub-completed-container">
-          <label for="sub-not-needed">Sub not needed:</label>
-          <input type="checkbox" id="sub-not-needed" data-field="Subcontractor Not Needed">
-        </div>
+    <label class="sub-completed-container" for="sub-not-needed">
+  <span>Sub not needed:</span>
+  <input type="checkbox" id="sub-not-needed" data-field="Subcontractor Not Needed">
+</label>
+
 
         <!-- Payment Info -->
         <div id="subcontractor-payment-container">
@@ -128,7 +129,7 @@
 
         <!-- Billable Reason -->
         <div class="form-group" id="billable-reason-container" style="display: none;">
-          <label for="billable-reason">Billable Reason</label>
+<label for="billable-reason" id="billable-reason-label">Billable Reason</label>
           <select id="billable-reason" name="billable-reason" data-field="Billable Reason (If Billable)">
             <option value="Another Trade Damaged Work">Another Trade Damaged Work</option>
             <option value="Homeowner Damage">Homeowner Damage</option>
@@ -205,10 +206,13 @@
         </div>
 
         <!-- Miscellaneous Checkboxes -->
-        <div class="form-group centered-checkbox">
-          <label id="field-tech-reviewed-label" for="field-tech-reviewed">Field Tech Reviewed:</label>
-          <input type="checkbox" id="field-tech-reviewed" data-field="Field Tech Reviewed">
-        </div>
+<div class="form-group centered-checkbox">
+  <label id="field-tech-reviewed-label" for="field-tech-reviewed" class="clickable-checkbox-label">
+    <input type="checkbox" id="field-tech-reviewed" data-field="Field Tech Reviewed">
+    Field Tech Reviewed
+  </label>
+</div>
+
       <br>
       <br>
       <br>

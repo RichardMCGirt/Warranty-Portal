@@ -1409,7 +1409,7 @@ function updateConditionalFieldVisibility(job) {
             "field-tech-reviewed", "additional-fields-container", "message-container",
             "materials-needed-label", "upload-issue-picture-label", "field-tech-reviewed-label",
             "materials-needed-container", "material-needed-container", "issue-pictures",
-            "upload-issue-picture", "trigger-issue-upload", "issue-file-list", "billable-status-container"
+            "upload-issue-picture", "trigger-issue-upload", "issue-file-list", "billable-status-container", "billable-reason-container", "billable-reason-label"
         ].forEach(hideElementById);
 
         if (status !== "Field Tech Review Needed") {
