@@ -177,27 +177,41 @@ select {
   margin-bottom: 15px;
 }
 
-.billable-label input[type="radio"] {
-  margin-right: 12px;
-  width: 25px;
-  height: 25px;
-}
-
 #billable-status-container {
   display: flex;
-  flex-direction: column;
-  gap: 16px; /* adds spacing between the radio options */
-  margin-top: 10px;
-  margin-bottom: 15px;
+  gap: 10px;
 }
 
-/* Checkboxes */
-input[type="checkbox"] {
-  margin-right: 10px;
-  transform: scale(1.5);
-  width: 24px;
-  height: 24px;
+.billable-label {
+  padding: 12px 20px;
+  background-color: #eee;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
 }
+
+/* When input is checked, style the corresponding label */
+.billable-label input:checked + span,
+.billable-label input:checked {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.billable-label:has(input:checked) {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* Optional hover effect */
+.billable-label:hover {
+  background-color: #ddd;
+}
+
 .form-group label {
   margin-bottom: 6px; /* optional spacing between label and textarea */
 }

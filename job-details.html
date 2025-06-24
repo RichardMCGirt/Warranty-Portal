@@ -97,20 +97,24 @@
         </div>
 
         <!-- Billable Section -->
-        <div id="additional-fields-container" style="padding: 16px;">
-          <div class="form-group">
-            <label for="billable-status" style="font-size: 18px; font-weight: 600;">Billable Status</label>
-            <div id="billable-status-container">
-              <label class="billable-label">
-                <input type="radio" name="billable-status" value="Billable" data-field="Billable/ Non Billable" />
-                Billable
-              </label>
-              <label class="billable-label">
-                <input type="radio" name="billable-status" value="Non Billable" data-field="Billable/ Non Billable" />
-                Non-Billable
-              </label>
-            </div>
-          </div>
+  <div id="additional-fields-container" style="padding: 16px;">
+  <div class="form-group">
+    <label for="billable-status" style="font-size: 18px; font-weight: 600;">Billable Status</label>
+
+    <div id="billable-status-container">
+  <label class="billable-label">
+    <input type="radio" id="billable" name="billable-status" value="Billable" data-field="Billable/ Non Billable" hidden />
+    Billable
+  </label>
+  <label class="billable-label">
+    <input type="radio" id="non-billable" name="billable-status" value="Non Billable" data-field="Billable/ Non Billable" hidden />
+    Non-Billable
+  </label>
+</div>
+
+  </div>
+
+
 
           <div class="form-group" id="homeowner-builder-container" style="display: none;">
             <label for="homeowner-builder">Homeowner/Builder Pay</label>
