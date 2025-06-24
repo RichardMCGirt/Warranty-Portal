@@ -1409,7 +1409,7 @@ function updateConditionalFieldVisibility(job) {
             "field-tech-reviewed", "additional-fields-container", "message-container",
             "materials-needed-label", "upload-issue-picture-label", "field-tech-reviewed-label",
             "materials-needed-container", "material-needed-container", "issue-pictures",
-            "upload-issue-picture", "trigger-issue-upload", "issue-file-list", "billable-reason-label"
+            "upload-issue-picture", "trigger-issue-upload", "issue-file-list", "billable-reason-label", "issue-pictures"
         ].forEach(hideElementById);
 
         if (status !== "Field Tech Review Needed") {
@@ -1946,7 +1946,7 @@ await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFi
            }
         } catch (error) {
             console.error("❌ Error updating Airtable:", error);
-            showToast("❌ Error saving job details. Please try again.", "error");
+            showToast("❌ Error saving job details.");
         }
     });
     
