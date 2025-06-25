@@ -227,6 +227,16 @@ async function displayImages(files, containerId, fieldName = "") {
         return;
     }
 
+      if (
+    containerId === "issue-pictures" &&
+    status?.toLowerCase().trim() === "scheduled- awaiting field"
+  ) {
+    console.log("🚫 Skipping issue images due to status:", status);
+    container.innerHTML = ""; // Just in case
+    container.style.display = "none";
+    return;
+  }
+
     container.innerHTML = ""; // Clear existing content
 
     if (!files || files.length === 0) {
@@ -368,9 +378,12 @@ previewElement.addEventListener("click", () => {
         container.appendChild(wrapperDiv);
     }
 
-    container.style.display = "none";
-    container.offsetHeight;
-    container.style.display = "block";
+container.style.display = "none";
+container.offsetHeight;
+container.style.display = "block";
+
+
+
 
     // ✅ Check if we need to show or hide delete button
     checkAndHideDeleteButton();
@@ -418,70 +431,61 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
     document.querySelector("nav").classList.toggle("collapsed");
   });
 
-async function loadImagesForLot(warrantyId, status) {
+async function loadImagesForLot(warrantyId, statusRaw) {
+  const issuePicturesSection = document.getElementById("issue-pictures");
+  const completedPicturesSection = document.getElementById("completed-pictures");
+  const uploadIssueInput = document.getElementById("upload-issue-picture");
+  const uploadCompletedInput = document.getElementById("upload-completed-picture");
 
-    // Get elements and ensure they exist before accessing them
-    const issuePicturesSection = document.getElementById("issue-pictures");
-    const completedPicturesSection = document.getElementById("completed-pictures");
-    const uploadIssueInput = document.getElementById("upload-issue-picture");
-    const uploadCompletedInput = document.getElementById("upload-completed-picture");
-
-    if (!issuePicturesSection || !completedPicturesSection || !uploadIssueInput || !uploadCompletedInput) {
-        console.error("❌ One or more required elements are missing from the DOM.");
-        return;
-    }
-
-    // Show loading indicators while fetching images
-    issuePicturesSection.innerHTML = "📡 Loading issue images...";
-    completedPicturesSection.innerHTML = "📡 Loading completed images...";
-
-    try {
-        // Fetch both sets of images
-    const issueImages = await fetchCurrentImagesFromAirtable(warrantyId, "Picture(s) of Issue");
-const completedImages = await fetchCurrentImagesFromAirtable(warrantyId, "Completed  Pictures");
-
-        // Check if any images exist
-        const hasIssueImages = issueImages && issueImages.length > 0;
-        const hasCompletedImages = completedImages && completedImages.length > 0;
-
-        // Show/Hide upload inputs based on images available
-        uploadIssueInput.style.display = hasIssueImages ? "block" : "none";
-        uploadCompletedInput.style.display = hasCompletedImages ? "block" : "none";
-
-        // Clear loading message before inserting images
-        issuePicturesSection.innerHTML = hasIssueImages ? "" : "";
-        completedPicturesSection.innerHTML = hasCompletedImages ? "" : "";
-
-if (!hasIssueImages && !hasCompletedImages) {
-    checkAndHideDeleteButton();
+  if (!issuePicturesSection || !completedPicturesSection || !uploadIssueInput || !uploadCompletedInput) {
+    console.error("❌ One or more required image containers or inputs are missing.");
     return;
+  }
+
+  // Clear UI first
+  issuePicturesSection.innerHTML = "📡 Loading issue images...";
+  completedPicturesSection.innerHTML = "📡 Loading completed images...";
+
+  const status = (statusRaw || "").toLowerCase().trim();
+  const isScheduledAwaitingField = status === "scheduled- awaiting field";
+
+  try {
+    const issueImages = await fetchCurrentImagesFromAirtable(warrantyId, "Picture(s) of Issue");
+    const completedImages = await fetchCurrentImagesFromAirtable(warrantyId, "Completed  Pictures");
+
+    const hasIssueImages = Array.isArray(issueImages) && issueImages.length > 0;
+    const hasCompletedImages = Array.isArray(completedImages) && completedImages.length > 0;
+
+    // Clear loading state
+    issuePicturesSection.innerHTML = "";
+    completedPicturesSection.innerHTML = "";
+
+    // Hide/show upload inputs
+    uploadIssueInput.style.display = hasIssueImages ? "block" : "none";
+    uploadCompletedInput.style.display = hasCompletedImages ? "block" : "none";
+
+    // ✅ Only display issue images if status is NOT 'Scheduled- Awaiting Field'
+   if (!isScheduledAwaitingField && hasIssueImages) {
+} else {
+  issuePicturesSection.innerHTML = "";
+  issuePicturesSection.style.display = "none";
 }
 
-// ✅ Only show if status allows
-if (status?.toLowerCase() === "scheduled- awaiting field") {
-    // Do not show issue images
-} else if (hasIssueImages) {
-await displayImages(issueImages, "issue-pictures", "Picture(s) of Issue");
-}
 
-if (hasCompletedImages) {
-await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
-}
-
-        if (hasCompletedImages) {
-await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
-        }
-
-        // Ensure delete button updates correctly after image load
-        setTimeout(checkAndHideDeleteButton, 500);
-        checkAndHideDeleteButton();
-
-    } catch (error) {
-console.error(`❌ Error loading images for warranty ID: ${warrantyId}`, error);
-        issuePicturesSection.innerHTML = "❌ Error loading issue images.";
-        completedPicturesSection.innerHTML = "❌ Error loading completed images.";
+    if (hasCompletedImages) {
+      await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
     }
+
+    // Refresh delete button visibility
+    setTimeout(checkAndHideDeleteButton, 300);
+
+  } catch (error) {
+    console.error(`❌ Error loading images for warranty ID: ${warrantyId}`, error);
+    issuePicturesSection.innerHTML = "❌ Error loading issue images.";
+    completedPicturesSection.innerHTML = "❌ Error loading completed images.";
+  }
 }
+
 
 async function refreshImageContainers() {
 
