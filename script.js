@@ -51,21 +51,50 @@ function setupFilterMenu() {
 }
 
 
-  function setupSearchInput() {
-    const input = document.getElementById('search-input');
-    input.addEventListener('input', () => {
-      const searchValue = input.value.toLowerCase();
-      ['#airtable-data', '#feild-data'].forEach(tableSelector => {
-        const rows = document.querySelectorAll(`${tableSelector} tbody tr`);
-        rows.forEach(row => {
-          const match = Array.from(row.cells).some(cell =>
-            cell.textContent.toLowerCase().includes(searchValue)
-          );
-          row.style.display = match ? '' : 'none';
-        });
+function setupSearchInput() {
+  const input = document.getElementById('search-input');
+  input.addEventListener('input', () => {
+    const searchValue = input.value.toLowerCase();
+    const isSearching = searchValue.trim() !== '';
+
+    ['#airtable-data', '#feild-data'].forEach(tableSelector => {
+      const rows = document.querySelectorAll(`${tableSelector} tbody tr`);
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        const warrantyId = row.getAttribute('data-warranty-id')?.toLowerCase() || '';
+        const cellMatch = Array.from(row.cells).some(cell =>
+          cell.textContent.toLowerCase().includes(searchValue)
+        );
+        const match = cellMatch || warrantyId.includes(searchValue);
+        row.style.display = match ? '' : 'none';
+
+        // Unmerge: show all cells individually
+        const firstCell = row.cells[0];
+        if (firstCell) {
+          firstCell.style.display = '';
+          firstCell.removeAttribute('rowspan');
+        }
+
+        if (match) visibleCount++;
       });
+
+      // ✅ Hide entire content section if no visible rows
+      const section = tableSelector === '#airtable-data'
+        ? document.getElementById('main-content')
+        : document.getElementById('secoundary-content');
+      section.style.display = visibleCount > 0 ? 'block' : 'none';
+
+      // ✅ Restore merged cells only if not searching
+      if (!isSearching) {
+        mergeTableCells(tableSelector, 0);
+      }
     });
-  }
+  });
+}
+
+
+
 
   function setupJumpLinkObserver() {
     const secondaryContent = document.getElementById("secoundary-content");
@@ -294,16 +323,20 @@ const oddColor = '#ffffff';   // White
     return nameA.localeCompare(nameB);
   });
 
-  records.forEach(record => {
-    const row = document.createElement('tr');
-    const tech = record.fields['field tech'] || 'N/A';
-    const lot = record.fields['Lot Number and Community/Neighborhood'] || record.fields['Street Address'] || 'N/A';
+ records.forEach(record => {
+  const row = document.createElement('tr');
+  const tech = record.fields['field tech'] || 'N/A';
+  const lot = record.fields['Lot Number and Community/Neighborhood'] || record.fields['Street Address'] || 'N/A';
+  const warrantyId = record.fields['Warranty Record ID'] || '';
 
-    row.innerHTML = `
-      <td data-field="field tech">${tech}</td>
-      <td data-field="Lot Number and Community/Neighborhood" style="cursor:pointer;color:blue;text-decoration:underline">${lot}</td>
-      <td data-field="b" style="display:none">${record.fields['b'] || ''}</td>
-    `;
+  row.setAttribute('data-warranty-id', warrantyId); // ✅ Add this line
+
+  row.innerHTML = `
+    <td data-field="field tech">${tech}</td>
+    <td data-field="Lot Number and Community/Neighborhood" style="cursor:pointer;color:blue;text-decoration:underline">${lot}</td>
+    <td data-field="b" style="display:none">${record.fields['b'] || ''}</td>
+  `;
+
 
     row.querySelector('[data-field="Lot Number and Community/Neighborhood"]').addEventListener('click', () => {
       const id = record.fields['Warranty Record ID'];
