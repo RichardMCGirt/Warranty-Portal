@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const airtableApiKey = env.AIRTABLE_API_KEY;
   const airtableBaseId = env.AIRTABLE_BASE_ID;
   const airtableTableName = env.AIRTABLE_TABLE_NAME;
-  const airtableTableName2 = env.AIRTABLE_TABLE_NAME2;
 
   if (!airtableApiKey || !airtableBaseId || !airtableTableName) {
     console.error('❌ Airtable credentials are missing');
@@ -50,7 +49,6 @@ function setupFilterMenu() {
   });
 }
 
-
 function setupSearchInput() {
   const input = document.getElementById('search-input');
   input.addEventListener('input', () => {
@@ -92,9 +90,6 @@ function setupSearchInput() {
     });
   });
 }
-
-
-
 
   function setupJumpLinkObserver() {
     const secondaryContent = document.getElementById("secoundary-content");
@@ -239,7 +234,6 @@ function applyFilters() {
   });
 }
 
-
   function updateURLWithFilters(selected) {
     const params = new URLSearchParams(window.location.search);
     if (selected.length > 0) {
@@ -270,7 +264,6 @@ function applyFilters() {
     return collected;
   }
 }
-
 
 function applyAlternatingColors(selector) {
   const table = document.querySelector(selector);
@@ -337,7 +330,6 @@ const oddColor = '#ffffff';   // White
     <td data-field="b" style="display:none">${record.fields['b'] || ''}</td>
   `;
 
-
     row.querySelector('[data-field="Lot Number and Community/Neighborhood"]').addEventListener('click', () => {
       const id = record.fields['Warranty Record ID'];
       if (!id) return;
@@ -356,7 +348,6 @@ applyAlternatingColors(tableSelector);
   if (table) table.style.display = 'table';
   if (h2) h2.style.display = 'block';
 }
-
 
   function mergeTableCells(selector, columnIndex) {
     const table = document.querySelector(selector);
