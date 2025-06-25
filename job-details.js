@@ -1,4 +1,5 @@
 let dropboxRefreshToken = null;
+let formHasUnsavedChanges = false;
 
 function getWarrantyId() {
     const id = document.getElementById("warranty-id")?.value?.trim();
@@ -1766,29 +1767,31 @@ let recordId = new URLSearchParams(window.location.search).get("id") || getSaved
 
 });
 
-    document.addEventListener("DOMContentLoaded", function () {
-    
-        const formElements = document.querySelectorAll(
-            'input:not([disabled]), textarea:not([disabled]), select:not([disabled])'
-        );
-    
-        formElements.forEach(element => {
-            element.addEventListener("input", () => handleInputChange(element), { once: true });
-            element.addEventListener("change", () => handleInputChange(element), { once: true });
-        });
-    
-        function handleInputChange(element) {
-        }
-          // ✅ 💡 Add this right here:
-          setTimeout(() => {
-            const input = document.getElementById("upload-completed-picture");
-            const label = document.querySelector("label[for='upload-completed-picture']");
-        
-            if (input) input.style.setProperty("display", "none", "important");
-            if (label) label.style.setProperty("display", "none", "important");
-        }, 500);
-        
+document.addEventListener("DOMContentLoaded", function () {
+
+    const formElements = document.querySelectorAll(
+        'input:not([disabled]), textarea:not([disabled]), select:not([disabled])'
+    );
+
+    formElements.forEach(element => {
+        element.addEventListener("input", () => {
+            formHasUnsavedChanges = true;
+        }, { once: false });
+
+        element.addEventListener("change", () => {
+            formHasUnsavedChanges = true;
+        }, { once: false });
     });
+
+    // ✅ 💡 Add this right here:
+    setTimeout(() => {
+        const input = document.getElementById("upload-completed-picture");
+        const label = document.querySelector("label[for='upload-completed-picture']");
+
+        if (input) input.style.setProperty("display", "none", "important");
+        if (label) label.style.setProperty("display", "none", "important");
+    }, 500);
+});
     
     document.getElementById("save-job").addEventListener("click", async function () {
         const scrollPosition = window.scrollY; // ✅ Add this as your first line    
@@ -1843,7 +1846,6 @@ const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
         }
         
         
-        // ✅ Manually handle radio buttons for Billable/Non Billable
       // ✅ Manually handle radio buttons for Billable/Non Billable
 const selectedRadio = document.querySelector('input[name="billable-status"]:checked');
 const billableField = selectedRadio?.getAttribute("data-field") || "Billable/ Non Billable";
@@ -1872,6 +1874,7 @@ if (subcontractorPaymentInput) {
 await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFields);
 console.log("📦 Saving to Airtable with Material/Not needed:", updatedFields["Material/Not needed"]);
 console.log("📤 Full updatedFields payload:", updatedFields);
+formHasUnsavedChanges = false;
 
         const inputs = document.querySelectorAll("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
 
@@ -2282,13 +2285,20 @@ async function uploadFileToDropbox(file, token, creds = {}, attempt = 1) {
     }
 }
 
- window.addEventListener("beforeunload", function (e) {
+window.addEventListener("beforeunload", function (e) {
     if (uploadInProgress) {
         e.preventDefault();
         e.returnValue = "Uploads are still in progress. Are you sure you want to leave?";
         return "Uploads are still in progress. Are you sure you want to leave?";
     }
+
+    if (formHasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+        return "You have unsaved changes. Are you sure you want to leave?";
+    }
 });
+
 
     // 🔹 Get Dropbox Shared Link
   async function getDropboxSharedLink(filePath) {
