@@ -1506,6 +1506,7 @@ async function populateSubcontractorSection(job) {
 }
 
 
+
 function populateStaticInputs(job) {
     const safe = val => val ?? "";
 
@@ -1513,7 +1514,9 @@ function populateStaticInputs(job) {
     setInputValue("job-name", safe(job["Lot Number and Community/Neighborhood"]));
     setInputValue("field-tech", safe(job["field tech"]));
     setInputValue("address", safe(job["Address"]));
-    setInputValue("homeowner-name", safe(job["Homeowner Name"]));
+    setInputValue("homeowner-name", safe(job["Home owner full name"]));
+        setInputValue("homeowner-number", safe(job["Homeowner number"]));
+
     setInputValue("contact-email", safe(job["Contact Email"]));
     setInputValue("description", safe(job["Description of Issue"]));
     setInputValue("dow-completed", safe(job["DOW to be Completed"]));
