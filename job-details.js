@@ -447,7 +447,6 @@ async function loadImagesForLot(warrantyId, statusRaw) {
   completedPicturesSection.innerHTML = "📡 Loading completed images...";
 
   const status = (statusRaw || "").toLowerCase().trim();
-  const isScheduledAwaitingField = status === "scheduled- awaiting field";
 
   try {
     const issueImages = await fetchCurrentImagesFromAirtable(warrantyId, "Picture(s) of Issue");
@@ -465,12 +464,12 @@ async function loadImagesForLot(warrantyId, statusRaw) {
     uploadCompletedInput.style.display = hasCompletedImages ? "block" : "none";
 
     // ✅ Only display issue images if status is NOT 'Scheduled- Awaiting Field'
-   if (!isScheduledAwaitingField && hasIssueImages) {
+if (hasIssueImages) {
+  await displayImages(issueImages, "issue-pictures", "Picture(s) of Issue");
 } else {
-  issuePicturesSection.innerHTML = "";
-  issuePicturesSection.style.display = "none";
+  issuePicturesSection.innerHTML = "<p>No issue images uploaded yet.</p>";
+  issuePicturesSection.style.display = "block";
 }
-
 
     if (hasCompletedImages) {
       await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
@@ -485,7 +484,6 @@ async function loadImagesForLot(warrantyId, statusRaw) {
     completedPicturesSection.innerHTML = "❌ Error loading completed images.";
   }
 }
-
 
 async function refreshImageContainers() {
 
@@ -1412,8 +1410,6 @@ function toggleJobCompletedVisibility(job) {
         showElement("file-input-container");
     }
 }
-
-
 
 function updateConditionalFieldVisibility(job) {
     const status = job["Status"];
