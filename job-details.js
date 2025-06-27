@@ -465,11 +465,31 @@ async function loadImagesForLot(warrantyId, statusRaw) {
 
     // ✅ Only display issue images if status is NOT 'Scheduled- Awaiting Field'
 if (hasIssueImages) {
-  await displayImages(issueImages, "issue-pictures", "Picture(s) of Issue");
+  if (status === "scheduled- awaiting field") {
+    let html = `
+      <div class="issue-images-wrapper">
+        <h3 style="margin-top: 10px;">Issue Images</h3>
+        <div id="issue-images-container"></div>
+    `;
+
+    if (hasCompletedImages) {
+      html += `<hr style="margin-top: 10px; margin-bottom: 10px;">`;
+    }
+
+    html += `</div>`;
+    issuePicturesSection.innerHTML = html;
+
+    await displayImages(issueImages, "issue-images-container", "Picture(s) of Issue");
+    issuePicturesSection.style.display = "block";
+  } else {
+    await displayImages(issueImages, "issue-pictures", "Picture(s) of Issue");
+  }
 } else {
   issuePicturesSection.innerHTML = "<p>No issue images uploaded yet.</p>";
   issuePicturesSection.style.display = "block";
 }
+
+
 
     if (hasCompletedImages) {
       await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
