@@ -466,21 +466,27 @@ async function loadImagesForLot(warrantyId, statusRaw) {
     // ✅ Only display issue images if status is NOT 'Scheduled- Awaiting Field'
 if (hasIssueImages) {
   if (status === "scheduled- awaiting field") {
-    let html = `
-      <div class="issue-images-wrapper">
-        <h3 style="margin-top: 10px;">Issue Images</h3>
-        <div id="issue-images-container"></div>
-    `;
+    // Check if wrapper already exists to avoid re-adding
+    const wrapperExists = document.getElementById("issue-images-container");
+    if (!wrapperExists) {
+      let html = `
+        <div class="issue-images-wrapper">
+          <h3 style="margin-top: 10px;">Issue Images</h3>
+          <div id="issue-images-container"></div>
+      `;
 
-    if (hasCompletedImages) {
-      html += `<hr style="margin-top: 10px; margin-bottom: 10px;">`;
+      if (hasCompletedImages) {
+        html += `<hr style="margin-top: 10px; margin-bottom: 10px;">`;
+      }
+
+      html += `</div>`;
+      issuePicturesSection.innerHTML = html;
     }
 
-    html += `</div>`;
-    issuePicturesSection.innerHTML = html;
-
-    await displayImages(issueImages, "issue-images-container", "Picture(s) of Issue");
     issuePicturesSection.style.display = "block";
+
+    // Always re-render the images inside the inner container
+    await displayImages(issueImages, "issue-images-container", "Picture(s) of Issue");
   } else {
     await displayImages(issueImages, "issue-pictures", "Picture(s) of Issue");
   }
@@ -489,11 +495,19 @@ if (hasIssueImages) {
   issuePicturesSection.style.display = "block";
 }
 
+  if (hasCompletedImages) {
+  const completedContainer = document.getElementById("completed-pictures");
+  if (completedContainer) {
+    completedContainer.innerHTML = `
+      <div class="completed-images-wrapper">
+        <h3 style="margin-top: 10px;">Completed Images</h3>
+        <div id="completed-images-container"></div>
+      </div>
+    `;
+    await displayImages(completedImages, "completed-images-container", "Completed  Pictures");
+  }
+}
 
-
-    if (hasCompletedImages) {
-      await displayImages(completedImages, "completed-pictures", "Completed  Pictures");
-    }
 
     // Refresh delete button visibility
     setTimeout(checkAndHideDeleteButton, 300);
