@@ -64,7 +64,7 @@ nav {
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 88px;
   justify-content: center;
 }
 
@@ -821,9 +821,11 @@ button:hover {
   }
 
   nav {
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
     position: relative;
+      gap: 38px;
+
   }
 
   nav.collapsed {
