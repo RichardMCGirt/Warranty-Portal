@@ -239,13 +239,23 @@ async function displayImages(files, containerId, fieldName = "") {
 
     container.innerHTML = ""; // Clear existing content
 
-    if (!files || files.length === 0) {
-        container.innerHTML = "<p></p>";
-        
-        // ✅ Hide delete button if both are empty
-        checkAndHideDeleteButton();
-        return;
-    }
+  if (!files || files.length === 0) {
+    const isIssue = fieldName === "Picture(s) of Issue";
+    const header = isIssue ? "Issue Images" : "Completed Images";
+    const wrapperId = isIssue ? "issue-images-container" : "completed-images-container";
+
+    container.innerHTML = `
+        <div class="${isIssue ? "issue-images-wrapper" : "completed-images-wrapper"}">
+            <h3 style="margin-top: 10px;">${header}</h3>
+            <div id="${wrapperId}"><p>No images uploaded yet.</p></div>
+        </div>
+    `;
+
+    container.style.display = "block";
+    checkAndHideDeleteButton();
+    return;
+}
+
 
     for (const file of files) {
         if (!file.url) {
@@ -1449,7 +1459,7 @@ function updateConditionalFieldVisibility(job) {
     const status = job["Status"];
     if (status === "Scheduled- Awaiting Field") {
         [
-            "billable-status", "homeowner-builder", "subcontractor", "vendor-dropdown-container",
+            "billable-status", "homeowner-builder", "subcontractor", 
             "materials-needed", "billable-reason", "field-review-not-needed", "field-review-needed",
             "field-tech-reviewed", "additional-fields-container", "message-container",
             "materials-needed-label", "upload-issue-picture-label", "field-tech-reviewed-label",
@@ -2891,4 +2901,82 @@ document.addEventListener("DOMContentLoaded", function () {
           }
       });
       
-      
+      async function fetchVendors() {
+    const apiKey = 'patCnUsdz4bORwYNV.5c27cab8c99e7caf5b0dc05ce177182df1a9d60f4afc4a5d4b57802f44c65328';
+    const baseId = 'appeNSp44fJ8QYeY5';
+    const tableName = 'tblLEYdDi0hfD9fT3';
+    const view = 'viw8m7cAu6Oao2WiK';
+
+    const url = `https://api.airtable.com/v0/${baseId}/${tableName}?view=${view}`;
+    const headers = {
+        Authorization: `Bearer ${apiKey}`
+    };
+
+    try {
+        const response = await fetch(url, { headers });
+        const data = await response.json();
+
+        const dropdown = document.getElementById("vendor-dropdown");
+
+        if (!dropdown) {
+            console.warn("⚠️ vendor-dropdown not found.");
+            return;
+        }
+
+        data.records.forEach(record => {
+            const name = record.fields["Name"];
+            if (name) {
+                const option = document.createElement("option");
+                option.value = name;
+                option.textContent = name;
+                dropdown.appendChild(option);
+            }
+        });
+    } catch (error) {
+        console.error("❌ Error fetching vendors:", error);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", fetchVendors);
+
+let hasUnsavedChanges = false;
+
+// Mark form as dirty if anything changes
+document.getElementById('job-form').addEventListener('input', () => {
+  hasUnsavedChanges = true;
+});
+
+// Swipe detection
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', function (e) {
+  touchStartX = e.changedTouches[0].screenX;
+}, false);
+
+document.addEventListener('touchend', function (e) {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipeGesture();
+}, false);
+
+function handleSwipeGesture() {
+  const swipeThreshold = 100; // Minimum distance to be a valid swipe
+  if (touchStartX - touchEndX > swipeThreshold) {
+    // Swipe left detected
+    if (hasUnsavedChanges) {
+      const confirmLeave = confirm('Swiped left, You have unsaved changes. Are you sure you want to leave this page?');
+      if (!confirmLeave) return;
+    }
+    window.location.href = 'index.html';
+  }
+}
+
+function handleHomeownerClick() {
+  const number = document.getElementById("homeowner-number").value;
+  if (number) {
+    // Or open dialer:
+    const sanitized = number.replace(/[^\d+]/g, ""); // Keep digits and +
+
+     window.location.href = `tel:${number}`;
+  }
+}
