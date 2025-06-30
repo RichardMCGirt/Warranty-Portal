@@ -1,6 +1,24 @@
 let dropboxRefreshToken = null;
 let formHasUnsavedChanges = false;
 
+async function fetchWithRetry(url, options = {}, maxRetries = 5) {
+  let attempt = 0;
+  let delay = 500; // start with 500ms
+
+  while (attempt < maxRetries) {
+    const response = await fetch(url, options);
+
+    if (response.status !== 429) return response;
+
+    console.warn(`⚠️ Rate limited, retrying in ${delay}ms...`);
+    await new Promise(res => setTimeout(res, delay));
+    delay *= 2; // exponential backoff
+    attempt++;
+  }
+
+  throw new Error(`❌ Max retries reached for ${url}`);
+}
+
 function getWarrantyId() {
     const id = document.getElementById("warranty-id")?.value?.trim();
     if (id) return id;
@@ -409,7 +427,7 @@ async function fetchCurrentImagesFromAirtable(warrantyId, imageField) {
     const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(`{Warranty Record ID} = '${warrantyId}'`)}&fields[]=${imageField}`;
 
     try {
-        const response = await fetch(url, {
+        const response = await fetchWithRetry(url, {
             headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
         });
 
@@ -584,7 +602,7 @@ async function getRecordIdByWarrantyId(warrantyId) {
     const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${window.env.AIRTABLE_TABLE_NAME}?filterByFormula=${encodeURIComponent(filterFormula)}&maxRecords=1`;
 
     try {
-        const response = await fetch(url, {
+        const response = await fetchWithRetry(url, {
             headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
         });
 
@@ -858,6 +876,10 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
             }
         }
         
+// ✅ Global helper to handle Airtable/Dropbox rate limits
+
+
+
         function checkImagesVisibility() {
             const images = document.querySelectorAll(".image-container img"); // Adjust selector if needed
             if (images.length > 0) {
@@ -1264,7 +1286,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/${tableName}/${recordId}`;
     
         try {
-            const response = await fetch(url, {
+            const response = await fetchWithRetry(url, {
                 headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
             });
     
@@ -1340,7 +1362,7 @@ document.addEventListener("DOMContentLoaded", function () {
     async function fetchSubcontractorNameById(recordId) {
         const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl9SgC5wUi2TQuF7/${recordId}`;
       
-        const response = await fetch(url, {
+        const response = await fetchWithRetry(url, {
           headers: {
             Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`
           }
@@ -1456,25 +1478,27 @@ function toggleJobCompletedVisibility(job) {
 }
 
 function updateConditionalFieldVisibility(job) {
-    const status = job["Status"];
-    if (status === "Scheduled- Awaiting Field") {
-        [
-            "billable-status", "homeowner-builder", "subcontractor", 
-            "materials-needed", "billable-reason", "field-review-not-needed", "field-review-needed",
-            "field-tech-reviewed", "additional-fields-container", "message-container",
-            "materials-needed-label", "upload-issue-picture-label", "field-tech-reviewed-label",
-            "materials-needed-container", "material-needed-container", "issue-pictures",
-            "upload-issue-picture", "trigger-issue-upload", "issue-file-list"
-        ].forEach(hideElementById);
+  const status = job["Status"];
+  if (status === "Scheduled- Awaiting Field") {
+    [
+      "billable-status", "homeowner-builder", "subcontractor", 
+      "materials-needed", "billable-reason", "field-review-not-needed", "field-review-needed",
+      "field-tech-reviewed", "additional-fields-container", "message-container",
+      "materials-needed-label", "upload-issue-picture-label", "field-tech-reviewed-label",
+      "materials-needed-container", "material-needed-container", "issue-pictures",
+      "upload-issue-picture", "trigger-issue-upload", "issue-file-list"
+    ].forEach(hideElementById);
 
-        if (status !== "Field Tech Review Needed") {
-            hideParentFormGroup("field-tech-reviewed");
-        }
-    } else {
-        showElement("job-completed");
-        showElement("job-completed-label");
-    }
+    // ✅ Do NOT hide job-completed or save-job here!
+    showElement("job-completed");
+    showElement("save-job");
+  } else {
+    showElement("job-completed");
+    showElement("job-completed-label");
+    showElement("save-job");
+  }
 }
+
 
 function updateBillableFields(job) {
     const billableValue = job["Billable/ Non Billable"] ?? "";
@@ -2032,7 +2056,7 @@ formHasUnsavedChanges = false;
 async function fetchDropboxToken() {
     try {
         const url = `https://api.airtable.com/v0/${airtableBaseId}/tbl6EeKPsNuEvt5yJ?maxRecords=1`;
-        const response = await fetch(url, {
+        const response = await fetchWithRetry(url, {
             headers: { Authorization: `Bearer ${airtableApiKey}` }
         });
 
@@ -2090,7 +2114,7 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
     params.append("client_secret", dropboxAppSecret);
 
     try {
-        const response = await fetch(dropboxAuthUrl, {
+        const response = await fetchWithRetry(dropboxAuthUrl, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: params
@@ -2274,7 +2298,7 @@ async function uploadFileToDropbox(file, token, creds = {}, attempt = 1) {
     const path = `/uploads/${encodeURIComponent(file.name)}`;
 
     try {
-        const response = await fetch(dropboxUploadUrl, {
+        const response = await fetchWithRetry(dropboxUploadUrl, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${token}`,
@@ -2310,7 +2334,6 @@ async function uploadFileToDropbox(file, token, creds = {}, attempt = 1) {
                 tag === "expired_access_token" ||
                 errorResponse?.error_summary?.startsWith("expired_access_token")
             ) {
-
                 // Refresh the token
                 await refreshDropboxAccessToken(creds.refreshToken, creds.appKey, creds.appSecret);
                 const newToken = await fetchDropboxToken();
@@ -2352,7 +2375,7 @@ window.addEventListener("beforeunload", function (e) {
   const url = "https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings";
 
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${dropboxAccessToken}`,
@@ -2470,7 +2493,7 @@ populateSubcontractorDropdown(allSubcontractors, currentSubcontractor);
                 url += `&offset=${offset}`;
             }
         
-            const response = await fetch(url, {
+            const response = await fetchWithRetry(url, {
                 headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
             });
     
@@ -2496,7 +2519,7 @@ async function getExistingDropboxLink(filePath) {
   const url = "https://api.dropboxapi.com/2/sharing/list_shared_links";
 
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${dropboxAccessToken}`,
@@ -2631,7 +2654,7 @@ async function fetchVendors() {
     const headers = { Authorization: `Bearer ${apiKey}` };
   
     try {
-      const response = await fetch(url, { headers });
+      const response = await fetchWithRetry(url, { headers });
       const data = await response.json();
   
       const dropdown = document.getElementById("vendor-dropdown");
@@ -2686,7 +2709,7 @@ async function populateVendorDropdownWithSelection(possibleId) {
     let selectedVendorId = null;
   
     try {
-      const response = await fetch(currentRecordUrl, { headers });
+      const response = await fetchWithRetry(currentRecordUrl, { headers });
       const data = await response.json();
   
       const vendorField = data.fields["Material Vendor"];
@@ -2762,7 +2785,7 @@ async function populateVendorDropdownWithSelection(possibleId) {
             )
         );
 
-        const response = await fetch(url, {
+        const response = await fetchWithRetry(url, {
             method: "PATCH",
             headers: {
                 Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`,
@@ -2913,7 +2936,7 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     try {
-        const response = await fetch(url, { headers });
+        const response = await fetchWithRetry(url, { headers });
         const data = await response.json();
 
         const dropdown = document.getElementById("vendor-dropdown");
