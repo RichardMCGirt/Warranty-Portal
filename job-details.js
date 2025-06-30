@@ -3003,3 +3003,16 @@ function handleHomeownerClick() {
      window.location.href = `tel:${number}`;
   }
 }
+
+ document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('job-completed-container');
+    const checkbox = document.getElementById('job-completed-checkbox');
+
+    container.addEventListener('click', (event) => {
+      // Avoid toggling twice if user clicks the checkbox directly
+      if (event.target.tagName.toLowerCase() !== 'input') {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change')); // If you have any listeners on change
+      }
+    });
+  });
