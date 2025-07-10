@@ -885,6 +885,12 @@ button:hover {
     padding: 10px 12px;
     border-radius: 10px;
   }
+  #subcontractor-dropdown {
+  width: 30ch !important;                
+  font-size: 13px;
+  padding: 12px;
+  margin-bottom: 15px;
+}
 }
 
 
