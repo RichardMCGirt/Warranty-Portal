@@ -123,11 +123,6 @@ nav a.back-button:hover {
   }
 }
 
-/* If you want to keep it left-aligned, remove 'left:50%' and 'transform' above */
-
-
-
-
 /* ============================= */
 /* Forms and Input              */
 /* ============================= */
@@ -153,7 +148,17 @@ select {
   padding: 10px;
   box-sizing: border-box;
   border: 1px solid #ccc;
+  text-align: center !important;
   border-radius: 5px;
+    display: block;
+}
+
+input[type="datetime-local"] {
+  width: 28ch;                /* fits YYYY-MM-DDTHH:MM */
+  max-width: 100%;
+  display: block;
+  margin: 0 auto;
+  text-align: center;
 }
 
 input[readonly],
@@ -225,7 +230,7 @@ select {
 }
 
 #subcontractor-dropdown {
-  width: auto !important;
+  width: 70ch !important;                /* fits YYYY-MM-DDTHH:MM */
   font-size: 16px;
   padding: 12px;
   margin-bottom: 15px;
