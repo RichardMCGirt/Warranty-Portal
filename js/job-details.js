@@ -46,7 +46,6 @@ function updateMaterialVisibility() {
   }
 }
 
-
 function checkAndHideDeleteButton() {
     const deleteButton = document.getElementById("delete-images-btn");
     const issueContainer = document.getElementById("issue-pictures");
@@ -66,9 +65,97 @@ function checkAndHideDeleteButton() {
     }
 }
 
+function addCarouselSwipeHandlers(overlay) {
+  let startX = 0;
+  overlay.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 1) {
+      startX = e.touches[0].clientX;
+    }
+  });
+  overlay.addEventListener("touchend", (e) => {
+    if (e.changedTouches.length === 1) {
+      const endX = e.changedTouches[0].clientX;
+      const diff = endX - startX;
+      if (Math.abs(diff) > 40) {
+        if (diff > 0) {
+          // Swipe right: previous
+          currentCarouselIndex =
+            (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
+          displayCarouselItem(currentCarouselIndex);
+        } else {
+          // Swipe left: next
+          currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
+          displayCarouselItem(currentCarouselIndex);
+        }
+      }
+    }
+  });
+}
+
+function ensureCarouselOverlay() {
+  let overlay = document.getElementById("attachment-carousel");
+  if (overlay) return overlay;
+
+  overlay = document.createElement("div");
+  overlay.id = "attachment-carousel";
+  overlay.style.display = "none";
+  overlay.innerHTML = `
+    <button id="carousel-prev" class="carousel-nav carousel-nav-left">&#8592;</button>
+    <div id="carousel-body"></div>
+    <button id="carousel-next" class="carousel-nav carousel-nav-right">&#8594;</button>
+    <button id="carousel-close-button" class="carousel-close">&times;</button>
+  `;
+  document.body.appendChild(overlay);
+
+  // Attach swipe events right here!
+  addCarouselSwipeHandlers(overlay);
+
+  // Setup nav/close button listeners
+  overlay.querySelector("#carousel-next").addEventListener("click", (e) => {
+    e.preventDefault();
+    if (currentCarouselFiles.length > 0) {
+      currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
+      displayCarouselItem(currentCarouselIndex);
+    }
+  });
+  overlay.querySelector("#carousel-prev").addEventListener("click", (e) => {
+    e.preventDefault();
+    if (currentCarouselFiles.length > 0) {
+      currentCarouselIndex =
+        (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
+      displayCarouselItem(currentCarouselIndex);
+    }
+  });
+  overlay.querySelector("#carousel-close-button").addEventListener("click", () => {
+    closeCarousel();
+  });
+
+  return overlay;
+}
+
+
+document.getElementById("attachment-carousel")?.addEventListener("touchend", (e) => {
+  if (e.changedTouches.length === 1) {
+    const endX = e.changedTouches[0].clientX;
+    const diff = endX - startX;
+    if (Math.abs(diff) > 40) { // minimum swipe distance
+      if (diff > 0) {
+        // Swipe right: previous
+        currentCarouselIndex =
+          (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
+        displayCarouselItem(currentCarouselIndex);
+      } else {
+        // Swipe left: next
+        currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
+        displayCarouselItem(currentCarouselIndex);
+      }
+    }
+  }
+});
+
 // ✅ Open the carousel
 function openCarousel(files, startIndex = 0, warrantyId, field) {
-  const overlay = document.getElementById("attachment-carousel");
+  const overlay = ensureCarouselOverlay(); // <-- always ensures overlay and handlers exist!
   const body = document.getElementById("carousel-body");
   const closeBtn = document.getElementById("carousel-close-button");
   const saveBtn = document.getElementById("save-job");
@@ -90,6 +177,7 @@ function openCarousel(files, startIndex = 0, warrantyId, field) {
 
   displayCarouselItem(currentCarouselIndex);
 }
+
 
 
 
@@ -961,19 +1049,21 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                 } else {
                 }
                     let jobData = {
-                    "DOW to be Completed": document.getElementById("dow-completed").value,
-                    "Subcontractor Not Needed": subcontractorCheckbox.checked,
-                    "Billable/ Non Billable": selectedBillable ? selectedBillable.value : undefined,
-                    "Homeowner Builder pay": document.getElementById("homeowner-builder").value,
-                    "Billable Reason (If Billable)": document.getElementById("billable-reason").value,
-                    "Field Review Not Needed": document.getElementById("field-review-not-needed")?.checked || false,
-                    "Field Review Needed": document.getElementById("field-review-needed")?.checked || false,
-                    "Subcontractor Payment": parseFloat(document.getElementById("subcontractor-payment").value) || 0,
-                    "Materials Needed": document.getElementById("materials-needed").value,
-                    "Field Tech Reviewed": document.getElementById("field-tech-reviewed")?.checked || false,
-                    "Job Completed": document.getElementById("job-completed")?.checked || false,
-                    "Material Not Needed": document.getElementById("material-not-needed").checked,
-                };
+    "DOW to be Completed": document.getElementById("dow-completed").value,
+    "Subcontractor Not Needed": subcontractorCheckbox.checked,
+    "Billable/ Non Billable": selectedBillable ? selectedBillable.value : undefined,
+    "Homeowner Builder pay": document.getElementById("homeowner-builder").value,
+    "Billable Reason (If Billable)": document.getElementById("billable-reason").value,
+    "Field Review Not Needed": document.getElementById("field-review-not-needed")?.checked || false,
+    "Field Review Needed": document.getElementById("field-review-needed")?.checked || false,
+    "Subcontractor Payment": parseFloat(document.getElementById("subcontractor-payment").value) || 0,
+    "Materials Needed": document.getElementById("materials-needed").value,
+    "Field Tech Reviewed": document.getElementById("field-tech-reviewed")?.checked || false,
+    "Job Completed": document.getElementById("job-completed")?.checked || false,
+    "Material Not Needed": document.getElementById("material-not-needed").checked,
+    "Date Warranty Started": document.getElementById("date-warranty-started").value 
+};
+
                 const fieldTechReviewedEl = document.getElementById("field-tech-reviewed");
                 const jobCompletedEl = document.getElementById("job-completed");
                 
@@ -1583,12 +1673,12 @@ function populateStaticInputs(job) {
     setInputValue("field-tech", safe(job["field tech"]));
     setInputValue("address", safe(job["Address"]));
     setInputValue("homeowner-name", safe(job["Home owner full name"]));
-        setInputValue("homeowner-number", safe(job["Homeowner number"]));
-
+    setInputValue("homeowner-number", safe(job["Homeowner number"]));
     setInputValue("description", safe(job["Description of Issue"]));
     setInputValue("dow-completed", safe(job["DOW to be Completed"]));
     setInputValue("StartDate", convertUTCToLocalInput(job["StartDate"]));
     setInputValue("EndDate", convertUTCToLocalInput(job["EndDate"]));
+    setInputValue("date-warranty-started", safe(job["Date Warranty Started"])); // <-- Added line
     setInputValue("subcontractor", safe(job["Subcontractor"]));
     setInputValue("subcontractor-payment", safe(job["Subcontractor Payment"]));
     setInputValue("material-needed-select", safe(job["Material/Not needed"]));
@@ -1599,6 +1689,7 @@ function populateStaticInputs(job) {
 
     ["description", "dow-completed", "materials-needed"].forEach(adjustTextareaSize);
 }
+
 
 
 document.getElementById("material-needed-select")?.addEventListener("change", (e) => {
@@ -2245,7 +2336,6 @@ await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, {
   [targetField]: combinedList
 });
 
-
 uploadInProgress = false;
 checkAndHideDeleteButton();
 
@@ -2804,15 +2894,6 @@ async function populateVendorDropdownWithSelection(possibleId) {
                 showToast("❌ Error updating Airtable: Unable to parse error response", "error");
                 return;
             }
-
-            console.group("📛 Airtable Update Error Details");
-            console.error("❌ Status Code:", response.status);
-            console.error("❌ Status Text:", response.statusText);
-            console.error("❌ Error Type:", errorDetails.error?.type || "Unknown");
-            console.error("❌ Error Message:", errorDetails.error?.message || "No message provided");
-            console.error("📦 Full Error Object:", errorDetails);
-            console.groupEnd();
-
             showToast(`❌ Airtable error: ${errorDetails.error?.message || 'Unknown error'}`, "error");
             return;
         }
@@ -2918,7 +2999,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const encodedName = encodeURIComponent(techName);
     window.location.href = `http://localhost:5501/index.html?techs=${encodedName}`;
 });
-
           } else {
           }
       });

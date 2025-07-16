@@ -156,13 +156,15 @@ select {
     display: block;
 }
 
-input[type="datetime-local"] {
-  width: 28ch;                /* fits YYYY-MM-DDTHH:MM */
+input[type="datetime-local"],
+input[type="date"] {
+  width: 28ch;
   max-width: 100%;
   display: block;
   margin: 0 auto;
   text-align: center;
 }
+
 
 input[readonly],
 textarea[readonly] {
@@ -535,6 +537,18 @@ button:hover {
   justify-content: center;
   overflow: hidden; /* Prevents children from spilling out */
   padding: 10px;
+}
+input[type="date"] {
+  width: 28ch;   /* Match with datetime-local */
+  max-width: 100%;
+  display: block;
+  margin: 0 auto;
+  text-align: center;
+  font-size: 16px;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 /* Individual file wrapper */
