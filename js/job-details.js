@@ -1585,7 +1585,6 @@ function populateStaticInputs(job) {
     setInputValue("homeowner-name", safe(job["Home owner full name"]));
         setInputValue("homeowner-number", safe(job["Homeowner number"]));
 
-    setInputValue("contact-email", safe(job["Contact Email"]));
     setInputValue("description", safe(job["Description of Issue"]));
     setInputValue("dow-completed", safe(job["DOW to be Completed"]));
     setInputValue("StartDate", convertUTCToLocalInput(job["StartDate"]));
