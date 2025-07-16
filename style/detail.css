@@ -48,6 +48,10 @@ body {
 .toast-container.show {
   opacity: 1;
 }
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
 
 /* ============================= */
 /* Navigation                   */
@@ -64,7 +68,6 @@ nav {
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-wrap: wrap;
-  gap: 88px;
   justify-content: center;
 }
 
@@ -199,25 +202,47 @@ label[for="field-status"] {
     text-align: center !important; /* ✅ Add to center text inside if needed */
 
 }
+.address-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
 
-/* Address input */
+.address-container label {
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.address-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+.address-input,
 #address {
-  cursor: pointer;
   background-color: #f8f9fa;
   border: 2px solid #007BFF;
   border-radius: 10px;
   font-size: 18px;
   text-align: center;
   padding: 14px;
-  max-width: 600px;
+  max-width: 95vw;      /* Responsive for small screens */
   outline: none;
   font-weight: bold;
   color: #333;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out;
+  transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
 }
 
-#address:hover {
+.address-input:hover,
+.address-input:focus,
+#address:hover,
+#address:focus {
   background-color: #e0f2ff;
   box-shadow: 0px 4px 12px rgba(0, 123, 255, 0.3);
   transform: scale(1.02);
