@@ -113,15 +113,6 @@ th {
     height: 3.5em;
 }
 
-
-
-td[contenteditable="true"] {
-    cursor: text;
-}
-td.edited {
-    background-color: rgb(85, 82, 82) !important;
-}
-
 td[data-field="Lot Number and Community/Neighborhood"] {
     padding: 12px 16px;
     touch-action: manipulation;
@@ -221,10 +212,6 @@ td[data-field="b"], .hidden-column {
     max-width: 100%;
 }
 
-#checkbox-container.show {
-    display: block;
-}
-
 .checkbox-row {
     display: flex;
     flex-direction: column;
@@ -250,48 +237,6 @@ td[data-field="b"], .hidden-column {
 }
 
 /* ============================= */
-/* Carousel Overlay             */
-/* ============================= */
-.carousel-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.carousel-content {
-    position: relative;
-    max-width: 90%;
-    max-height: 90%;
-    text-align: center;
-}
-
-.carousel-close, .carousel-nav, .carousel-delete {
-    position: absolute;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    background: none;
-    border: none;
-}
-.carousel-close { top: 20px; right: 30px; font-size: 32px; }
-.carousel-nav { top: 50%; transform: translateY(-50%); font-size: 40px; }
-#carousel-prev { left: 10px; }
-#carousel-next { right: 10px; }
-.carousel-delete {
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: red;
-    padding: 10px;
-}
-
-
-/* ============================= */
 /* Utility & Navigation         */
 /* ============================= */
 .jump-link {
@@ -308,7 +253,6 @@ td[data-field="b"], .hidden-column {
 .jump-link:hover {
     background-color: #002244;
 }
-
 
 /* ============================= */
 /* Media Query: max-width 950px */
