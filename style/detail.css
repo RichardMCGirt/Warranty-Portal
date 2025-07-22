@@ -9,6 +9,67 @@ body {
   color: #333;
 }
 
+.center-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;      /* Center horizontally */
+  justify-content: center;  /* Center vertically if you set a height */
+}
+
+#billable-status-container {
+  display: flex;
+  gap: 32px;                /* Spacing between the two radios */
+  margin-top: 12px;
+}
+
+.billable-label {
+  font-size: 17px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.subcontractor-select-wrapper {
+  display: flex;
+  flex-direction: column;       /* Stack label and dropdown vertically */
+  align-items: center;          /* Center horizontally */
+  justify-content: center;      /* Center vertically, if used with height */
+  margin: 32px auto;            /* Add vertical space and center horizontally */
+  padding: 20px 0;              /* Optional: extra padding for aesthetics */
+}
+.centered-input-wrapper {
+  display: flex;
+  justify-content: center;    /* Center horizontally */
+  align-items: center;        /* Center vertically if you set height */
+  margin: 40px auto;          /* Top/bottom space + horizontal centering */
+  width: 100%;
+  max-width: 500px;           /* Optional: limit width on large screens */
+}
+
+#subcontractor-dropdown {
+  width: 100%;
+  max-width: 350px;           /* Optional: controls input width */
+  box-sizing: border-box;
+  text-align: center;         /* Centers the placeholder/text */
+}
+
+.subcontractor-select-wrapper label {
+  margin-bottom: 8px;           /* Space between label and dropdown */
+  font-size: 1.1em;
+  font-weight: 500;
+}
+
+.subcontractor-select-wrapper select {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1em;
+  min-width: 250px;
+  box-shadow: 0 2px 8px rgba(60,60,60,0.06);
+}
+
 .scrollable-content {
   margin-top: 10px;
   padding: 10px 10px 120px;
