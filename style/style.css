@@ -102,6 +102,14 @@ td {
     font-size: 24px;
 }
 
+#checkbox-container {
+  display: none;
+}
+#checkbox-container.show {
+  display: block;
+}
+
+
 th {
     background-color: #002244;
     color: white;
