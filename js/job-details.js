@@ -31,9 +31,9 @@ function getWarrantyId() {
 function updateMaterialVisibility() {
   const materialSelect = document.getElementById('material-needed-select');
   const materialsContainer = document.getElementById('materials-needed-container');
-  const vendorDropdown = document.querySelector('#materials-needed-container #vendor-dropdown').parentElement;
+  const vendorDropdownContainer = document.getElementById('vendor-dropdown-container');
 
-  if (!materialSelect || !materialsContainer || !vendorDropdown) {
+  if (!materialSelect || !materialsContainer || !vendorDropdownContainer) {
     console.log("❌ Missing one or more elements");
     return;
   }
@@ -43,15 +43,18 @@ function updateMaterialVisibility() {
 
   if (selected === 'Needs Materials') {
     materialsContainer.style.display = '';
-    vendorDropdown.style.display = '';
+    vendorDropdownContainer.style.display = '';
     console.log("👀 Showing vendor and materials containers");
   } else {
     materialsContainer.style.display = 'none';
-    vendorDropdown.style.display = 'none';
+    vendorDropdownContainer.style.display = 'none';
     console.log("🙈 Hiding vendor and materials containers");
   }
 }
 
+
+document.getElementById('material-needed-select').addEventListener('change', updateMaterialVisibility);
+window.addEventListener('DOMContentLoaded', updateMaterialVisibility);
 
 
 function checkAndHideDeleteButton() {
