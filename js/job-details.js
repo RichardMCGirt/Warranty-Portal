@@ -2880,6 +2880,15 @@ async function populateVendorDropdownWithSelection(possibleId) {
   });
 
   console.log("🎉 Vendor dropdown populated with", allVendors.length, "vendors.");
+if (window.vendorChoices) {
+  window.vendorChoices.destroy(); // Cleanup if already initialized
+}
+window.vendorChoices = new Choices('#vendor-dropdown', {
+  searchEnabled: true,
+  itemSelectText: '',
+  shouldSort: false // Already sorted by your JS
+});
+
 }
 
 
