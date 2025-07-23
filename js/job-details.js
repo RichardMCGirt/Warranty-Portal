@@ -2833,36 +2833,48 @@ async function populateVendorDropdownWithSelection(possibleId) {
     console.error("❌ Failed to fetch current record:", error);
   }
 
-  // 2. Fetch all vendors
-  const vendorListUrl = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tblHZqptShyGhbP5B?view=viwioQYJrw5ZhmfIN`;
-  try {
-    console.log(`🌐 Fetching vendor list: ${vendorListUrl}`);
-    const vendorResponse = await fetch(vendorListUrl, { headers });
-    const vendorData = await vendorResponse.json();
-    console.log("📦 Vendor records fetched:", vendorData.records);
+  // 2. Fetch all vendors, handling pagination
+  let allVendors = [];
+  let offset = null;
+  let fetchCount = 0;
 
-    // 3. Clear old options and add new ones
-    dropdown.innerHTML = `<option value="">Select a Vendor...</option>`;
+  dropdown.innerHTML = `<option value="">Select a Vendor...</option>`;
 
-    vendorData.records.forEach(vendor => {
-      const option = document.createElement("option");
-      option.value = vendor.id;
-      option.textContent = vendor.fields["Name"] || "(No name)";
-      if (vendor.id === selectedVendorId) {
-        option.selected = true;
-        console.log(`✅ Setting vendor as selected: [${vendor.id}] ${option.textContent}`);
-      } else {
-        console.log(`➖ Adding vendor: [${vendor.id}] ${option.textContent}`);
-      }
-      dropdown.appendChild(option);
-    });
+  do {
+    let url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tblHZqptShyGhbP5B?view=viwioQYJrw5ZhmfIN`;
+    if (offset) url += `&offset=${offset}`;
+    try {
+      console.log(`🌐 Fetching vendor list${offset ? " (offset: " + offset + ")" : ""}: ${url}`);
+      const vendorResponse = await fetch(url, { headers });
+      const vendorData = await vendorResponse.json();
+      console.log(`📦 Vendor records fetched (batch ${fetchCount + 1}):`, vendorData.records);
+      allVendors = allVendors.concat(vendorData.records);
+      offset = vendorData.offset;
+      fetchCount++;
+    } catch (error) {
+      console.error("❌ Failed to fetch vendor list:", error);
+      break;
+    }
+  } while (offset);
 
-    console.log("🎉 Vendor dropdown populated.");
+  // 3. Add all vendors to dropdown
+  console.log(`🔢 Total vendors to add: ${allVendors.length}`);
+  allVendors.forEach(vendor => {
+    const option = document.createElement("option");
+    option.value = vendor.id;
+    option.textContent = vendor.fields["Name"] || "(No name)";
+    if (vendor.id === selectedVendorId) {
+      option.selected = true;
+      console.log(`✅ Setting vendor as selected: [${vendor.id}] ${option.textContent}`);
+    } else {
+      console.log(`➖ Adding vendor: [${vendor.id}] ${option.textContent}`);
+    }
+    dropdown.appendChild(option);
+  });
 
-  } catch (error) {
-    console.error("❌ Failed to fetch vendor list:", error);
-  }
+  console.log("🎉 Vendor dropdown populated with", allVendors.length, "vendors.");
 }
+
 
   
   async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
