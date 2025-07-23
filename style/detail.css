@@ -36,8 +36,8 @@ body {
   flex-direction: column;       /* Stack label and dropdown vertically */
   align-items: center;          /* Center horizontally */
   justify-content: center;      /* Center vertically, if used with height */
-  margin: 32px auto;            /* Add vertical space and center horizontally */
-  padding: 20px 0;              /* Optional: extra padding for aesthetics */
+  margin: 15px auto;            /* Add vertical space and center horizontally */
+  padding: 10px 0;              /* Optional: extra padding for aesthetics */
 }
 .centered-input-wrapper {
   display: flex;
@@ -266,7 +266,10 @@ select {
 
 #billable-status-container {
   display: flex;
-  gap: 10px;
+  justify-content: center;  /* centers horizontally */
+  align-items: center;      /* centers vertically (optional) */
+  gap: 2em;                 /* adds space between labels */
+  margin: 1em 0;            /* space above and below */
 }
 
 .billable-label {
