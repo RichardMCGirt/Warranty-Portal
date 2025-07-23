@@ -2857,6 +2857,13 @@ async function populateVendorDropdownWithSelection(possibleId) {
     }
   } while (offset);
 
+  // 🔤 Sort vendors alphabetically by name (case-insensitive)
+  allVendors.sort((a, b) => {
+    const nameA = (a.fields["Name"] || "").toLowerCase();
+    const nameB = (b.fields["Name"] || "").toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+
   // 3. Add all vendors to dropdown
   console.log(`🔢 Total vendors to add: ${allVendors.length}`);
   allVendors.forEach(vendor => {
@@ -2874,6 +2881,7 @@ async function populateVendorDropdownWithSelection(possibleId) {
 
   console.log("🎉 Vendor dropdown populated with", allVendors.length, "vendors.");
 }
+
 
 
   
