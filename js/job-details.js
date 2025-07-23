@@ -3095,3 +3095,14 @@ function handleHomeownerClick() {
       }
     });
   });
+
+  // For every trash icon inside .file-wrapper
+document.querySelectorAll('.file-wrapper .trash-icon').forEach(icon => {
+  icon.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const wrapper = this.closest('.file-wrapper');
+    const checkbox = wrapper.querySelector('.image-checkbox');
+    checkbox.checked = !checkbox.checked;
+    wrapper.classList.toggle('checked', checkbox.checked);
+  });
+});

@@ -624,6 +624,11 @@ input[type="date"] {
   display: none;
 }
 
+.file-wrapper.checked .marked-for-deletion {
+  display: block;
+}
+
+
 /* ============================= */
 /* Carousel                     */
 /* ============================= */
