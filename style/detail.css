@@ -257,6 +257,11 @@ select {
   cursor: pointer;
 }
 
+.choices__list--dropdown, .choices__list[aria-expanded] {
+  z-index: 9999 !important;
+}
+
+
 #subcontractor-dropdown {
   width: 70ch !important;                /* fits YYYY-MM-DDTHH:MM */
   font-size: 16px;
