@@ -2880,6 +2880,14 @@ async function populateVendorDropdownWithSelection(possibleId) {
   });
 
   console.log("🎉 Vendor dropdown populated with", allVendors.length, "vendors.");
+  // Remove duplicate vendors by ID
+const seen = new Set();
+allVendors = allVendors.filter(vendor => {
+  if (seen.has(vendor.id)) return false;
+  seen.add(vendor.id);
+  return true;
+});
+
 if (window.vendorChoices) {
   window.vendorChoices.destroy(); // Cleanup if already initialized
 }
@@ -2888,6 +2896,7 @@ window.vendorChoices = new Choices('#vendor-dropdown', {
   itemSelectText: '',
   shouldSort: false // Already sorted by your JS
 });
+console.log("Vendor IDs:", allVendors.map(v => v.id));
 
 }
 
