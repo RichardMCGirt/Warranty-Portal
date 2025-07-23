@@ -1583,7 +1583,8 @@ function updateConditionalFieldVisibility(job) {
   if (status === "Scheduled- Awaiting Field") {
     [
       "billable-status", "homeowner-builder", "subcontractor", 
-      "materials-needed", "billable-reason", "field-review-not-needed", "field-review-needed",
+      "materials-needed", "billable-reason", "billable-reason-label", // <--- added here
+      "field-review-not-needed", "field-review-needed",
       "field-tech-reviewed", "additional-fields-container", "message-container",
       "materials-needed-label", "upload-issue-picture-label", "field-tech-reviewed-label",
       "materials-needed-container", "material-needed-container", "issue-pictures",
@@ -1599,6 +1600,7 @@ function updateConditionalFieldVisibility(job) {
     showElement("save-job");
   }
 }
+
 
 
 function updateBillableFields(job) {
@@ -2901,6 +2903,19 @@ console.log("Vendor IDs:", allVendors.map(v => v.id));
 }
 
 
+window.vendorChoices = new Choices('#vendor-dropdown', {
+  searchEnabled: true,
+  itemSelectText: '',
+  shouldSort: false
+});
+
+document.getElementById('vendor-dropdown').addEventListener('showDropdown', function() {
+  // Focus the search input inside the Choices container
+  setTimeout(() => {
+    const input = document.querySelector('.choices__input--cloned');
+    if (input) input.focus();
+  }, 0);
+});
 
   
   async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
