@@ -85,17 +85,12 @@
         <textarea id="dow-completed" data-field="DOW to be Completed" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"></textarea>
 
         <!-- Subcontractor Selection -->
-<div class="centered-input-wrapper">
-  <input
-    list="subcontractor-options"
-    id="subcontractor-dropdown"
-    placeholder="Select or type subcontractor..."
-    data-field="Subcontractor"
-    style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid rgb(204, 204, 204); pointer-events: none; background: rgb(233, 236, 239);"
-    readonly="true"
-  >
+    <div class="subcontractor-select-wrapper">
+  <label id="subcontractor-dropdown1-label" for="subcontractor-dropdown1">Select a Subcontractor:</label>
+  <select id="subcontractor-dropdown" data-field="Subcontractor">
+    <option value="">Select a Subcontractor...</option>
+  </select>
 </div>
-
 
 
         <div class="sub-completed-container">
@@ -111,21 +106,19 @@
 
         <!-- Billable Section -->
         <div id="additional-fields-container" style="padding: 16px;">
-  <div class="form-group center-group">
-    <label for="billable-status" style="font-size: 18px; font-weight: 600;">Billable Status</label>
-    <div id="billable-status-container">
-      <label class="billable-label">
-        <input type="radio" name="billable-status" value="Billable" data-field="Billable/ Non Billable" />
-        Billable
-      </label>
-      <label class="billable-label">
-        <input type="radio" name="billable-status" value="Non Billable" data-field="Billable/ Non Billable" />
-        Non-Billable
-      </label>
-    </div>
-  </div>
-</div>
-
+          <div class="form-group">
+            <label for="billable-status" style="font-size: 18px; font-weight: 600;">Billable Status</label>
+            <div id="billable-status-container">
+              <label class="billable-label">
+                <input type="radio" name="billable-status" value="Billable" data-field="Billable/ Non Billable" />
+                Billable
+              </label>
+              <label class="billable-label">
+                <input type="radio" name="billable-status" value="Non Billable" data-field="Billable/ Non Billable" />
+                Non-Billable
+              </label>
+            </div>
+          </div>
 
           <div class="form-group" id="homeowner-builder-container" style="display: none;">
             <label for="homeowner-builder">Homeowner/Builder Pay</label>
@@ -135,7 +128,7 @@
               <option value=""></option>
             </select>
           </div>
-        
+        </div>
 
         <!-- Billable Reason -->
         <div class="form-group" id="billable-reason-container" style="display: none;">
@@ -162,7 +155,6 @@
         </div>
 
         <!-- Materials Section -->
-<!-- Materials Section (textarea only) -->
 <div id="material-needed-container" class="material-needed-container">
   <label for="material-needed-select">Are any materials needed:</label>
   <select id="material-needed-select">
@@ -172,20 +164,24 @@
   </select>
   <br>
   <div class="form-group" id="materials-needed-container">
-    <label for="materials-needed" id="materials-needed-label">Materials Needed</label>
+     <label for="vendor-dropdown">Select a Vendor:</label>
+              <select id="vendor-dropdown" data-field="Material Vendor">
+                <option value="">Select a Vendor...</option>
+              </select>
+      <label for="materials-needed" id="materials-needed-label">Materials Needed</label>
     <textarea id="materials-needed" name="materials-needed" data-field="Materials Needed" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
-
-
-
-<!-- Vendor Dropdown (only shown if 'Needs Materials') -->
-<div id="vendor-dropdown-container">
-  <label for="vendor-dropdown">Select a Vendor:</label>
-  <select id="vendor-dropdown" data-field="Material Vendor">
-    <option value="">Select a Vendor...</option>
-  </select>
-</div>
+  </div>
 </div>
 
+
+            <!-- Vendor Dropdown -->
+            <div id="vendor-dropdown-container">
+              <label for="vendor-dropdown">Select a Vendor:</label>
+              <select id="vendor-dropdown" data-field="Material Vendor">
+                <option value="">Select a Vendor...</option>
+              </select>
+            </div>
+          
 
         <!-- Image Uploads -->
         <div class="file-input-container">

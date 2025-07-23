@@ -30,32 +30,21 @@ function getWarrantyId() {
 
 function updateMaterialVisibility() {
   const materialSelect = document.getElementById('material-needed-select');
-  const materialsContainer = document.getElementById('materials-needed-container');
   const vendorDropdownContainer = document.getElementById('vendor-dropdown-container');
+  const materialsContainer = document.getElementById('materials-needed-container');
 
-  if (!materialSelect || !materialsContainer || !vendorDropdownContainer) {
-    console.log("❌ Missing one or more elements");
-    return;
-  }
+  if (!materialSelect || !vendorDropdownContainer || !materialsContainer) return;
 
-  const selected = materialSelect.value.trim();
-  console.log("🔄 Material selected:", selected);
+  const selected = materialSelect.value;
 
-  if (selected === 'Needs Materials') {
-    materialsContainer.style.display = '';
-    vendorDropdownContainer.style.display = '';
-    console.log("👀 Showing vendor and materials containers");
-  } else {
-    materialsContainer.style.display = 'none';
+  if (selected === 'Do Not Need Materials' || selected === '') {
     vendorDropdownContainer.style.display = 'none';
-    console.log("🙈 Hiding vendor and materials containers");
+    materialsContainer.style.display = 'none';
+  } else {
+    vendorDropdownContainer.style.display = '';
+    materialsContainer.style.display = '';
   }
 }
-
-
-document.getElementById('material-needed-select').addEventListener('change', updateMaterialVisibility);
-window.addEventListener('DOMContentLoaded', updateMaterialVisibility);
-
 
 function checkAndHideDeleteButton() {
     const deleteButton = document.getElementById("delete-images-btn");
