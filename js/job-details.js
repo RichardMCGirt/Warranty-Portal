@@ -757,6 +757,10 @@ function showToast(message, type = "success", duration = 3000) {
 }
 
 
+// When the modal or scrollable container opens:
+document.body.classList.add('noscroll');
+// When it closes:
+document.body.classList.remove('noscroll');
 
 
 function openMapApp() {
