@@ -229,18 +229,6 @@ label[for="field-status"] {
   border-radius: 8px;
   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
   text-align: center !important; 
-  /* NEW: make container scrollable if content is tall */
-  max-height: 90vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  /* This ensures the sticky button works inside */
-  position: relative;
-}
-body.noscroll {
-  overflow: hidden !important;
-  position: fixed;   /* Prevents scroll position jump */
-  width: 100vw;
 }
 
 .address-input,
