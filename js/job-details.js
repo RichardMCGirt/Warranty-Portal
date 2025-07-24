@@ -1370,6 +1370,30 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+
+    function allowScrollBounce(el) {
+  el.addEventListener('wheel', function(e) {
+    const scrollTop = el.scrollTop;
+    const scrollHeight = el.scrollHeight;
+    const height = el.clientHeight;
+    const delta = e.deltaY;
+    const atTop = scrollTop === 0;
+    const atBottom = scrollTop + height >= scrollHeight - 1;
+
+    if ((atTop && delta < 0) || (atBottom && delta > 0)) {
+      // If at the end and user keeps scrolling, let page scroll
+      e.preventDefault();
+      window.scrollBy({ top: delta, behavior: 'auto' });
+    }
+    // Otherwise, container scrolls normally
+  }, { passive: false });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const scrollable = document.querySelector('.job-details-container');
+  if (scrollable) allowScrollBounce(scrollable);
+});
+
     
     async function fetchAirtableRecord(tableName, lotNameOrRecordId) {
     
