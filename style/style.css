@@ -105,10 +105,10 @@ td {
 #checkbox-container {
   display: none;
 }
+
 #checkbox-container.show {
   display: block;
 }
-
 
 th {
     background-color: #002244;
@@ -148,7 +148,6 @@ td[data-field="b"], .hidden-column {
 #feild-data th:nth-child(3) {
     display: none;
 }
-
 
 /* ============================= */
 /* Scrollable Areas             */

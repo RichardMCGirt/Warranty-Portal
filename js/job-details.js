@@ -1371,7 +1371,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    function allowScrollBounce(el) {
+function allowScrollBounce(el) {
   el.addEventListener('wheel', function(e) {
     const scrollTop = el.scrollTop;
     const scrollHeight = el.scrollHeight;
@@ -1394,7 +1394,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (scrollable) allowScrollBounce(scrollable);
 });
 
-    
     async function fetchAirtableRecord(tableName, lotNameOrRecordId) {
     
         if (!lotNameOrRecordId) {
@@ -1565,13 +1564,10 @@ function populateMaterialSection(job) {
     updateMaterialVisibility(); // sync vendor/materials visibility
 }
 
-
-
 document.addEventListener("DOMContentLoaded", function () {
   const materialSelect = document.getElementById('material-needed-select');
   materialSelect?.addEventListener('change', updateMaterialVisibility);
 });
-
 
 function toggleJobCompletedVisibility(job) {
     const container = document.getElementById("job-completed-container");
@@ -1629,8 +1625,6 @@ function updateConditionalFieldVisibility(job) {
   }
 }
 
-
-
 function updateBillableFields(job) {
     const billableValue = job["Billable/ Non Billable"] ?? "";
     const container = document.getElementById("billable-reason-container");
@@ -1657,19 +1651,6 @@ function setReviewCheckboxes(job) {
     setCheckboxValue("field-tech-reviewed", job["Field Tech Reviewed"]);
     setCheckboxValue("job-completed-checkbox", job["Job Completed"]);
 }
-
-
-function addOptionIfMissing(select, value) {
-    if (!select) return;
-    const exists = Array.from(select.options).some(opt => opt.value === value);
-    if (!exists) {
-        const option = document.createElement("option");
-        option.value = value;
-        option.textContent = value;
-        select.appendChild(option);
-    }
-}
-
 
 async function populateSubcontractorSection(job) {
     const subElement = document.getElementById("original-subcontractor");
@@ -1704,8 +1685,6 @@ async function populateSubcontractorSection(job) {
     container.style.display = "";
 }
 
-
-
 function populateStaticInputs(job) {
     const safe = val => val ?? "";
 
@@ -1731,8 +1710,6 @@ function populateStaticInputs(job) {
     ["description", "dow-completed", "materials-needed"].forEach(adjustTextareaSize);
 }
 
-
-
 document.getElementById("material-needed-select")?.addEventListener("change", (e) => {
     const value = e.target.value;
   
@@ -1747,13 +1724,6 @@ document.getElementById("material-needed-select")?.addEventListener("change", (e
     // store this value for later save
     window.materialDropdownValue = value;
   });
-  
-function hideParentFormGroup(elementId) {
-    const el = document.getElementById(elementId);
-    if (el && el.closest(".form-group")) {
-        el.closest(".form-group").style.display = "none";
-    }
-}
 
 function updateMaterialsTextareaVisibility() {
     const materialSelect = document.getElementById("material-needed-select");
@@ -1926,7 +1896,8 @@ async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
         console.error(`❌ Error deleting images from '${imageField}' in Airtable:`, error);
     }
 }
-    async function testFetchImages() {
+
+async function testFetchImages() {
         try {
             const recordData = await fetchAirtableRecord(airtableTableName, recordId);
     
@@ -1966,7 +1937,6 @@ let recordId = new URLSearchParams(window.location.search).get("id") || getSaved
     saveRecordIdToLocal(recordId); 
     setTimeout(checkAndHideDeleteButton, 500); // slight delay if images render async
     document.getElementById("material-needed-select").addEventListener("change", updateMaterialsTextareaVisibility);
-
 });
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -1995,7 +1965,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 500);
 });
     
-    document.getElementById("save-job").addEventListener("click", async function () {
+document.getElementById("save-job").addEventListener("click", async function () {
         const scrollPosition = window.scrollY; // ✅ Add this as your first line    
         const warrantyId = getWarrantyId();
     
@@ -2040,7 +2010,6 @@ const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
         if (materialSelect) {
   updatedFields["Material/Not needed"] = materialSelect.value.trim() || null;
 }
-        
         const convertedEndUTC = safeToISOString(currentEndLocal);
         if (convertedEndUTC && convertedEndUTC !== originalEndUTC) {
             updatedFields["EndDate"] = convertedEndUTC;
@@ -2058,8 +2027,6 @@ if (selectedRadio && selectedRadio.value.trim()) {
     // skip updating or clear the field safely
     updatedFields[billableField] = null; // or use `delete updatedFields[billableField];` if you want to omit it
 }
-
-        
         const subcontractorPaymentInput = document.getElementById("subcontractor-payment");
 if (subcontractorPaymentInput) {
     let subcontractorPaymentRaw = subcontractorPaymentInput.value.replace(/[^0-9.]/g, ""); // Remove $ and commas
@@ -2171,7 +2138,7 @@ formHasUnsavedChanges = false;
         }
     });
     
-    function formatDateToISO(dateStr) {
+function formatDateToISO(dateStr) {
         if (!dateStr) return ""; // If empty, return blank
     
         const dateObj = new Date(dateStr);
@@ -2298,7 +2265,7 @@ async function refreshDropboxAccessToken(refreshToken, dropboxAppKey, dropboxApp
     }
 }
 
-    function convertUTCToLocalInput(utcDateString) {
+function convertUTCToLocalInput(utcDateString) {
         if (!utcDateString) return "";
         const utcDate = new Date(utcDateString);
         const offsetMs = utcDate.getTimezoneOffset() * 60000;
@@ -2498,8 +2465,6 @@ window.addEventListener("beforeunload", function (e) {
         return "You have unsaved changes. Are you sure you want to leave?";
     }
 });
-
-
     // 🔹 Get Dropbox Shared Link
   async function getDropboxSharedLink(filePath) {
   const url = "https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings";
@@ -2557,7 +2522,7 @@ function updateCalendarSpanWithDivision(division) {
   }
 }
 
-    async function fetchAndPopulateSubcontractors(resolvedRecordId) {
+async function fetchAndPopulateSubcontractors(resolvedRecordId) {
     
         const airtableBaseId = window.env.AIRTABLE_BASE_ID;
         const primaryTableId = "tbl6EeKPsNuEvt5yJ"; // Table where `b` and `Subcontractor` are stored
@@ -2613,7 +2578,7 @@ populateSubcontractorDropdown(allSubcontractors, currentSubcontractor);
     }
     
     // 🔹 Function to fetch all subcontractors (Handles offsets)
-    async function fetchAllSubcontractors(baseId, tableId, branchB) {
+async function fetchAllSubcontractors(baseId, tableId, branchB) {
         let allRecords = [];
         let offset = null;
     
@@ -2677,7 +2642,7 @@ async function getExistingDropboxLink(filePath) {
   }
 }
 
-    function convertToDirectLink(sharedUrl) {
+function convertToDirectLink(sharedUrl) {
         if (sharedUrl.includes("dropbox.com")) {
             return sharedUrl.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "?raw=1");
         }
@@ -2715,7 +2680,7 @@ async function getExistingDropboxLink(filePath) {
         input.setAttribute("list", "subcontractor-options");
         input.setAttribute("id", "subcontractor-dropdown");
         input.setAttribute("placeholder", "Select or type subcontractor...");
-        input.setAttribute("data-field", "Subcontractor"); // ✅ Add this line
+        input.setAttribute("data-field", "Subcontractor"); 
 
         input.style.width = "100%";
         input.style.padding = "10px";
@@ -2732,7 +2697,7 @@ async function getExistingDropboxLink(filePath) {
             dataList.id = "subcontractor-options";
             document.body.appendChild(dataList);
         } else {
-            dataList.innerHTML = ""; // clear previous
+            dataList.innerHTML = ""; 
         }
     
         // Add "Sub Not Needed" at the top
@@ -2927,9 +2892,7 @@ window.vendorChoices = new Choices('#vendor-dropdown', {
   shouldSort: false // Already sorted by your JS
 });
 console.log("Vendor IDs:", allVendors.map(v => v.id));
-
 }
-
 
 window.vendorChoices = new Choices('#vendor-dropdown', {
   searchEnabled: true,
@@ -2945,7 +2908,6 @@ document.getElementById('vendor-dropdown').addEventListener('showDropdown', func
   }, 0);
 });
 
-  
   async function updateAirtableRecord(tableName, lotNameOrRecordId, fields) {
 
     const saveButton = document.getElementById("save-job");
@@ -3015,12 +2977,11 @@ document.getElementById('vendor-dropdown').addEventListener('showDropdown', func
         if (saveButton) saveButton.disabled = false;
     }
 }
+
 document.addEventListener("DOMContentLoaded", function () {
   const materialSelect = document.getElementById("material-needed-select");
   const materialsTextarea = document.getElementById("materials-needed");
   const textareaContainer = document.getElementById("materials-needed-container");
-
-  const placeholderOption = materialSelect.querySelector('option[value=""]');
 
     // Show/hide textarea when user changes selection with confirmation
     materialSelect.addEventListener("change", function () {
@@ -3047,7 +3008,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   });
-
 });
 
     document.getElementById("trigger-issue-upload").addEventListener("click", () => {
@@ -3112,7 +3072,7 @@ document.addEventListener("DOMContentLoaded", function () {
           }
       });
       
-      async function fetchVendors() {
+  async function fetchVendors() {
     const apiKey = 'patCnUsdz4bORwYNV.5c27cab8c99e7caf5b0dc05ce177182df1a9d60f4afc4a5d4b57802f44c65328';
     const baseId = 'appeNSp44fJ8QYeY5';
     const tableName = 'tblLEYdDi0hfD9fT3';
