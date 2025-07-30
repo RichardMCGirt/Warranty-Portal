@@ -908,3 +908,7 @@ input[type="date"] {
   }
 }
 
+#attachment-carousel {
+  touch-action: none;      /* Let JS handle swipes, not the browser */
+  overscroll-behavior: contain; /* Stop pull-to-refresh / back swipe */
+}

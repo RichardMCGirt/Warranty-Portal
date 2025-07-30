@@ -83,7 +83,7 @@ function addCarouselSwipeHandlers(overlay) {
       touchMoved = false;
       console.log("👉 touchstart", startX, startY);
     }
-  }, { passive: true });
+  }, { passive: false });
 
   overlay.addEventListener("touchmove", (e) => {
     if (e.touches.length !== 1) return;
