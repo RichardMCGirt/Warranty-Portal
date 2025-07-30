@@ -89,11 +89,8 @@ html, body {
 nav {
   background-color: #01070c;
     position: fixed;   /* Keeps it fixed in place */
-
   padding: 10px;
-  top: 0;
     left: 0;
-
   width: 100%;
     padding: 10px 50px 10px 10px; 
   z-index: 1000;
@@ -867,8 +864,10 @@ input[type="date"] {
   nav {
     flex-direction: row;
     align-items: flex-start;
-    position: relative;
-      gap: 18px;
+ position: fixed;   /* Keeps it fixed in place */
+  padding: 10px;
+    left: 0;
+  width: 100%;      gap: 18px;
   }
 
   nav.collapsed {
