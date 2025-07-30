@@ -812,9 +812,33 @@ input[type="date"] {
 
   #carousel-body img,
   #carousel-body iframe {
-    max-width: 95vw;
-    max-height: 55vh;
+    max-width: 95vw !important;
+    max-height: 55vh !important;
   }
+
+#carousel-body {
+  display: flex;
+  justify-content: center;   /* center horizontally */
+  align-items: center;       /* center vertically */
+  height: 100vh;             /* full viewport height */
+  background-color: #000;    /* optional: black background looks better */
+}
+
+#carousel-body img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;       /* keep aspect ratio, prevent cropping */
+
+  /* Ensure best quality rendering */
+  image-rendering: auto;     /* default: lets browser decide best */
+  image-rendering: smooth;   /* helps with up/downscaling */
+  
+  /* Prevent blurry scaling */
+  width: auto;
+  height: auto;
+}
+
+
 
   .carousel-close {
     font-size: 1.5rem;

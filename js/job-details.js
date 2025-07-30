@@ -1,5 +1,7 @@
 let dropboxRefreshToken = null;
 let formHasUnsavedChanges = false;
+let systemSwipeBlocker = null;
+let globalSwipeEnabled = true;
 
 async function fetchWithRetry(url, options = {}, maxRetries = 5) {
   let attempt = 0;
@@ -34,24 +36,19 @@ function updateMaterialVisibility() {
   const vendorDropdownContainer = document.getElementById('vendor-dropdown-container');
 
   if (!materialSelect || !materialsContainer || !vendorDropdownContainer) {
-    console.log("❌ Missing one or more elements");
     return;
   }
 
   const selected = materialSelect.value.trim();
-  console.log("🔄 Material selected:", selected);
 
   if (selected === 'Needs Materials') {
     materialsContainer.style.display = '';
     vendorDropdownContainer.style.display = '';
-    console.log("👀 Showing vendor and materials containers");
   } else {
     materialsContainer.style.display = 'none';
     vendorDropdownContainer.style.display = 'none';
-    console.log("🙈 Hiding vendor and materials containers");
   }
 }
-
 
 document.getElementById('material-needed-select').addEventListener('change', updateMaterialVisibility);
 window.addEventListener('DOMContentLoaded', updateMaterialVisibility);
@@ -77,30 +74,59 @@ function checkAndHideDeleteButton() {
 }
 
 function addCarouselSwipeHandlers(overlay) {
-  let startX = 0;
+  let startX = 0, startY = 0, touchMoved = false;
+
   overlay.addEventListener("touchstart", (e) => {
     if (e.touches.length === 1) {
       startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      touchMoved = false;
+      console.log("👉 touchstart", startX, startY);
     }
-  });
+  }, { passive: true });
+
+  overlay.addEventListener("touchmove", (e) => {
+    if (e.touches.length !== 1) return;
+
+    const diffX = e.touches[0].clientX - startX;
+    const diffY = e.touches[0].clientY - startY;
+
+    // Only treat as swipe if horizontal dominates
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+      e.preventDefault();  // 🚫 Block browser back/forward navigation
+      touchMoved = true;
+      console.log("👉 touchmove horizontal swipe detected:", diffX);
+    }
+  }, { passive: false });
+
   overlay.addEventListener("touchend", (e) => {
-    if (e.changedTouches.length === 1) {
-      const endX = e.changedTouches[0].clientX;
-      const diff = endX - startX;
-      if (Math.abs(diff) > 40) {
-        if (diff > 0) {
-          // Swipe right: previous
-          currentCarouselIndex =
-            (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
-          displayCarouselItem(currentCarouselIndex);
-        } else {
-          // Swipe left: next
-          currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
-          displayCarouselItem(currentCarouselIndex);
-        }
-      }
-    }
-  });
+ if (!touchMoved || e.changedTouches.length !== 1) {
+  console.log("👉 touchend but no valid swipe", { touchMoved, touches: e.changedTouches.length });
+  return;
+}
+
+const diffX = e.changedTouches[0].clientX - startX;
+console.log("👉 touchend diffX:", diffX);
+console.log("📍 currentCarouselIndex before:", currentCarouselIndex);
+
+if (Math.abs(diffX) > 40) {
+  if (diffX > 0) {
+    console.log("👉 swipe RIGHT → previous image");
+    currentCarouselIndex = (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
+  } else {
+    console.log("👉 swipe LEFT → next image");
+    currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
+  }
+
+  console.log("📍 currentCarouselIndex after:", currentCarouselIndex, 
+              "→", currentCarouselFiles[currentCarouselIndex]?.filename || currentCarouselFiles[currentCarouselIndex]?.url);
+
+  displayCarouselItem(currentCarouselIndex);
+} else {
+  console.log("👉 swipe too small, ignored");
+}
+
+  }, { passive: false });
 }
 
 function ensureCarouselOverlay() {
@@ -121,15 +147,20 @@ function ensureCarouselOverlay() {
   // Attach swipe events right here!
   addCarouselSwipeHandlers(overlay);
 
+  const nextBtn = overlay.querySelector("#carousel-next");
+  const prevBtn = overlay.querySelector("#carousel-prev");
+  const closeBtn = overlay.querySelector("#carousel-close-button");
+
   // Setup nav/close button listeners
-  overlay.querySelector("#carousel-next").addEventListener("click", (e) => {
+  nextBtn.addEventListener("click", (e) => {
     e.preventDefault();
     if (currentCarouselFiles.length > 0) {
       currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
       displayCarouselItem(currentCarouselIndex);
     }
   });
-  overlay.querySelector("#carousel-prev").addEventListener("click", (e) => {
+
+  prevBtn.addEventListener("click", (e) => {
     e.preventDefault();
     if (currentCarouselFiles.length > 0) {
       currentCarouselIndex =
@@ -137,40 +168,18 @@ function ensureCarouselOverlay() {
       displayCarouselItem(currentCarouselIndex);
     }
   });
-  overlay.querySelector("#carousel-close-button").addEventListener("click", () => {
+
+  closeBtn.addEventListener("click", () => {
     closeCarousel();
   });
 
   return overlay;
 }
 
-
-document.getElementById("attachment-carousel")?.addEventListener("touchend", (e) => {
-  if (e.changedTouches.length === 1) {
-    const endX = e.changedTouches[0].clientX;
-    const diff = endX - startX;
-    if (Math.abs(diff) > 40) { // minimum swipe distance
-      if (diff > 0) {
-        // Swipe right: previous
-        currentCarouselIndex =
-          (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
-        displayCarouselItem(currentCarouselIndex);
-      } else {
-        // Swipe left: next
-        currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
-        displayCarouselItem(currentCarouselIndex);
-      }
-    }
-  }
-});
-
 // ✅ Open the carousel
 function openCarousel(files, startIndex = 0, warrantyId, field) {
-  const overlay = ensureCarouselOverlay(); // <-- always ensures overlay and handlers exist!
+  const overlay = ensureCarouselOverlay();
   const body = document.getElementById("carousel-body");
-  const closeBtn = document.getElementById("carousel-close-button");
-  const saveBtn = document.getElementById("save-job");
-
   if (!overlay || !body) return;
 
   currentCarouselFiles = files;
@@ -179,14 +188,15 @@ function openCarousel(files, startIndex = 0, warrantyId, field) {
   currentWarrantyId = warrantyId;
 
   overlay.style.display = "flex";
-
-  // Show the big red X
-  if (closeBtn) closeBtn.style.display = "block";
-
-  // Hide save button
-  if (saveBtn) saveBtn.style.display = "none";
-
+  globalSwipeEnabled = false; // 🔒 disable page swipe
   displayCarouselItem(currentCarouselIndex);
+
+
+  // ✅ Prevent page scroll
+  document.body.style.overflow = "hidden";
+  // Debug: log files loaded into carousel
+  console.log("📝 currentCarouselFiles length:", currentCarouselFiles.length);
+  console.log(currentCarouselFiles.map(f => f.filename || f.url));
 }
 
 
@@ -196,44 +206,72 @@ function openCarousel(files, startIndex = 0, warrantyId, field) {
 function displayCarouselItem(index) {
   const body = document.getElementById("carousel-body");
 
-  if (
-    !body ||
-    !Array.isArray(currentCarouselFiles) ||
-    index < 0 ||
-    index >= currentCarouselFiles.length
-  ) {
-    return; // Do NOT close overlay
+  if (!body || !Array.isArray(currentCarouselFiles) ||
+      index < 0 || index >= currentCarouselFiles.length) {
+    console.warn("❌ Invalid carousel state:", { body, files: currentCarouselFiles, index });
+    return;
   }
 
   const file = currentCarouselFiles[index];
-  body.innerHTML = ""; // Clear previous content
+  console.log("📸 Rendering file:", file);
 
-  if (file.type?.startsWith("image/")) {
-    const img = document.createElement("img");
-    img.src = file.url;
-    img.alt = file.filename || "Image Preview";
-    img.style.maxWidth = "100%";
-    img.style.maxHeight = "80vh";
-    img.style.borderRadius = "8px";
-    img.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
-    body.appendChild(img);
-  } else if (file.type === "application/pdf") {
-    const iframe = document.createElement("iframe");
-    iframe.src = file.url;
-    iframe.title = file.filename || "PDF Preview";
-    iframe.style.width = "80vw";
-    iframe.style.height = "80vh";
-    iframe.style.border = "none";
-    iframe.style.borderRadius = "8px";
-    body.appendChild(iframe);
+  body.innerHTML = "";
+
+  if (file?.url) {
+    if (file.type?.startsWith("image/")) {
+  const img = document.createElement("img");
+
+  // Add unique query param to force reload
+  const bustedUrl = file.url + (file.url.includes("?") ? "&" : "?") + "ts=" + Date.now();
+  img.src = bustedUrl;
+
+  img.alt = file.filename || "Image Preview";
+  img.style.maxWidth = "100%";
+  img.style.maxHeight = "80vh";
+
+  body.appendChild(img);
+
+  // ✅ Debug logs
+  console.log("📸 Rendering image:", file.filename || file.url);
+  console.log("🔗 Image URL (with cache‑buster):", bustedUrl);
+  console.log("📍 Carousel index:", index, "of", currentCarouselFiles.length);
+    } else if (file.type === "application/pdf") {
+      const iframe = document.createElement("iframe");
+      iframe.src = file.url;
+      iframe.style.width = "80vw";
+      iframe.style.height = "80vh";
+      body.appendChild(iframe);
+    } else {
+      console.warn("⚠️ Unsupported file type, showing raw link:", file);
+      const a = document.createElement("a");
+      a.href = file.url;
+      a.textContent = file.filename || "Download File";
+      a.target = "_blank";
+      body.appendChild(a);
+    }
   } else {
-    const fallback = document.createElement("p");
-    fallback.textContent = "⚠️ Unsupported file type.";
-    fallback.style.color = "#fff";
-    fallback.style.fontSize = "18px";
-    body.appendChild(fallback);
+    console.error("❌ File missing .url:", file);
+  }
+
+  updateCarouselNavVisibility();
+}
+
+function updateCarouselNavVisibility() {
+  const overlay = document.getElementById("attachment-carousel");
+  if (!overlay) return;
+
+  const nextBtn = overlay.querySelector("#carousel-next");
+  const prevBtn = overlay.querySelector("#carousel-prev");
+
+  if (currentCarouselFiles.length <= 1) {
+    nextBtn.style.display = "none";
+    prevBtn.style.display = "none";
+  } else {
+    nextBtn.style.display = "block";
+    prevBtn.style.display = "block";
   }
 }
+
 
 // ✅ Close the carousel
 function closeCarousel() {
@@ -244,7 +282,26 @@ function closeCarousel() {
   if (overlay) overlay.style.display = "none";
   if (closeBtn) closeBtn.style.display = "none";
   if (saveBtn) saveBtn.style.display = "block";
+
+  // Re-enable body scroll
+  document.body.style.overflow = "auto";
+
+  // ✅ Remove system swipe blocker
+  if (systemSwipeBlocker && overlay) {
+    overlay.removeEventListener("touchstart", systemSwipeBlocker.touchstart);
+    overlay.removeEventListener("touchmove", systemSwipeBlocker.touchmove);
+    systemSwipeBlocker = null;
+  }
+  globalSwipeEnabled = true; // 🔓 re-enable page swipe
+
+  // Reset state
+  currentCarouselFiles = [];
+  currentCarouselIndex = 0;
+  currentCarouselField = null;
+  currentWarrantyId = null;
 }
+
+
 
 document.getElementById("carousel-close-button")?.addEventListener("click", () => {
   closeCarousel();
@@ -348,7 +405,6 @@ async function displayImages(files, containerId, fieldName = "") {
     containerId === "issue-pictures" &&
     status?.toLowerCase().trim() === "scheduled- awaiting field"
   ) {
-    console.log("🚫 Skipping issue images due to status:", status);
     container.innerHTML = ""; // Just in case
     container.style.display = "none";
     return;
@@ -372,7 +428,6 @@ async function displayImages(files, containerId, fieldName = "") {
     checkAndHideDeleteButton();
     return;
 }
-
 
     for (const file of files) {
         if (!file.url) {
@@ -634,7 +689,6 @@ if (hasIssueImages) {
     await displayImages(completedImages, "completed-images-container", "Completed  Pictures");
   }
 }
-
 
     // Refresh delete button visibility
     setTimeout(checkAndHideDeleteButton, 300);
@@ -942,7 +996,7 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
         }
 
         // Function to handle checkbox toggle
-        function toggleSubcontractorField() {
+  function toggleSubcontractorField() {
             const input = document.getElementById("subcontractor-dropdown");
             const datalist = document.getElementById("subcontractor-options");
             const checkbox = document.getElementById("sub-not-needed");
@@ -1209,56 +1263,6 @@ if (!isNaN(paymentValue)) {
     return isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-// ✅ Global state
-let currentCarouselFiles = [];
-let currentCarouselIndex = 0;
-
-document.addEventListener("DOMContentLoaded", () => {
-  const carouselOverlay = document.getElementById("attachment-carousel");
-  if (!carouselOverlay) return;
-
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let touchMoved = false;
-
-  carouselOverlay.addEventListener("touchstart", (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-    touchStartY = e.changedTouches[0].screenY;
-    touchMoved = false;
-  }, { passive: false }); // ✅ MUST set to false so preventDefault works
-
-  carouselOverlay.addEventListener("touchmove", (e) => {
-    const touchX = e.changedTouches[0].screenX;
-    const touchY = e.changedTouches[0].screenY;
-
-    const diffX = Math.abs(touchX - touchStartX);
-    const diffY = Math.abs(touchY - touchStartY);
-
-    if (diffX > diffY && diffX > 10) {
-      e.preventDefault(); // ✅ Now works correctly
-      touchMoved = true;
-    }
-  }, { passive: false }); // ✅ Also must be false here
-
-  carouselOverlay.addEventListener("touchend", (e) => {
-    if (!touchMoved) return;
-
-    const touchEndX = e.changedTouches[0].screenX;
-    const diffX = touchEndX - touchStartX;
-
-    if (Math.abs(diffX) > 50) {
-      if (diffX > 0) {
-        // Swipe right → previous
-        currentCarouselIndex = (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
-      } else {
-        // Swipe left → next
-        currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
-      }
-      displayCarouselItem(currentCarouselIndex);
-    }
-  }, false);
-});
-
     async function ensureDropboxToken() {
         if (!dropboxAccessToken) {
             dropboxAccessToken = await fetchDropboxToken();
@@ -1517,7 +1521,6 @@ async function populatePrimaryFields(job) {
   // Async vendor + subcontractor in parallel
   requestIdleCallback(() => populateVendorDropdownWithSelection(job["Warranty Record ID"]));
   populateSubcontractorSection(job).then(() => {
-    console.log("✅ Subcontractor loaded");
   });
 
   // Adjust large textareas without blocking
@@ -1535,11 +1538,9 @@ function populateMaterialSection(job) {
     const materialSelect = document.getElementById("material-needed-select");
     const materialsTextarea = document.getElementById("materials-needed");
     const textareaContainer = document.getElementById("materials-needed-container");
-
     const value = job["Material/Not needed"] ?? "";
     const materialsValue = job["Materials Needed"] ?? "";
 
-    console.log("🎯 Populating Material/Not needed dropdown with:", value);
 
     if (materialSelect) {
         materialSelect.value = value;
@@ -1573,11 +1574,6 @@ function toggleJobCompletedVisibility(job) {
     const container = document.getElementById("job-completed-container");
     const statusRaw = job["Status"];
     const status = (statusRaw || "").toLowerCase().trim();
-
-    console.log("🔍 toggleJobCompletedVisibility called");
-    console.log("📦 Raw Status:", statusRaw);
-    console.log("📦 Normalized Status:", status);
-
     const shouldHide = status === "field tech review needed";
 
     if (container) {
@@ -2004,7 +2000,6 @@ const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
         if (!materialSelect) {
   console.warn("⚠️ #material-needed-select not found in DOM.");
 } else {
-  console.log("🔽 Selected Material value:", materialSelect.value);
 }
 
         if (materialSelect) {
@@ -2041,8 +2036,7 @@ if (subcontractorPaymentInput) {
 
 // ⬇️ Airtable update happens after logging
 await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFields);
-console.log("📦 Saving to Airtable with Material/Not needed:", updatedFields["Material/Not needed"]);
-console.log("📤 Full updatedFields payload:", updatedFields);
+
 formHasUnsavedChanges = false;
 
         const inputs = document.querySelectorAll("input:not([disabled]), textarea:not([disabled]), select:not([disabled])");
@@ -2508,17 +2502,14 @@ function updateCalendarSpanWithDivision(division) {
 
   if (!span || !link) return;
 
-  console.log("📦 Division passed to function:", division);
 
   if (division && division !== '__show_all__') {
     span.textContent = `${division}`; // ✅ no parentheses
     const encodedDivision = encodeURIComponent(division);
     link.href = `https://calendar.vanirinstalledsales.info/personal-calendars.html?division=${encodedDivision}`;
-    console.log(`🔗 Updated link href to: ${link.href}`);
   } else {
     span.textContent = '';
     link.href = `https://calendar.vanirinstalledsales.info/personal-calendars.html`;
-    console.log("ℹ️ Reset link to default href (no division).");
   }
 }
 
@@ -2784,7 +2775,6 @@ async function populateVendorDropdownWithSelection(possibleId) {
   }
 
   let recordId = String(possibleId || "").trim();
-  console.log("🔍 Received possibleId:", possibleId);
 
   if (!recordId) {
     console.error("❌ No record ID or Warranty ID provided.");
@@ -2792,15 +2782,12 @@ async function populateVendorDropdownWithSelection(possibleId) {
   }
 
   if (!recordId.startsWith("rec")) {
-    console.log("🔁 Resolving Warranty ID to Airtable Record ID:", recordId);
     recordId = await getRecordIdByWarrantyId(recordId);
     if (!recordId) {
       console.error("❌ Could not resolve Record ID from Warranty ID:", possibleId);
       return;
     }
-    console.log("✅ Resolved Record ID:", recordId);
   } else {
-    console.log("✅ Using provided Record ID:", recordId);
   }
 
   // 1. Fetch the current record to get the selected vendor (if any)
@@ -2812,17 +2799,13 @@ async function populateVendorDropdownWithSelection(possibleId) {
   let selectedVendorId = null;
 
   try {
-    console.log(`🌐 Fetching current record: ${currentRecordUrl}`);
     const response = await fetchWithRetry(currentRecordUrl, { headers });
     const data = await response.json();
-    console.log("📝 Current record data:", data);
 
     const vendorField = data.fields["Material Vendor"];
     if (Array.isArray(vendorField) && vendorField.length > 0) {
       selectedVendorId = vendorField[0]; // ID of linked vendor
-      console.log("✅ Found selected Vendor ID on record:", selectedVendorId);
     } else {
-      console.log("ℹ️ No vendor linked on this record.");
     }
   } catch (error) {
     console.error("❌ Failed to fetch current record:", error);
@@ -2839,10 +2822,8 @@ async function populateVendorDropdownWithSelection(possibleId) {
     let url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tblHZqptShyGhbP5B?view=viwioQYJrw5ZhmfIN`;
     if (offset) url += `&offset=${offset}`;
     try {
-      console.log(`🌐 Fetching vendor list${offset ? " (offset: " + offset + ")" : ""}: ${url}`);
       const vendorResponse = await fetch(url, { headers });
       const vendorData = await vendorResponse.json();
-      console.log(`📦 Vendor records fetched (batch ${fetchCount + 1}):`, vendorData.records);
       allVendors = allVendors.concat(vendorData.records);
       offset = vendorData.offset;
       fetchCount++;
@@ -2860,21 +2841,17 @@ async function populateVendorDropdownWithSelection(possibleId) {
   });
 
   // 3. Add all vendors to dropdown
-  console.log(`🔢 Total vendors to add: ${allVendors.length}`);
   allVendors.forEach(vendor => {
     const option = document.createElement("option");
     option.value = vendor.id;
     option.textContent = vendor.fields["Name"] || "(No name)";
     if (vendor.id === selectedVendorId) {
       option.selected = true;
-      console.log(`✅ Setting vendor as selected: [${vendor.id}] ${option.textContent}`);
     } else {
-      console.log(`➖ Adding vendor: [${vendor.id}] ${option.textContent}`);
     }
     dropdown.appendChild(option);
   });
 
-  console.log("🎉 Vendor dropdown populated with", allVendors.length, "vendors.");
   // Remove duplicate vendors by ID
 const seen = new Set();
 allVendors = allVendors.filter(vendor => {
@@ -2891,7 +2868,6 @@ window.vendorChoices = new Choices('#vendor-dropdown', {
   itemSelectText: '',
   shouldSort: false // Already sorted by your JS
 });
-console.log("Vendor IDs:", allVendors.map(v => v.id));
 }
 
 window.vendorChoices = new Choices('#vendor-dropdown', {
@@ -2985,25 +2961,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Show/hide textarea when user changes selection with confirmation
     materialSelect.addEventListener("change", function () {
-    console.log("🔄 Dropdown changed to:", this.value);
 
     if (this.value === "Needs Materials") {
-      console.log("📂 Showing materials-needed textarea");
       textareaContainer.style.display = "block";
     } else if (this.value === "Do Not Need Materials") {
       if (materialsTextarea.value.trim() !== "") {
         const confirmed = confirm("⚠️ You have entered materials. Do you want to clear them?");
         if (confirmed) {
-          console.log("🧹 User confirmed clearing materials textarea.");
           materialsTextarea.value = "";
           textareaContainer.style.display = "none";
         } else {
-          console.log("❌ User canceled. Reverting dropdown to 'Needs Materials'");
           this.value = "Needs Materials";
           textareaContainer.style.display = "block"; // show again in case it was hidden
         }
       } else {
-        console.log("📁 Hiding textarea (no content to clear)");
         textareaContainer.style.display = "none";
       }
     }
@@ -3130,12 +3101,13 @@ document.addEventListener('touchend', function (e) {
   handleSwipeGesture();
 }, false);
 
+
 function handleSwipeGesture() {
-  const swipeThreshold = 100; // Minimum distance to be a valid swipe
+  if (!globalSwipeEnabled) return; // 🚫 ignore if carousel is open
+  const swipeThreshold = 100;
   if (touchStartX - touchEndX > swipeThreshold) {
-    // Swipe left detected
     if (hasUnsavedChanges) {
-      const confirmLeave = confirm('Swiped left, You have unsaved changes. Are you sure you want to leave this page?');
+      const confirmLeave = confirm('Swiped left, You have unsaved changes. Leave page?');
       if (!confirmLeave) return;
     }
     window.location.href = 'index.html';
