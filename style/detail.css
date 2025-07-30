@@ -91,6 +91,7 @@ nav {
     position: fixed;   /* Keeps it fixed in place */
   padding: 10px;
     left: 0;
+    top: 0;
   width: 100%;
     padding: 10px 50px 10px 10px; 
   z-index: 1000;
@@ -846,8 +847,8 @@ input[type="date"] {
   #menu-toggle {
     width: 90%;
     font-size: 20px;
-    padding: 12px 0;
-    margin: 12px auto 0 auto; 
+    padding: 3px 0;
+    margin: 3px auto 0 auto; 
     border-radius: 12px;
   }
 }
@@ -856,18 +857,22 @@ input[type="date"] {
   #nav-toggle {
     display: block;
     position: absolute;
-    top: 10px;
+    top: 0px;
     right: 85px;
     z-index: 1001;
   }
+  body {
+  padding-top: 30px; /* match your nav height */
+}
+
 
   nav {
     flex-direction: row;
     align-items: flex-start;
  position: fixed;   /* Keeps it fixed in place */
-  padding: 10px;
-    left: 0;
-  width: 100%;      gap: 18px;
+  padding: 3px;
+  width: 100%;     
+   gap: 9px;
   }
 
   nav.collapsed {
