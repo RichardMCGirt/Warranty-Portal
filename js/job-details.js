@@ -1089,22 +1089,20 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                 const convertedEndUTC = safeToISOString(currentEndLocal);
                 const convertedStartAMPM = safeToISOString(currentStartLocal);
                 const updatedFields = {};
-                const selectedBillable = document.querySelector('input[name="billable-status"]:checked');
+             const billableSelect = document.getElementById("billable-status");
+const value = billableSelect?.value?.trim() || "";
 
-                if (!selectedBillable) {
-                    return;
-                }
+if (value === "Billable" || value === "Non Billable") {
+    updatedFields["Billable/ Non Billable"] = value;
+} else {
+    updatedFields["Billable/ Non Billable"] = null; // or skip if you don’t want to overwrite
+}
+
                 
-                const value = selectedBillable?.value?.trim();
-                
-                if (value === "Billable" || value === "Non Billable") {
-                    updatedFields["Billable/ Non Billable"] = value.trim();
-                } else {
-                }
                     let jobData = {
     "DOW to be Completed": document.getElementById("dow-completed").value,
     "Subcontractor Not Needed": subcontractorCheckbox.checked,
-    "Billable/ Non Billable": selectedBillable ? selectedBillable.value : undefined,
+"Billable/ Non Billable": billableSelect ? billableSelect.value : undefined,
     "Homeowner Builder pay": document.getElementById("homeowner-builder").value,
     "Billable Reason (If Billable)": document.getElementById("billable-reason").value,
     "Field Review Not Needed": document.getElementById("field-review-not-needed")?.checked || false,
@@ -1604,28 +1602,42 @@ function updateConditionalFieldVisibility(job) {
     showElement("save-job");
   }
 }
-
-function updateBillableFields(job) {
-    const billableValue = job["Billable/ Non Billable"] ?? "";
+document.getElementById("billable-status")?.addEventListener("change", function () {
     const container = document.getElementById("billable-reason-container");
     const homeownerBuilderContainer = document.getElementById("homeowner-builder")?.parentElement;
 
-    document.querySelectorAll('label.billable-label').forEach(label => {
-        const radio = label.querySelector('input[name="billable-status"]');
-        if (!radio) return;
+    if (this.value === "Billable") {
+        if (container) container.style.display = "block";
+        if (homeownerBuilderContainer) homeownerBuilderContainer.style.display = "block";
+    } else {
+        if (container) container.style.display = "none";
+        if (homeownerBuilderContainer) homeownerBuilderContainer.style.display = "none";
+    }
+});
 
-        radio.checked = radio.value === billableValue;
-        label.classList.toggle("selected", radio.checked);
+function updateBillableFields(job) {
+    const billableValue = job["Billable/ Non Billable"] ?? "";
+    const billableSelect = document.getElementById("billable-status");
+    const container = document.getElementById("billable-reason-container");
+    const homeownerBuilderContainer = document.getElementById("homeowner-builder")?.parentElement;
 
-        if (radio.checked) {
-            container.style.display = radio.value === "Billable" ? "block" : "none";
-            homeownerBuilderContainer.style.display = radio.value === "Billable" ? "block" : "none";
-        }
-    });
+    if (billableSelect) {
+        billableSelect.value = billableValue || ""; // show "" if empty
+    }
+
+    // Show/hide extra fields depending on value
+    if (billableValue === "Billable") {
+        if (container) container.style.display = "block";
+        if (homeownerBuilderContainer) homeownerBuilderContainer.style.display = "block";
+    } else {
+        if (container) container.style.display = "none";
+        if (homeownerBuilderContainer) homeownerBuilderContainer.style.display = "none";
+    }
 
     setInputValue("homeowner-builder", job["Homeowner Builder pay"] ?? "");
     setInputValue("billable-reason", job["Billable Reason (If Billable)"] ?? "");
 }
+
 
 function setReviewCheckboxes(job) {
     setCheckboxValue("field-tech-reviewed", job["Field Tech Reviewed"]);
@@ -1997,15 +2009,13 @@ const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
         
         
       // ✅ Manually handle radio buttons for Billable/Non Billable
-const selectedRadio = document.querySelector('input[name="billable-status"]:checked');
-const billableField = selectedRadio?.getAttribute("data-field") || "Billable/ Non Billable";
-
-if (selectedRadio && selectedRadio.value.trim()) {
-    updatedFields[billableField] = selectedRadio.value.trim();
+const billableSelect = document.getElementById("billable-status");
+if (billableSelect && billableSelect.value.trim()) {
+    updatedFields["Billable/ Non Billable"] = billableSelect.value.trim();
 } else {
-    // skip updating or clear the field safely
-    updatedFields[billableField] = null; // or use `delete updatedFields[billableField];` if you want to omit it
+    updatedFields["Billable/ Non Billable"] = null;
 }
+
         const subcontractorPaymentInput = document.getElementById("subcontractor-payment");
 if (subcontractorPaymentInput) {
     let subcontractorPaymentRaw = subcontractorPaymentInput.value.replace(/[^0-9.]/g, ""); // Remove $ and commas
