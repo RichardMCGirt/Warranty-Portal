@@ -76,58 +76,40 @@ function checkAndHideDeleteButton() {
 function addCarouselSwipeHandlers(overlay) {
   let startX = 0, startY = 0, touchMoved = false;
 
-  overlay.addEventListener("touchstart", (e) => {
+  // Use the inner body, not the overlay
+  const swipeTarget = overlay.querySelector("#carousel-body") || overlay;
+
+  swipeTarget.addEventListener("touchstart", (e) => {
     if (e.touches.length === 1) {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       touchMoved = false;
-      console.log("👉 touchstart", startX, startY);
     }
   }, { passive: false });
 
-  overlay.addEventListener("touchmove", (e) => {
+  swipeTarget.addEventListener("touchmove", (e) => {
     if (e.touches.length !== 1) return;
 
     const diffX = e.touches[0].clientX - startX;
     const diffY = e.touches[0].clientY - startY;
 
-    // Only treat as swipe if horizontal dominates
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-      e.preventDefault();  // 🚫 Block browser back/forward navigation
+      e.preventDefault();  // 🚫 block browser back nav
       touchMoved = true;
-      console.log("👉 touchmove horizontal swipe detected:", diffX);
     }
   }, { passive: false });
 
-  overlay.addEventListener("touchend", (e) => {
- if (!touchMoved || e.changedTouches.length !== 1) {
-  console.log("👉 touchend but no valid swipe", { touchMoved, touches: e.changedTouches.length });
-  return;
-}
+swipeTarget.addEventListener("touchend", (e) => {
+  if (!touchMoved || e.changedTouches.length !== 1) return;
 
-const diffX = e.changedTouches[0].clientX - startX;
-console.log("👉 touchend diffX:", diffX);
-console.log("📍 currentCarouselIndex before:", currentCarouselIndex);
-
-if (Math.abs(diffX) > 40) {
-  if (diffX > 0) {
-    console.log("👉 swipe RIGHT → previous image");
-    currentCarouselIndex = (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
-  } else {
-    console.log("👉 swipe LEFT → next image");
-    currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
+  const diffX = e.changedTouches[0].clientX - startX;
+  if (Math.abs(diffX) > 40) {
+    diffX > 0 ? prevImage() : nextImage();
   }
+}, { passive: false });
 
-  console.log("📍 currentCarouselIndex after:", currentCarouselIndex, 
-              "→", currentCarouselFiles[currentCarouselIndex]?.filename || currentCarouselFiles[currentCarouselIndex]?.url);
-
-  displayCarouselItem(currentCarouselIndex);
-} else {
-  console.log("👉 swipe too small, ignored");
 }
 
-  }, { passive: false });
-}
 
 function ensureCarouselOverlay() {
   let overlay = document.getElementById("attachment-carousel");
@@ -152,22 +134,16 @@ function ensureCarouselOverlay() {
   const closeBtn = overlay.querySelector("#carousel-close-button");
 
   // Setup nav/close button listeners
-  nextBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (currentCarouselFiles.length > 0) {
-      currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
-      displayCarouselItem(currentCarouselIndex);
-    }
-  });
+nextBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  nextImage();
+});
 
-  prevBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (currentCarouselFiles.length > 0) {
-      currentCarouselIndex =
-        (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
-      displayCarouselItem(currentCarouselIndex);
-    }
-  });
+prevBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  prevImage();
+});
+
 
   closeBtn.addEventListener("click", () => {
     closeCarousel();
@@ -200,6 +176,14 @@ function openCarousel(files, startIndex = 0, warrantyId, field) {
 }
 
 
+document.addEventListener("keydown", (e) => {
+  const overlay = document.getElementById("attachment-carousel");
+  if (!overlay || overlay.style.display === "none") return; // only if open
+
+  if (e.key === "ArrowRight") nextImage();
+  if (e.key === "ArrowLeft") prevImage();
+  if (e.key === "Escape") closeCarousel();
+});
 
 
 // ✅ Display an individual item
@@ -3147,3 +3131,18 @@ document.querySelectorAll('.file-wrapper .trash-icon').forEach(icon => {
     wrapper.classList.toggle('checked', checkbox.checked);
   });
 });
+
+window.nextImage = function () {
+  if (!Array.isArray(currentCarouselFiles) || currentCarouselFiles.length === 0) return;
+
+  currentCarouselIndex = (currentCarouselIndex + 1) % currentCarouselFiles.length;
+  displayCarouselItem(currentCarouselIndex);
+};
+
+window.prevImage = function () {
+  if (!Array.isArray(currentCarouselFiles) || currentCarouselFiles.length === 0) return;
+
+  currentCarouselIndex = (currentCarouselIndex - 1 + currentCarouselFiles.length) % currentCarouselFiles.length;
+  displayCarouselItem(currentCarouselIndex);
+};
+
