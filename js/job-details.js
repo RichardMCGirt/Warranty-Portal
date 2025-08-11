@@ -1956,6 +1956,22 @@ document.addEventListener("DOMContentLoaded", function () {
         if (label) label.style.setProperty("display", "none", "important");
     }, 500);
 });
+
+function formatDateTimeForAirtable(dateInput) {
+    if (!dateInput) return "";
+    let dateObj = new Date(dateInput);
+    if (isNaN(dateObj.getTime())) return "";
+    return new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/New_York",
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+    }).format(dateObj).replace(",", "");
+}
+
     
 document.getElementById("save-job").addEventListener("click", async function () {
         const scrollPosition = window.scrollY; // ✅ Add this as your first line    
@@ -1988,10 +2004,16 @@ const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
         updatedFields["Subcontractor Not Needed"] = subcontractorNotNeeded;
 
         // ✅ Only add StartDate if it changed
-        const convertedStartUTC = safeToISOString(currentStartLocal);
-        if (convertedStartUTC && convertedStartUTC !== originalStartUTC) {
-            updatedFields["StartDate"] = convertedStartUTC;
-        } else {
+const convertedStartUTC = safeToISOString(currentStartLocal);
+const formattedStartAT = formatDateTimeForAirtable(currentStartLocal); // your existing formatting function
+
+if ((convertedStartUTC && convertedStartUTC !== originalStartUTC) ||
+    (formattedStartAT && formattedStartAT !== record.getCellValue("FormattedStartDate"))) {
+
+    updatedFields["StartDate"] = convertedStartUTC || null; // null clears if empty
+    updatedFields["FormattedStartDate"] = formattedStartAT || "";
+}
+ else {
         }
         if (!materialSelect) {
   console.warn("⚠️ #material-needed-select not found in DOM.");
