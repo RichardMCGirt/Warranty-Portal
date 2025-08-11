@@ -2,6 +2,7 @@ let dropboxRefreshToken = null;
 let formHasUnsavedChanges = false;
 let systemSwipeBlocker = null;
 let globalSwipeEnabled = true;
+          let updatedFields = {};
 
 async function fetchWithRetry(url, options = {}, maxRetries = 5) {
   let attempt = 0;
@@ -1050,6 +1051,7 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
         
         /** ✅ Add Event Listener for Save Button **/
         saveButton.addEventListener("click", async function () {
+
             const scrollPosition = window.scrollY;
 
             const requiredFields = ["job-name", "StartDate", "EndDate"];
@@ -1088,7 +1090,6 @@ await fetchAndPopulateSubcontractors(resolvedRecordId);
                 const convertedStartUTC = safeToISOString(currentStartLocal);
                 const convertedEndUTC = safeToISOString(currentEndLocal);
                 const convertedStartAMPM = safeToISOString(currentStartLocal);
-                const updatedFields = {};
              const billableSelect = document.getElementById("billable-status");
 const value = billableSelect?.value?.trim() || "";
 
@@ -1877,9 +1878,8 @@ async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
         checkAndHideDeleteButton();
 
         // Update Airtable record
-        await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, {
-            [imageField]: updatedImages.length > 0 ? updatedImages : []
-        });
+       await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFields);
+
 
         // ✅ **Refresh UI by reloading images dynamically**
         await loadImagesForLot(warrantyId);
