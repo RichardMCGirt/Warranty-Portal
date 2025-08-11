@@ -1105,13 +1105,13 @@ if (value === "Billable" || value === "Non Billable") {
 "Billable/ Non Billable": billableSelect ? billableSelect.value : undefined,
     "Homeowner Builder pay": document.getElementById("homeowner-builder").value,
     "Billable Reason (If Billable)": document.getElementById("billable-reason").value,
-    "Field Review Not Needed": document.getElementById("field-review-not-needed")?.checked || false,
-    "Field Review Needed": document.getElementById("field-review-needed")?.checked || false,
+ "Field Review Not Needed": document.getElementById("field-review-not-needed")?.checked || false,
+"Field Review Needed": document.getElementById("field-review-needed")?.checked || false,
     "Subcontractor Payment": parseFloat(document.getElementById("subcontractor-payment").value) || 0,
     "Materials Needed": document.getElementById("materials-needed").value,
-    "Field Tech Reviewed": document.getElementById("field-tech-reviewed")?.checked || false,
-    "Job Completed": document.getElementById("job-completed")?.checked || false,
-    "Material Not Needed": document.getElementById("material-not-needed").checked,
+"Field Tech Reviewed": document.getElementById("field-tech-reviewed")?.checked || false,
+"Job Completed": document.getElementById("job-completed")?.checked || false,
+"Material Not Needed": document.getElementById("material-not-needed")?.checked || false,
     "Date Warranty Started": document.getElementById("date-warranty-started").value 
 };
 
@@ -1971,8 +1971,7 @@ function formatDateTimeForAirtable(dateInput) {
         hour12: true,
     }).format(dateObj).replace(",", "");
 }
-
-    
+   
 document.getElementById("save-job").addEventListener("click", async function () {
         const scrollPosition = window.scrollY; // ✅ Add this as your first line    
         const warrantyId = getWarrantyId();
@@ -1986,47 +1985,34 @@ document.getElementById("save-job").addEventListener("click", async function () 
             return;
         }
         
-const currentRecord = await fetchAirtableRecord(airtableTableName, recordId);
-        const originalStartUTC = currentRecord?.fields?.["StartDate"];
-        const originalEndUTC = currentRecord?.fields?.["EndDate"];    
-        const currentStartLocal = document.getElementById("StartDate")?.value;
-        const currentEndLocal = document.getElementById("EndDate")?.value;
-        const subNotNeededCheckbox = document.getElementById("sub-not-needed");
-const subcontractorNotNeeded = subNotNeededCheckbox?.checked || false;
-   const materialSelect = document.getElementById("material-needed-select");
-     
-        const updatedFields = {}; // begin fresh field collection
+const currentRecord = await fetchAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId);
+const originalStartUTC = currentRecord?.fields?.["StartDate"] ?? null;
+const originalEndUTC = currentRecord?.fields?.["EndDate"] ?? null;
+const originalFormattedStart = currentRecord?.fields?.["FormattedStartDate"] ?? "";
 
-        if (!currentRecord || !currentRecord.fields) {
-            alert("❌ Could not load original record data. Try again.");
-            return;
-        }
-        updatedFields["Subcontractor Not Needed"] = subcontractorNotNeeded;
+const currentStartLocal = document.getElementById("StartDate")?.value || "";
+const currentEndLocal   = document.getElementById("EndDate")?.value || "";
 
-        // ✅ Only add StartDate if it changed
 const convertedStartUTC = safeToISOString(currentStartLocal);
-const formattedStartAT = formatDateTimeForAirtable(currentStartLocal); // your existing formatting function
+const formattedStartAT  = formatDateTimeForAirtable(currentStartLocal); // your existing formatter
 
-if ((convertedStartUTC && convertedStartUTC !== originalStartUTC) ||
-    (formattedStartAT && formattedStartAT !== record.getCellValue("FormattedStartDate"))) {
+// Update Start + FormattedStartDate only if either changed
+if ((convertedStartUTC ?? "") !== (originalStartUTC ?? "") ||
+    (formattedStartAT  ?? "") !== (originalFormattedStart ?? "")) {
+  updatedFields["StartDate"] = convertedStartUTC ?? null;   // null clears if empty
+  updatedFields["FormattedStartDate"] = formattedStartAT ?? "";
+}
 
-    updatedFields["StartDate"] = convertedStartUTC || null; // null clears if empty
-    updatedFields["FormattedStartDate"] = formattedStartAT || "";
+// Material/Not needed (guard element safely)
+const materialSelect = document.getElementById("material-needed-select");
+updatedFields["Material/Not needed"] = materialSelect?.value?.trim() || null;
+
+// EndDate only if changed
+const convertedEndUTC = safeToISOString(currentEndLocal);
+if ((convertedEndUTC ?? "") !== (originalEndUTC ?? "")) {
+  updatedFields["EndDate"] = convertedEndUTC;
 }
  else {
-        }
-        if (!materialSelect) {
-  console.warn("⚠️ #material-needed-select not found in DOM.");
-} else {
-}
-
-        if (materialSelect) {
-  updatedFields["Material/Not needed"] = materialSelect.value.trim() || null;
-}
-        const convertedEndUTC = safeToISOString(currentEndLocal);
-        if (convertedEndUTC && convertedEndUTC !== originalEndUTC) {
-            updatedFields["EndDate"] = convertedEndUTC;
-        } else {
         }
         
         
