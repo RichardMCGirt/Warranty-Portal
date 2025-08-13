@@ -1677,7 +1677,7 @@ async function populateSubcontractorSection(job) {
 
     // 3) Fallbacks if the linked record is missing
     if (!Array.isArray(originalSub) || originalSub.length === 0) {
-      const fallback = job["Subcontractor"] || "N/A";
+      const fallback = job["Subcontractor"] || "";
       subElement.textContent = fallback;
       if (phone) {
         const phoneLine = document.createElement("div");
@@ -3311,10 +3311,7 @@ window.prevImage = function () {
 // Forcefully neutralize any mobile placeholder overlays showing "N/A"
 (function () {
   function killNAOverlays() {
-    // A) If a pseudo-element is injecting content, this CSS (already added) removes it.
-    // B) If a real element is overlaying "N/A", find and hide it.
-
-    // Find any *visible* element whose own textContent is exactly "N/A"
+    
     const nodes = Array.from(document.body.querySelectorAll('*')).filter((el) => {
       // Ignore our legit target
       if (el.matches('#original-subcontractor, .original-subcontractor, [data-subcontractor-display]')) return false;
@@ -3355,16 +3352,4 @@ window.prevImage = function () {
   obs.observe(document.body, { childList: true, subtree: true });
   setTimeout(() => obs.disconnect(), 2000); // no need to watch forever
 })();
-(function bringToFront(){
-  const el = document.querySelector('#original-subcontractor') 
-    || document.querySelector('.original-subcontractor') 
-    || document.querySelector('[data-subcontractor-display]');
-  if (!el) return;
 
-  // Create a stacking context and raise it
-  el.style.position = 'relative';
-  el.style.zIndex = '2147483647';
-  // Give it a subtle highlight so you can see it
-  el.style.background = 'rgba(255,255,0,0.15)';
-  el.style.outline = '2px dashed red';
-})();
