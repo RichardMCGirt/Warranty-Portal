@@ -49,6 +49,39 @@ async function setOriginalSubcontractorFromLinked(fields) {
   const target = document.getElementById("original-subcontractor");
   if (!target || !fields) return;
 
+  function normalizePhoneForTel(phoneRaw) {
+    if (!phoneRaw) return "";
+    return String(phoneRaw).replace(/[^\d+]/g, "");
+  }
+  function getLinkedIdsFromField(fieldValue) {
+    if (Array.isArray(fieldValue) && fieldValue.length > 0) return fieldValue;
+    if (typeof fieldValue === "string" && fieldValue.trim() !== "") return [fieldValue.trim()];
+    return [];
+  }
+  async function fetchSubcontractorById(recId) {
+    const baseId = window.env?.AIRTABLE_BASE_ID;
+    const table = window.env?.AIRTABLE_SUBCONTRACTOR_TABLE_NAME; // 'tbl9SgC5wUi2TQuF7'
+    const apiKey = window.env?.AIRTABLE_API_KEY;
+    if (!baseId || !table || !apiKey || !recId) return null;
+    const url = `https://api.airtable.com/v0/${baseId}/${table}/${recId}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.fields || null;
+  }
+  async function fetchSubcontractorByName(name) {
+    const baseId = window.env?.AIRTABLE_BASE_ID;
+    const table = window.env?.AIRTABLE_SUBCONTRACTOR_TABLE_NAME;
+    const apiKey = window.env?.AIRTABLE_API_KEY;
+    if (!baseId || !table || !apiKey || !name) return null;
+    const formula = `LOWER({Subcontractor Company Name}) = '${String(name).toLowerCase().replace(/'/g, "\\'")}'`;
+    const url = `https://api.airtable.com/v0/${baseId}/${table}?filterByFormula=${encodeURIComponent(formula)}&maxRecords=1`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.records?.[0]?.fields || null;
+  }
+
   const linkedValue =
     fields["Original Subcontractor"] ??
     fields["Subcontractor (Original)"] ??
@@ -64,25 +97,18 @@ async function setOriginalSubcontractorFromLinked(fields) {
     if (subFields) {
       displayName =
         subFields["Subcontractor Company Name"] ??
-        subFields["Name"] ??
-        subFields["Company"] ??
-        "";
+        subFields["Name"] ?? subFields["Company"] ?? "";
       phoneNumber =
         subFields["Subcontractor Phone Number"] ??
-        subFields["Phone"] ??
-        subFields["Phone Number"] ??
-        "";
+        subFields["Phone"] ?? subFields["Phone Number"] ?? "";
     }
   } else if (typeof linkedValue === "string" && linkedValue.trim() !== "") {
     const subFields = await fetchSubcontractorByName(linkedValue.trim());
     if (subFields) {
-      displayName =
-        subFields["Subcontractor Company Name"] ?? linkedValue.trim();
+      displayName = subFields["Subcontractor Company Name"] ?? linkedValue.trim();
       phoneNumber =
         subFields["Subcontractor Phone Number"] ??
-        subFields["Phone"] ??
-        subFields["Phone Number"] ??
-        "";
+        subFields["Phone"] ?? subFields["Phone Number"] ?? "";
     } else {
       displayName = linkedValue.trim();
     }
@@ -91,7 +117,11 @@ async function setOriginalSubcontractorFromLinked(fields) {
   if (!displayName) displayName = "N/A";
   const tel = normalizePhoneForTel(phoneNumber);
 
-  // Build display: name on first line, number (clickable) on second
+  // Make sure it can show multiple lines and isn’t clipped
+  target.style.whiteSpace = "normal";
+  target.style.display = "block";
+
+  // Render both lines; make the number clickable
   if (tel && phoneNumber) {
     target.innerHTML = `
       <div>${displayName}</div>
@@ -99,81 +129,10 @@ async function setOriginalSubcontractorFromLinked(fields) {
         <a href="tel:${tel}" style="color:inherit; text-decoration:none;">${phoneNumber}</a>
       </div>
     `;
-    target.style.cursor = "pointer";
   } else {
-    target.innerHTML = `<div>${displayName}</div>`;
-    target.style.cursor = "default";
+    target.textContent = displayName;
   }
 }
-
-
-
-async function setOriginalSubcontractorFromLinked(fields) {
-  const target = document.getElementById("original-subcontractor");
-  if (!target || !fields) return;
-
-  // Prefer explicit "Original Subcontractor" linked field; fall back to "Subcontractor"
-  const linkedValue =
-    fields["Original Subcontractor"] ??
-    fields["Subcontractor (Original)"] ??
-    fields["Original Sub"] ??
-    fields["Subcontractor"];
-
-  let displayName = "";
-  let phoneNumber = "";
-
-  // 1) If it's linked IDs, fetch the first
-  const linkedIds = getLinkedIdsFromField(linkedValue);
-  if (linkedIds.length > 0) {
-    const subFields = await fetchSubcontractorById(linkedIds[0]);
-    if (subFields) {
-      displayName =
-        subFields["Subcontractor Company Name"] ??
-        subFields["Name"] ??
-        subFields["Company"] ??
-        "";
-      phoneNumber =
-        subFields["Subcontractor Phone Number"] ??
-        subFields["Phone"] ??
-        subFields["Phone Number"] ??
-        "";
-    }
-  } else if (typeof linkedValue === "string" && linkedValue.trim() !== "") {
-    // 2) If it's a name string, try a lookup by name
-    const subFields = await fetchSubcontractorByName(linkedValue.trim());
-    if (subFields) {
-      displayName =
-        subFields["Subcontractor Company Name"] ??
-        subFields["Name"] ??
-        subFields["Company"] ??
-        linkedValue.trim();
-      phoneNumber =
-        subFields["Subcontractor Phone Number"] ??
-        subFields["Phone"] ??
-        subFields["Phone Number"] ??
-        "";
-    } else {
-      displayName = linkedValue.trim();
-    }
-  }
-
-  // Finalize UI
-  if (!displayName) displayName = "N/A";
-  target.textContent = displayName;
-
-  // Make it click-to-call if we have a number
-  const tel = normalizePhoneForTel(phoneNumber);
-  if (tel) {
-    target.style.cursor = "pointer";
-    target.classList.add("clickable-call");
-    target.onclick = () => (window.location.href = `tel:${tel}`);
-  } else {
-    target.style.cursor = "default";
-    target.onclick = null;
-  }
-}
-
-
 
 
 async function fetchWithRetry(url, options = {}, maxRetries = 5) {
