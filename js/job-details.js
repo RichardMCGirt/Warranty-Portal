@@ -6,15 +6,13 @@ let updatedFields = {};
 
 // --- Original Subcontractor (linked record) support ---
 
+// --- Original Subcontractor (linked record) support ---
 function normalizePhoneForTel(phoneRaw) {
   if (!phoneRaw) return "";
-  // Keep + and digits; strip everything else
-  const cleaned = String(phoneRaw).replace(/[^\d+]/g, "");
-  return cleaned;
+  return String(phoneRaw).replace(/[^\d+]/g, "");
 }
 
 function getLinkedIdsFromField(fieldValue) {
-  // Airtable linked fields are usually arrays of record IDs; sometimes a single string sneaks in
   if (Array.isArray(fieldValue) && fieldValue.length > 0) return fieldValue;
   if (typeof fieldValue === "string" && fieldValue.trim() !== "") return [fieldValue.trim()];
   return [];
@@ -24,35 +22,88 @@ async function fetchSubcontractorById(recId) {
   const baseId = window.env?.AIRTABLE_BASE_ID;
   const table = window.env?.AIRTABLE_SUBCONTRACTOR_TABLE_NAME; // 'tbl9SgC5wUi2TQuF7'
   const apiKey = window.env?.AIRTABLE_API_KEY;
-
   if (!baseId || !table || !apiKey || !recId) return null;
 
   const url = `https://api.airtable.com/v0/${baseId}/${table}/${recId}`;
-  const res = await fetchWithRetry(url, {
-    headers: { Authorization: `Bearer ${apiKey}` }
-  });
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
   if (!res.ok) return null;
   const data = await res.json();
   return data?.fields || null;
 }
 
 async function fetchSubcontractorByName(name) {
-  // Fallback if the linked field ever contains a name string instead of a rec ID
   const baseId = window.env?.AIRTABLE_BASE_ID;
   const table = window.env?.AIRTABLE_SUBCONTRACTOR_TABLE_NAME;
   const apiKey = window.env?.AIRTABLE_API_KEY;
-
   if (!baseId || !table || !apiKey || !name) return null;
 
   const formula = `LOWER({Subcontractor Company Name}) = '${String(name).toLowerCase().replace(/'/g, "\\'")}'`;
   const url = `https://api.airtable.com/v0/${baseId}/${table}?filterByFormula=${encodeURIComponent(formula)}&maxRecords=1`;
-  const res = await fetchWithRetry(url, {
-    headers: { Authorization: `Bearer ${apiKey}` }
-  });
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
   if (!res.ok) return null;
   const data = await res.json();
   return data?.records?.[0]?.fields || null;
 }
+
+async function setOriginalSubcontractorFromLinked(fields) {
+  const target = document.getElementById("original-subcontractor");
+  if (!target || !fields) return;
+
+  // Prefer explicit “Original Subcontractor”; fallback to current “Subcontractor”
+  const linkedValue =
+    fields["Original Subcontractor"] ??
+    fields["Subcontractor (Original)"] ??
+    fields["Original Sub"] ??
+    fields["Subcontractor"];
+
+  let displayName = "";
+  let phoneNumber = "";
+
+  // If it's a linked record array (IDs), fetch the first record’s fields
+  const linkedIds = getLinkedIdsFromField(linkedValue);
+  if (linkedIds.length > 0) {
+    const subFields = await fetchSubcontractorById(linkedIds[0]);
+    if (subFields) {
+      displayName =
+        subFields["Subcontractor Company Name"] ??
+        subFields["Name"] ??
+        subFields["Company"] ??
+        "";
+      phoneNumber =
+        subFields["Subcontractor Phone Number"] ??
+        subFields["Phone"] ??
+        subFields["Phone Number"] ??
+        "";
+    }
+  } else if (typeof linkedValue === "string" && linkedValue.trim() !== "") {
+    // If it’s a name string, resolve it via filterByFormula
+    const subFields = await fetchSubcontractorByName(linkedValue.trim());
+    if (subFields) {
+      displayName =
+        subFields["Subcontractor Company Name"] ?? linkedValue.trim();
+      phoneNumber =
+        subFields["Subcontractor Phone Number"] ??
+        subFields["Phone"] ??
+        subFields["Phone Number"] ??
+        "";
+    } else {
+      displayName = linkedValue.trim();
+    }
+  }
+
+  if (!displayName) displayName = "N/A";
+  const tel = normalizePhoneForTel(phoneNumber);
+
+  // Render: make it a tel: link if we have a number
+  if (tel) {
+    target.innerHTML = `<a href="tel:${tel}" style="text-decoration:none;">${displayName}</a>`;
+    target.style.cursor = "pointer";
+  } else {
+    target.textContent = displayName;
+    target.style.cursor = "default";
+  }
+}
+
 
 async function setOriginalSubcontractorFromLinked(fields) {
   const target = document.getElementById("original-subcontractor");
