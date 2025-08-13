@@ -8,17 +8,37 @@ function setOriginalSubcontractorFromFields(fields) {
   const el = document.getElementById("original-subcontractor");
   if (!el) return;
 
-  // Try several likely field names; fall back to current Subcontractor; finally "N/A"
-  const value =
-    (fields && (
-      fields["Original Subcontractor"] ??
-      fields["Subcontractor (Original)"] ??
-      fields["Original Sub"] ??
-      fields["Subcontractor"]
-    )) ?? "N/A";
+  // Try to get the name from Airtable
+  const name =
+    fields["Original Subcontractor"] ??
+    fields["Subcontractor (Original)"] ??
+    fields["Original Sub"] ??
+    fields["Subcontractor"] ??
+    "";
 
-  el.textContent = (String(value || "").trim() !== "") ? value : "N/A";
+  // Try to get the number from Airtable
+  const phone =
+    fields["Original Subcontractor Number"] ??
+    fields["Subcontractor Phone"] ??
+    fields["Original Sub Number"] ??
+    "";
+
+  // Set display text
+  el.textContent = (name || "").trim() !== "" ? name : "N/A";
+
+  // If we have a number, make it clickable to call
+  if (phone && String(phone).trim() !== "") {
+    el.style.cursor = "pointer";
+    el.style.color = "#007BFF"; // link-like
+    el.onclick = () => {
+      window.location.href = `tel:${phone}`;
+    };
+  } else {
+    el.style.cursor = "default";
+    el.onclick = null;
+  }
 }
+
 
 
 async function fetchWithRetry(url, options = {}, maxRetries = 5) {
