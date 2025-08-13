@@ -2,7 +2,24 @@ let dropboxRefreshToken = null;
 let formHasUnsavedChanges = false;
 let systemSwipeBlocker = null;
 let globalSwipeEnabled = true;
-          let updatedFields = {};
+let updatedFields = {};
+
+function setOriginalSubcontractorFromFields(fields) {
+  const el = document.getElementById("original-subcontractor");
+  if (!el) return;
+
+  // Try several likely field names; fall back to current Subcontractor; finally "N/A"
+  const value =
+    (fields && (
+      fields["Original Subcontractor"] ??
+      fields["Subcontractor (Original)"] ??
+      fields["Original Sub"] ??
+      fields["Subcontractor"]
+    )) ?? "N/A";
+
+  el.textContent = (String(value || "").trim() !== "") ? value : "N/A";
+}
+
 
 async function fetchWithRetry(url, options = {}, maxRetries = 5) {
   let attempt = 0;
@@ -908,6 +925,8 @@ populateVendorDropdownWithSelection(resolvedRecordId); // don’t await
 
            // ✅ Populate UI with Primary Fields
 populatePrimaryFields(primaryData.fields);
+setOriginalSubcontractorFromFields(primaryData.fields);
+
 const lotName = primaryData.fields["Lot Number and Community/Neighborhood"];
 const statusRaw = primaryData.fields["Status"];
 const status = (statusRaw || "").trim().toLowerCase();
