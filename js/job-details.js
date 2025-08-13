@@ -1694,25 +1694,6 @@ async function populateSubcontractorSection(job) {
     const id = originalSub[0];
     const name = await fetchSubcontractorNameById(id);
 
-    // 5) Paint UI
-    subElement.textContent = name || job["Subcontractor"] || "N/A";
-    subElement.style.cursor = "pointer";
-    subElement.style.color = "#007bff";
-    subElement.style.textDecoration = "underline";
-    subElement.onclick = () => {
-      const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-      if (isMobile && phone) window.location.href = `tel:${phone}`;
-      else alert(`📞 ${name || "Original Sub"}\n${phone || "No phone"}`);
-    };
-
-    if (phone) {
-      const phoneLine = document.createElement("div");
-      phoneLine.textContent = phone;
-      phoneLine.style.fontSize = "0.85rem";
-      phoneLine.style.color = "#555";
-      phoneLine.style.marginTop = "4px";
-      container && container.appendChild(phoneLine);
-    }
     container && (container.style.display = "");
   } catch (err) {
     console.error("❌ populateSubcontractorSection failed:", err);
