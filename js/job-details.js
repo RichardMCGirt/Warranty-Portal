@@ -1516,7 +1516,8 @@ async function populatePrimaryFields(job) {
 
   // Async vendor + subcontractor in parallel
   requestIdleCallback(() => populateVendorDropdownWithSelection(job["Warranty Record ID"]));
-  populateSubcontractorSection(job).then(() => {
+  requestAnimationFrame(() => {
+    populateSubcontractorSection(job);
   });
 
   // Adjust large textareas without blocking
@@ -1529,6 +1530,7 @@ async function populatePrimaryFields(job) {
     document.getElementById("job-form")?.style.setProperty("opacity", "1", "important");
   });
 }
+
 
 function populateMaterialSection(job) {
     const materialSelect = document.getElementById("material-needed-select");
@@ -2641,6 +2643,109 @@ async function fetchAllSubcontractors(baseId, tableId, branchB) {
             vanirOffice: record.fields['Vanir Branch'] || 'Unknown Branch'
         }));
     }
+
+    // === BEGIN: Robust "Original Subcontractor" display (desktop + mobile) ===
+(function () {
+  // Update every possible display target (desktop AND mobile)
+  function applySubcontractorDisplay(name, phone) {
+    const targets = document.querySelectorAll(
+      '#original-subcontractor, .original-subcontractor, [data-subcontractor-display]'
+    );
+
+    if (!targets.length) {
+      console.warn('⚠️ No subcontractor display targets found.');
+      return;
+    }
+
+    targets.forEach((el) => {
+      // Text
+      el.textContent = name || 'N/A';
+
+      // Click-to-call / info
+      el.style.cursor = 'pointer';
+      el.style.color = '#007bff';
+      el.style.textDecoration = 'underline';
+      el.onclick = () => {
+        const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+        if (isMobile && phone) {
+          window.location.href = `tel:${phone}`;
+        } else {
+          alert(`📞 ${name || 'Original Sub'}\n${phone || 'No phone'}`);
+        }
+      };
+
+      // Single phone line sibling
+      const parent = el.parentElement;
+      if (!parent) return;
+
+      let phoneLine = parent.querySelector('.original-subcontractor-phone');
+      if (!phoneLine) {
+        phoneLine = document.createElement('div');
+        phoneLine.className = 'original-subcontractor-phone';
+        parent.appendChild(phoneLine);
+      }
+
+      phoneLine.textContent = phone || '';
+      phoneLine.style.fontSize = '0.85rem';
+      phoneLine.style.color = '#555';
+      phoneLine.style.marginTop = '4px';
+      phoneLine.style.display = phone ? '' : 'none';
+    });
+  }
+
+  async function resolveOriginalSubName(job) {
+    try {
+      const originalSub = job?.['Original Subcontractor'];
+      let phone = job?.['Original Subcontractor Phone Number'];
+      if (Array.isArray(phone)) phone = phone[0];
+
+      let name = '';
+      if (Array.isArray(originalSub) && originalSub.length > 0) {
+        const id = originalSub[0];
+        const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl9SgC5wUi2TQuF7/${id}`;
+        const resp = await fetchWithRetry(url, {
+          headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` },
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          name = data?.fields?.['Subcontractor Company Name'] || '';
+        } else {
+          console.warn('⚠️ Failed to resolve linked subcontractor name:', await resp.text());
+        }
+      }
+
+      if (!name) name = job?.['Subcontractor'] || ''; // fallback to plain text field
+      return { name: name || 'N/A', phone: phone || '' };
+    } catch (err) {
+      console.error('resolveOriginalSubName error:', err);
+      return { name: job?.['Subcontractor'] || 'N/A', phone: '' };
+    }
+  }
+
+  // Replace your existing populateSubcontractorSection with this:
+  window.populateSubcontractorSection = async function (job) {
+    const { name, phone } = await resolveOriginalSubName(job);
+
+    // First paint
+    applySubcontractorDisplay(name, phone);
+
+    // If your mobile layout swaps/rehydrates nodes, keep in sync briefly
+    const obs = new MutationObserver(() => applySubcontractorDisplay(name, phone));
+    obs.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => obs.disconnect(), 1500);
+
+    // Log duplicate IDs (common cause on responsive templates)
+    const dupes = document.querySelectorAll('#original-subcontractor');
+    if (dupes.length > 1) {
+      console.warn(
+        `⚠️ Found ${dupes.length} elements with id="original-subcontractor". IDs must be unique. ` +
+          `All will be updated, but prefer a class or data-attribute instead.`
+      );
+    }
+  };
+})();
+// === END: Robust "Original Subcontractor" display ===
+
     
 async function getExistingDropboxLink(filePath) {
   const url = "https://api.dropboxapi.com/2/sharing/list_shared_links";
@@ -3203,3 +3308,50 @@ window.prevImage = function () {
   displayCarouselItem(currentCarouselIndex);
 };
 
+// Forcefully neutralize any mobile placeholder overlays showing "N/A"
+(function () {
+  function killNAOverlays() {
+    // A) If a pseudo-element is injecting content, this CSS (already added) removes it.
+    // B) If a real element is overlaying "N/A", find and hide it.
+
+    // Find any *visible* element whose own textContent is exactly "N/A"
+    const nodes = Array.from(document.body.querySelectorAll('*')).filter((el) => {
+      // Ignore our legit target
+      if (el.matches('#original-subcontractor, .original-subcontractor, [data-subcontractor-display]')) return false;
+
+      const visible = !!(el.offsetParent || el.getClientRects().length);
+      if (!visible) return false;
+
+      const txt = (el.childNodes.length === 1 && el.textContent || '').trim();
+      return txt === 'N/A';
+    });
+
+    nodes.forEach((el) => {
+      // If it fully covers our subcontractor element area, hide it
+      const sub = document.querySelector('#original-subcontractor, .original-subcontractor, [data-subcontractor-display]');
+      if (!sub) return;
+
+      const r1 = sub.getBoundingClientRect();
+      const r2 = el.getBoundingClientRect();
+      const overlaps =
+        !(r2.right < r1.left || r2.left > r1.right || r2.bottom < r1.top || r2.top > r1.bottom);
+
+      if (overlaps) {
+        // Hide overlaying "N/A"
+        el.style.setProperty('display', 'none', 'important');
+      }
+    });
+
+    // Also ensure our target has the highest stacking within the container
+    document.querySelectorAll('#original-subcontractor, .original-subcontractor, [data-subcontractor-display]').forEach((el) => {
+      el.style.setProperty('position', 'relative', 'important');
+      el.style.setProperty('z-index', '2', 'important');
+    });
+  }
+
+  // Run once after paint + again when mobile DOM swaps in
+  requestAnimationFrame(killNAOverlays);
+  const obs = new MutationObserver(() => killNAOverlays());
+  obs.observe(document.body, { childList: true, subtree: true });
+  setTimeout(() => obs.disconnect(), 2000); // no need to watch forever
+})();

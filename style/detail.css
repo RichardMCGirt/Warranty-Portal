@@ -626,6 +626,11 @@ input[type="date"] {
   cursor: pointer;
   transition: background 0.3s ease-in-out, transform 0.2s ease-in-out;
 }
+/* belt-and-suspenders: prevent any pseudo-content from overlaying text on small screens */
+#original-subcontractor::before,
+#original-subcontractor::after {
+  content: none !important;
+}
 
 .file-checkbox::before {
   content: "🗑️";
@@ -910,4 +915,45 @@ input[type="date"] {
 #attachment-carousel {
   touch-action: none;      /* Let JS handle swipes, not the browser */
   overscroll-behavior: contain; /* Stop pull-to-refresh / back swipe */
+}
+#original-subcontractor,
+.original-subcontractor,
+[data-subcontractor-display] {
+  position: relative;
+  z-index: 2;
+  background: transparent !important;
+  text-shadow: none !important;
+}
+
+/* Kill any pseudo content that might inject 'N/A' at mobile breakpoints */
+#original-subcontractor::before,
+#original-subcontractor::after,
+.original-subcontractor::before,
+.original-subcontractor::after,
+[data-subcontractor-display]::before,
+[data-subcontractor-display]::after {
+  content: none !important;
+}
+
+/* If a mobile stylesheet uses content from attributes, neutralize common ones */
+#original-subcontractor::before,
+#original-subcontractor::after {
+  --subcontractor-text: "" !important;
+}
+@media (max-width: 900px) {
+  #original-subcontractor::before,
+  #original-subcontractor::after,
+  .original-subcontractor::before,
+  .original-subcontractor::after,
+  [data-subcontractor-display]::before,
+  [data-subcontractor-display]::after {
+    content: none !important;
+  }
+}
+
+/* Optional: give the phone line a consistent style if you kept it in HTML */
+.original-subcontractor-phone {
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 4px;
 }
