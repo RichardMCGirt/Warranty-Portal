@@ -19,7 +19,7 @@ function setOriginalSubcontractorFromFields(fields) {
   // Try to get the number from Airtable
   const phone =
     fields["Original Subcontractor Number"] ??
-    fields["Subcontractor Phone"] ??
+    fields["Subcontractor Phone Number"] ??
     fields["Original Sub Number"] ??
     "";
 
