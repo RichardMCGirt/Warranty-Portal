@@ -1660,65 +1660,6 @@ function setReviewCheckboxes(job) {
     setCheckboxValue("job-completed-checkbox", job["Job Completed"]);
 }
 
-async function populateSubcontractorSection(job) {
-  try {
-    // 1) Wait for the target element (prevents “N/A” sticking on mobile)
-    const subElement = await waitForElement("#original-subcontractor", 3000);
-    if (!subElement) {
-      console.warn("⚠️ #original-subcontractor not found in DOM (mobile template or timing).");
-      return;
-    }
-    const container = subElement.parentElement;
-
-    // 2) Pull values from the record
-    const originalSub = job["Original Subcontractor"];
-    let phone = job["Original Subcontractor Phone Number"];
-    if (Array.isArray(phone)) phone = phone[0];
-
-    // 3) Fallbacks if the linked record is missing
-    if (!Array.isArray(originalSub) || originalSub.length === 0) {
-      const fallback = job["Subcontractor"] || "N/A";
-      subElement.textContent = fallback;
-      if (phone) {
-        const phoneLine = document.createElement("div");
-        phoneLine.textContent = phone;
-        phoneLine.style.fontSize = "0.85rem";
-        phoneLine.style.color = "#555";
-        phoneLine.style.marginTop = "4px";
-        container && container.appendChild(phoneLine);
-      }
-      return;
-    }
-
-    // 4) Resolve linked record → name
-    const id = originalSub[0];
-    const name = await fetchSubcontractorNameById(id);
-
-    // 5) Paint UI
-    subElement.textContent = name || job["Subcontractor"] || "N/A";
-    subElement.style.cursor = "pointer";
-    subElement.style.color = "#007bff";
-    subElement.style.textDecoration = "underline";
-    subElement.onclick = () => {
-      const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-      if (isMobile && phone) window.location.href = `tel:${phone}`;
-      else alert(`📞 ${name || "Original Subcontractor"}\n${phone || "No phone"}`);
-    };
-
-    if (phone) {
-      const phoneLine = document.createElement("div");
-      phoneLine.textContent = phone;
-      phoneLine.style.fontSize = "0.85rem";
-      phoneLine.style.color = "#555";
-      phoneLine.style.marginTop = "4px";
-      container && container.appendChild(phoneLine);
-    }
-    container && (container.style.display = "");
-  } catch (err) {
-    console.error("❌ populateSubcontractorSection failed:", err);
-  }
-}
-
 function populateStaticInputs(job) {
     const safe = val => val ?? "";
 
@@ -2631,8 +2572,8 @@ async function fetchAllSubcontractors(baseId, tableId, branchB) {
             }
     
             const data = await response.json();
-            allRecords.push(...data.records);
-    
+allRecords.push(...data.records);
+   
             // If Airtable returns an offset, we need to fetch more records
             offset = data.offset || null;
     
