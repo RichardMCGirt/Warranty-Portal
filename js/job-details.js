@@ -1702,7 +1702,7 @@ async function populateSubcontractorSection(job) {
     subElement.onclick = () => {
       const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
       if (isMobile && phone) window.location.href = `tel:${phone}`;
-      else alert(`📞 ${name || "Original Sub"}\n${phone || "No phone"}`);
+      else alert(`📞 ${name || "Original Subcontractor"}\n${phone || "No phone"}`);
     };
 
     if (phone) {
