@@ -4,40 +4,121 @@ let systemSwipeBlocker = null;
 let globalSwipeEnabled = true;
 let updatedFields = {};
 
-function setOriginalSubcontractorFromFields(fields) {
-  const el = document.getElementById("original-subcontractor");
-  if (!el) return;
+// --- Original Subcontractor (linked record) support ---
 
-  // Try to get the name from Airtable
-  const name =
+function normalizePhoneForTel(phoneRaw) {
+  if (!phoneRaw) return "";
+  // Keep + and digits; strip everything else
+  const cleaned = String(phoneRaw).replace(/[^\d+]/g, "");
+  return cleaned;
+}
+
+function getLinkedIdsFromField(fieldValue) {
+  // Airtable linked fields are usually arrays of record IDs; sometimes a single string sneaks in
+  if (Array.isArray(fieldValue) && fieldValue.length > 0) return fieldValue;
+  if (typeof fieldValue === "string" && fieldValue.trim() !== "") return [fieldValue.trim()];
+  return [];
+}
+
+async function fetchSubcontractorById(recId) {
+  const baseId = window.env?.AIRTABLE_BASE_ID;
+  const table = window.env?.AIRTABLE_SUBCONTRACTOR_TABLE_NAME; // 'tbl9SgC5wUi2TQuF7'
+  const apiKey = window.env?.AIRTABLE_API_KEY;
+
+  if (!baseId || !table || !apiKey || !recId) return null;
+
+  const url = `https://api.airtable.com/v0/${baseId}/${table}/${recId}`;
+  const res = await fetchWithRetry(url, {
+    headers: { Authorization: `Bearer ${apiKey}` }
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data?.fields || null;
+}
+
+async function fetchSubcontractorByName(name) {
+  // Fallback if the linked field ever contains a name string instead of a rec ID
+  const baseId = window.env?.AIRTABLE_BASE_ID;
+  const table = window.env?.AIRTABLE_SUBCONTRACTOR_TABLE_NAME;
+  const apiKey = window.env?.AIRTABLE_API_KEY;
+
+  if (!baseId || !table || !apiKey || !name) return null;
+
+  const formula = `LOWER({Subcontractor Company Name}) = '${String(name).toLowerCase().replace(/'/g, "\\'")}'`;
+  const url = `https://api.airtable.com/v0/${baseId}/${table}?filterByFormula=${encodeURIComponent(formula)}&maxRecords=1`;
+  const res = await fetchWithRetry(url, {
+    headers: { Authorization: `Bearer ${apiKey}` }
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data?.records?.[0]?.fields || null;
+}
+
+async function setOriginalSubcontractorFromLinked(fields) {
+  const target = document.getElementById("original-subcontractor");
+  if (!target || !fields) return;
+
+  // Prefer explicit "Original Subcontractor" linked field; fall back to "Subcontractor"
+  const linkedValue =
     fields["Original Subcontractor"] ??
     fields["Subcontractor (Original)"] ??
     fields["Original Sub"] ??
-    fields["Subcontractor"] ??
-    "";
+    fields["Subcontractor"];
 
-  // Try to get the number from Airtable
-  const phone =
-    fields["Original Subcontractor Number"] ??
-    fields["Subcontractor Phone Number"] ??
-    fields["Original Sub Number"] ??
-    "";
+  let displayName = "";
+  let phoneNumber = "";
 
-  // Set display text
-  el.textContent = (name || "").trim() !== "" ? name : "N/A";
+  // 1) If it's linked IDs, fetch the first
+  const linkedIds = getLinkedIdsFromField(linkedValue);
+  if (linkedIds.length > 0) {
+    const subFields = await fetchSubcontractorById(linkedIds[0]);
+    if (subFields) {
+      displayName =
+        subFields["Subcontractor Company Name"] ??
+        subFields["Name"] ??
+        subFields["Company"] ??
+        "";
+      phoneNumber =
+        subFields["Subcontractor Phone Number"] ??
+        subFields["Phone"] ??
+        subFields["Phone Number"] ??
+        "";
+    }
+  } else if (typeof linkedValue === "string" && linkedValue.trim() !== "") {
+    // 2) If it's a name string, try a lookup by name
+    const subFields = await fetchSubcontractorByName(linkedValue.trim());
+    if (subFields) {
+      displayName =
+        subFields["Subcontractor Company Name"] ??
+        subFields["Name"] ??
+        subFields["Company"] ??
+        linkedValue.trim();
+      phoneNumber =
+        subFields["Subcontractor Phone Number"] ??
+        subFields["Phone"] ??
+        subFields["Phone Number"] ??
+        "";
+    } else {
+      displayName = linkedValue.trim();
+    }
+  }
 
-  // If we have a number, make it clickable to call
-  if (phone && String(phone).trim() !== "") {
-    el.style.cursor = "pointer";
-    el.style.color = "#007BFF"; // link-like
-    el.onclick = () => {
-      window.location.href = `tel:${phone}`;
-    };
+  // Finalize UI
+  if (!displayName) displayName = "N/A";
+  target.textContent = displayName;
+
+  // Make it click-to-call if we have a number
+  const tel = normalizePhoneForTel(phoneNumber);
+  if (tel) {
+    target.style.cursor = "pointer";
+    target.classList.add("clickable-call");
+    target.onclick = () => (window.location.href = `tel:${tel}`);
   } else {
-    el.style.cursor = "default";
-    el.onclick = null;
+    target.style.cursor = "default";
+    target.onclick = null;
   }
 }
+
 
 
 
@@ -945,7 +1026,7 @@ populateVendorDropdownWithSelection(resolvedRecordId); // don’t await
 
            // ✅ Populate UI with Primary Fields
 populatePrimaryFields(primaryData.fields);
-setOriginalSubcontractorFromFields(primaryData.fields);
+await setOriginalSubcontractorFromLinked(primaryData.fields);
 
 const lotName = primaryData.fields["Lot Number and Community/Neighborhood"];
 const statusRaw = primaryData.fields["Status"];
