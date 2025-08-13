@@ -49,7 +49,6 @@ async function setOriginalSubcontractorFromLinked(fields) {
   const target = document.getElementById("original-subcontractor");
   if (!target || !fields) return;
 
-  // Prefer explicit “Original Subcontractor”; fallback to current “Subcontractor”
   const linkedValue =
     fields["Original Subcontractor"] ??
     fields["Subcontractor (Original)"] ??
@@ -59,7 +58,6 @@ async function setOriginalSubcontractorFromLinked(fields) {
   let displayName = "";
   let phoneNumber = "";
 
-  // If it's a linked record array (IDs), fetch the first record’s fields
   const linkedIds = getLinkedIdsFromField(linkedValue);
   if (linkedIds.length > 0) {
     const subFields = await fetchSubcontractorById(linkedIds[0]);
@@ -76,7 +74,6 @@ async function setOriginalSubcontractorFromLinked(fields) {
         "";
     }
   } else if (typeof linkedValue === "string" && linkedValue.trim() !== "") {
-    // If it’s a name string, resolve it via filterByFormula
     const subFields = await fetchSubcontractorByName(linkedValue.trim());
     if (subFields) {
       displayName =
@@ -94,15 +91,21 @@ async function setOriginalSubcontractorFromLinked(fields) {
   if (!displayName) displayName = "N/A";
   const tel = normalizePhoneForTel(phoneNumber);
 
-  // Render: make it a tel: link if we have a number
-  if (tel) {
-    target.innerHTML = `<a href="tel:${tel}" style="text-decoration:none;">${displayName}</a>`;
+  // Build display: name on first line, number (clickable) on second
+  if (tel && phoneNumber) {
+    target.innerHTML = `
+      <div>${displayName}</div>
+      <div style="font-size:0.9em; color:#555;">
+        <a href="tel:${tel}" style="color:inherit; text-decoration:none;">${phoneNumber}</a>
+      </div>
+    `;
     target.style.cursor = "pointer";
   } else {
-    target.textContent = displayName;
+    target.innerHTML = `<div>${displayName}</div>`;
     target.style.cursor = "default";
   }
 }
+
 
 
 async function setOriginalSubcontractorFromLinked(fields) {
