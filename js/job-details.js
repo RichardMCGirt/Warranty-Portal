@@ -1917,7 +1917,7 @@ async function deleteImagesByLotName(warrantyId, imageIdsToDelete, imageField) {
         checkAndHideDeleteButton();
 
         // Update Airtable record
-       await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, updatedFields);
+await updateAirtableRecord(window.env.AIRTABLE_TABLE_NAME, warrantyId, { [imageField]: updatedImages });
 
 
         // ✅ **Refresh UI by reloading images dynamically**
