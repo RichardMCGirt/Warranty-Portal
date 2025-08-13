@@ -54,7 +54,6 @@ function updateMaterialVisibility() {
 document.getElementById('material-needed-select').addEventListener('change', updateMaterialVisibility);
 window.addEventListener('DOMContentLoaded', updateMaterialVisibility);
 
-
 function checkAndHideDeleteButton() {
     const deleteButton = document.getElementById("delete-images-btn");
     const issueContainer = document.getElementById("issue-pictures");
@@ -108,9 +107,7 @@ swipeTarget.addEventListener("touchend", (e) => {
     diffX > 0 ? prevImage() : nextImage();
   }
 }, { passive: false });
-
 }
-
 
 function ensureCarouselOverlay() {
   let overlay = document.getElementById("attachment-carousel");
@@ -1473,24 +1470,40 @@ document.addEventListener("DOMContentLoaded", function () {
   // Watch for checkbox change
   subcontractorCheckbox.addEventListener("change", toggleSubcontractorFields);
 });
+async function waitForElement(selector, timeoutMs = 3000) {
+  const existing = document.querySelector(selector);
+  if (existing) return existing;
 
-    async function fetchSubcontractorNameById(recordId) {
-        const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl9SgC5wUi2TQuF7/${recordId}`;
-      
-        const response = await fetchWithRetry(url, {
-          headers: {
-            Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}`
-          }
-        });
-      
-        if (!response.ok) {
-          console.error("Failed to fetch subcontractor record", recordId);
-          return "";
-        }
-      
-        const data = await response.json();
-        return data.fields["Subcontractor Company Name"] || ""; 
+  return new Promise(resolve => {
+    const obs = new MutationObserver(() => {
+      const el = document.querySelector(selector);
+      if (el) {
+        obs.disconnect();
+        resolve(el);
       }
+    });
+    obs.observe(document.documentElement, { childList: true, subtree: true });
+
+    setTimeout(() => {
+      obs.disconnect();
+      resolve(null); // give up gracefully
+    }, timeoutMs);
+  });
+}
+
+// Fetch linked subcontractor's display name safely
+async function fetchSubcontractorNameById(recordId) {
+  const url = `https://api.airtable.com/v0/${window.env.AIRTABLE_BASE_ID}/tbl9SgC5wUi2TQuF7/${recordId}`;
+  const response = await fetchWithRetry(url, {
+    headers: { Authorization: `Bearer ${window.env.AIRTABLE_API_KEY}` }
+  });
+  if (!response.ok) {
+    console.error("Failed to fetch subcontractor record", recordId);
+    return "";
+  }
+  const data = await response.json();
+  return data.fields["Subcontractor Company Name"] || "";
+}
       
 async function populatePrimaryFields(job) {
   populateStaticInputs(job);
@@ -1646,36 +1659,62 @@ function setReviewCheckboxes(job) {
 }
 
 async function populateSubcontractorSection(job) {
-    const subElement = document.getElementById("original-subcontractor");
-    const container = subElement?.parentElement;
+  try {
+    // 1) Wait for the target element (prevents “N/A” sticking on mobile)
+    const subElement = await waitForElement("#original-subcontractor", 3000);
+    if (!subElement) {
+      console.warn("⚠️ #original-subcontractor not found in DOM (mobile template or timing).");
+      return;
+    }
+    const container = subElement.parentElement;
+
+    // 2) Pull values from the record
     const originalSub = job["Original Subcontractor"];
     let phone = job["Original Subcontractor Phone Number"];
-
-    if (!Array.isArray(originalSub) || originalSub.length === 0) return;
-
-    const id = originalSub[0];
-    const name = await fetchSubcontractorNameById(id);
-    if (!name) return;
-
     if (Array.isArray(phone)) phone = phone[0];
 
-    subElement.textContent = name;
+    // 3) Fallbacks if the linked record is missing
+    if (!Array.isArray(originalSub) || originalSub.length === 0) {
+      const fallback = job["Subcontractor"] || "N/A";
+      subElement.textContent = fallback;
+      if (phone) {
+        const phoneLine = document.createElement("div");
+        phoneLine.textContent = phone;
+        phoneLine.style.fontSize = "0.85rem";
+        phoneLine.style.color = "#555";
+        phoneLine.style.marginTop = "4px";
+        container && container.appendChild(phoneLine);
+      }
+      return;
+    }
+
+    // 4) Resolve linked record → name
+    const id = originalSub[0];
+    const name = await fetchSubcontractorNameById(id);
+
+    // 5) Paint UI
+    subElement.textContent = name || job["Subcontractor"] || "N/A";
     subElement.style.cursor = "pointer";
     subElement.style.color = "#007bff";
     subElement.style.textDecoration = "underline";
     subElement.onclick = () => {
-        const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-        isMobile ? window.location.href = `tel:${phone}` : alert(`📞 ${name}\n${phone}`);
+      const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+      if (isMobile && phone) window.location.href = `tel:${phone}`;
+      else alert(`📞 ${name || "Original Sub"}\n${phone || "No phone"}`);
     };
 
-    const phoneLine = document.createElement("div");
-    phoneLine.textContent = phone;
-    phoneLine.style.fontSize = "0.85rem";
-    phoneLine.style.color = "#555";
-    phoneLine.style.marginTop = "4px";
-    container.appendChild(phoneLine);
-
-    container.style.display = "";
+    if (phone) {
+      const phoneLine = document.createElement("div");
+      phoneLine.textContent = phone;
+      phoneLine.style.fontSize = "0.85rem";
+      phoneLine.style.color = "#555";
+      phoneLine.style.marginTop = "4px";
+      container && container.appendChild(phoneLine);
+    }
+    container && (container.style.display = "");
+  } catch (err) {
+    console.error("❌ populateSubcontractorSection failed:", err);
+  }
 }
 
 function populateStaticInputs(job) {
