@@ -3355,3 +3355,16 @@ window.prevImage = function () {
   obs.observe(document.body, { childList: true, subtree: true });
   setTimeout(() => obs.disconnect(), 2000); // no need to watch forever
 })();
+(function bringToFront(){
+  const el = document.querySelector('#original-subcontractor') 
+    || document.querySelector('.original-subcontractor') 
+    || document.querySelector('[data-subcontractor-display]');
+  if (!el) return;
+
+  // Create a stacking context and raise it
+  el.style.position = 'relative';
+  el.style.zIndex = '2147483647';
+  // Give it a subtle highlight so you can see it
+  el.style.background = 'rgba(255,255,0,0.15)';
+  el.style.outline = '2px dashed red';
+})();
