@@ -23,9 +23,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlTechs = urlParams.get('techs');
 
     // ✅ Accept URL-provided filters (already URL-decoded by URLSearchParams)
+    // ✅ Never store "All" and never store empty strings
     if (urlTechs) {
-      const techArray = urlTechs.split(',').map(t => t.trim());
+      const techArray = urlTechs
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t && t.toLowerCase() !== 'all');
       localStorage.setItem("selectedFilters", JSON.stringify(techArray));
+    } else {
+      // If URL has no techs param, treat as "All" (show everything)
+      localStorage.setItem("selectedFilters", JSON.stringify([])); // empty = All
     }
 
     const menuToggle = document.getElementById('menu-toggle');
@@ -114,10 +121,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   function setupClearFilters() {
     const btn = document.getElementById('clear-filters');
     btn.addEventListener('click', () => {
-      localStorage.removeItem('selectedFilters');
+      // ✅ Clearing goes back to "All"
+      localStorage.setItem('selectedFilters', JSON.stringify([]));
       document.querySelectorAll('.filter-checkbox').forEach(cb => cb.checked = false);
       const allCheckbox = document.querySelector('.filter-checkbox[value="All"]');
       if (allCheckbox) allCheckbox.checked = true;
+      updateURLWithFilters([]); // will remove techs param
       applyFilters();
     });
   }
@@ -187,10 +196,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function attachCheckboxListeners() {
     document.querySelectorAll('.filter-checkbox').forEach(cb => {
-      cb.addEventListener('change', () => {
-        const selected = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
+      cb.addEventListener('change', (e) => {
+        const isAll = e.target.value === 'All';
+        const allCheckbox = document.querySelector('.filter-checkbox[value="All"]');
+
+        if (isAll) {
+          // ✅ ALL handling: when All is checked, uncheck all others
+          if (e.target.checked) {
+            document.querySelectorAll('.filter-checkbox').forEach(other => {
+              if (other.value !== 'All') other.checked = false;
+            });
+          }
+        } else {
+          // ✅ Non-All changed: if any non-All is checked, uncheck All
+          if (e.target.checked && allCheckbox) {
+            allCheckbox.checked = false;
+          }
+        }
+
+        // Build selected list excluding "All"
+        const selected = Array
+          .from(document.querySelectorAll('.filter-checkbox:checked'))
+          .map(cb => cb.value)
+          .filter(v => v.toLowerCase() !== 'all');
+
+        // Save without "All"
         localStorage.setItem('selectedFilters', JSON.stringify(selected));
-        updateURLWithFilters(selected); // ✅ keep URL in sync & properly encoded
+
+        // Update URL & apply filters
+        updateURLWithFilters(selected); // ✅ never writes "All" to URL
         applyFilters();
       });
     });
@@ -198,14 +232,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function loadFiltersFromLocalStorage() {
     const saved = JSON.parse(localStorage.getItem('selectedFilters') || '[]');
+
+    // ✅ Set checkboxes based on saved (never includes "All")
     document.querySelectorAll('.filter-checkbox').forEach(cb => {
+      if (cb.value === 'All') return; // don't check here
       cb.checked = saved.includes(cb.value);
     });
+
+    // ✅ If none saved, default to "All" (means show everything)
+    const allCheckbox = document.querySelector('.filter-checkbox[value="All"]');
+    if (allCheckbox) {
+      allCheckbox.checked = saved.length === 0;
+    }
   }
 
   function applyFilters() {
-    const selected = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
-    const isAll = selected.includes('All') || selected.length === 0;
+    // Read from checkboxes (not storage) to reflect current UI
+    let selected = Array
+      .from(document.querySelectorAll('.filter-checkbox:checked'))
+      .map(cb => cb.value);
+
+    // ✅ Treat "All" as empty selection internally
+    const isAllSelected = selected.includes('All');
+    if (isAllSelected) selected = [];
+
+    const isAll = selected.length === 0;
 
     ['#airtable-data', '#feild-data'].forEach(selector => {
       const table = document.querySelector(selector);
@@ -236,13 +287,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  function updateURLWithFilters(selected) {
-    // ✅ Properly encode techs using URLSearchParams; write a full URL per environment
+  function updateURLWithFilters(selectedRaw) {
+    // ✅ Never include "All" in URL; drop empties
+    const selected = (selectedRaw || []).filter(v => v && v.toLowerCase() !== 'all');
+
     const params = new URLSearchParams(window.location.search);
     if (selected.length > 0) {
-      params.set('techs', selected.join(',')); // comma will become %2C, spaces become +
+      params.set('techs', selected.join(',')); // commas → %2C; spaces → +
     } else {
-      params.delete('techs');
+      params.delete('techs'); // ✅ All/none → remove param
     }
 
     const qs = params.toString();
@@ -252,7 +305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const newURL = `${location.protocol}//${location.host}/index.html${qs ? `?${qs}` : ''}`;
       history.replaceState(null, '', newURL);
     } else {
-      // ✅ Keep current path on prod; still encodes as desired
+      // ✅ Keep current path on prod
       const newURL = `${location.pathname}${qs ? `?${qs}` : ''}`;
       history.replaceState(null, '', newURL);
     }
@@ -289,8 +342,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log(`🎯 Found ${rows.length} rows in ${selector}`);
 
     let colorToggle = false;
-    const evenColor = '#ffffff';  // Stronger professional contrast
-    const oddColor = '#ffffff';   // White
+    const evenColor = '#ffffff';
+    const oddColor = '#ffffff';
 
     rows.forEach((row) => {
       const firstCell = row.cells[0];
@@ -335,7 +388,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const lot = record.fields['Lot Number and Community/Neighborhood'] || record.fields['Street Address'] || 'N/A';
       const warrantyId = record.fields['Warranty Record ID'] || '';
 
-      row.setAttribute('data-warranty-id', warrantyId); // ✅ Add this line
+      row.setAttribute('data-warranty-id', warrantyId);
 
       row.innerHTML = `
         <td data-field="field tech">${tech}</td>
@@ -343,7 +396,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td data-field="b" style="display:none">${record.fields['b'] || ''}</td>
       `;
 
-      // ✅ CLICK HANDLER: build the EXACT URL formats you requested
+      // CLICK HANDLER for job → details URL
       row.querySelector('[data-field="Lot Number and Community/Neighborhood"]').addEventListener('click', () => {
         const id = record.fields['Warranty Record ID'];
         if (!id) return;
@@ -351,10 +404,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem("selectedJobId", id);
 
         if (location.hostname === 'localhost') {
-          // Local dev goes to the local job-details page
           window.location.href = `${location.protocol}//${location.host}/job-details.html?id=${encodeURIComponent(id)}`;
         } else {
-          // Production goes to the exact domain+path you specified
           window.location.href = `https://warranty-updates.vanirinstalledsales.info/job-details.html?id=${encodeURIComponent(id)}`;
         }
       });
@@ -362,7 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       tbody.appendChild(row);
     });
 
-    // ✅ Merge sorted duplicate values in column 0
+    // Merge sorted duplicate values in column 0
     mergeTableCells(tableSelector, 0);
     applyAlternatingColors(tableSelector);
 
