@@ -334,7 +334,7 @@ const oddColor = '#ffffff';   // White
       const id = record.fields['Warranty Record ID'];
       if (!id) return;
       localStorage.setItem("selectedJobId", id);
-      window.location.href = `job-details.html?id=${id}`;
+window.location.href = `${window.location.origin}/index.html?techs=${encodedName}`;
     });
 
     tbody.appendChild(row);
