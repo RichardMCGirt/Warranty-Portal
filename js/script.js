@@ -203,8 +203,7 @@ function setupSearchInput() {
 
 function applyFilters() {
   const selected = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
-const isAll = selected.length === 0 || 
-              (selected.includes('All') && selected.length === 1);
+  const isAll = selected.includes('All') || selected.length === 0;
 
   ['#airtable-data', '#feild-data'].forEach(selector => {
     const table = document.querySelector(selector);
@@ -331,17 +330,12 @@ const oddColor = '#ffffff';   // White
     <td data-field="b" style="display:none">${record.fields['b'] || ''}</td>
   `;
 
-   row.querySelector('[data-field="Lot Number and Community/Neighborhood"]').addEventListener('click', () => {
-  const id = record.fields['Warranty Record ID'];
-  if (!id) return;
-  localStorage.setItem("selectedJobId", id);
-
-  const tech = record.fields['field tech'] || 'N/A';
-  const encodedName = encodeURIComponent(tech);
-
-  window.location.href = `${window.location.origin}/index.html?techs=${encodedName}`;
-});
-
+    row.querySelector('[data-field="Lot Number and Community/Neighborhood"]').addEventListener('click', () => {
+      const id = record.fields['Warranty Record ID'];
+      if (!id) return;
+      localStorage.setItem("selectedJobId", id);
+      window.location.href = `job-details.html?id=${id}`;
+    });
 
     tbody.appendChild(row);
   });
@@ -384,22 +378,5 @@ applyAlternatingColors(tableSelector);
   function hideLoader() {
     const loader = document.getElementById('loader');
     if (loader) loader.style.display = 'none';
-  }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  const nav = document.querySelector('nav');
-  if (nav) {
-    const h = nav.offsetHeight;
-    document.documentElement.style.setProperty('--nav-height', h + 'px');
-    // keep it correct on resize/zoom
-    let rid;
-    const onResize = () => {
-      cancelAnimationFrame(rid);
-      rid = requestAnimationFrame(() => {
-        document.documentElement.style.setProperty('--nav-height', nav.offsetHeight + 'px');
-      });
-    };
-    window.addEventListener('resize', onResize, { passive: true });
   }
 });

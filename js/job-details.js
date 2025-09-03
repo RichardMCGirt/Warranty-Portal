@@ -134,6 +134,7 @@ async function setOriginalSubcontractorFromLinked(fields) {
   }
 }
 
+
 async function fetchWithRetry(url, options = {}, maxRetries = 5) {
   let attempt = 0;
   let delay = 500; // start with 500ms
@@ -3171,7 +3172,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
     const encodedName = encodeURIComponent(techName);
-window.location.href = `${window.location.origin}/index.html?techs=${encodedName}`;
+    window.location.href = `http://localhost:5501/index.html?techs=${encodedName}`;
 });
           } else {
           }
