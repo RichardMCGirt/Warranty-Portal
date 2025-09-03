@@ -3171,7 +3171,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
     const encodedName = encodeURIComponent(techName);
-    window.location.href = `http://localhost:5501/index.html?techs=${encodedName}`;
+window.location.href = `${window.location.origin}/index.html?techs=${encodedName}`;
 });
           } else {
           }
