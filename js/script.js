@@ -203,7 +203,8 @@ function setupSearchInput() {
 
 function applyFilters() {
   const selected = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
-  const isAll = selected.includes('All') || selected.length === 0;
+const isAll = selected.length === 0 || 
+              (selected.includes('All') && selected.length === 1);
 
   ['#airtable-data', '#feild-data'].forEach(selector => {
     const table = document.querySelector(selector);
