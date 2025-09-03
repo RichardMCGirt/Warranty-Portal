@@ -410,9 +410,9 @@ td[data-field="b"], .hidden-column {
     }
 
     .jump-link {
-        width: 100%;
+        width: 50%;
         text-align: center;
-        margin: 10px 0;
+        margin: auto;
         display: block;
         font-size: 14px;
     }
@@ -426,7 +426,7 @@ td[data-field="b"], .hidden-column {
 
     #search-input {
         font-size: 14px;
-        width: 100%;
+        width: 40%;
     }
 
     .scrollable-div {

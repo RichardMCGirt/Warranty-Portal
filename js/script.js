@@ -380,3 +380,20 @@ applyAlternatingColors(tableSelector);
     if (loader) loader.style.display = 'none';
   }
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const nav = document.querySelector('nav');
+  if (nav) {
+    const h = nav.offsetHeight;
+    document.documentElement.style.setProperty('--nav-height', h + 'px');
+    // keep it correct on resize/zoom
+    let rid;
+    const onResize = () => {
+      cancelAnimationFrame(rid);
+      rid = requestAnimationFrame(() => {
+        document.documentElement.style.setProperty('--nav-height', nav.offsetHeight + 'px');
+      });
+    };
+    window.addEventListener('resize', onResize, { passive: true });
+  }
+});

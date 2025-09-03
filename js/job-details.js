@@ -134,7 +134,6 @@ async function setOriginalSubcontractorFromLinked(fields) {
   }
 }
 
-
 async function fetchWithRetry(url, options = {}, maxRetries = 5) {
   let attempt = 0;
   let delay = 500; // start with 500ms
