@@ -18,78 +18,80 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupClearFilters();
   fetchDataAndInitialize();
 
-function setupFilterMenu() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const urlTechs = urlParams.get('techs');
-  if (urlTechs) {
-    const techArray = urlTechs.split(',').map(t => t.trim());
-    localStorage.setItem("selectedFilters", JSON.stringify(techArray));
-  }
+  function setupFilterMenu() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTechs = urlParams.get('techs');
 
-  const menuToggle = document.getElementById('menu-toggle');
-  const checkboxContainer = document.getElementById('checkbox-container');
-
-  // 🔄 Toggle visibility on button click
-  menuToggle.addEventListener('click', () => {
-    checkboxContainer.classList.toggle('show');
-  });
-
-  // ❌ Close on click outside
-  document.addEventListener('click', (event) => {
-    if (!checkboxContainer.contains(event.target) && !menuToggle.contains(event.target)) {
-      checkboxContainer.classList.remove('show');
+    // ✅ Accept URL-provided filters (already URL-decoded by URLSearchParams)
+    if (urlTechs) {
+      const techArray = urlTechs.split(',').map(t => t.trim());
+      localStorage.setItem("selectedFilters", JSON.stringify(techArray));
     }
-  });
 
-  // ❌ Close on scroll
-  window.addEventListener('scroll', () => {
-    if (checkboxContainer.classList.contains('show')) {
-      checkboxContainer.classList.remove('show');
-    }
-  });
-}
+    const menuToggle = document.getElementById('menu-toggle');
+    const checkboxContainer = document.getElementById('checkbox-container');
 
-function setupSearchInput() {
-  const input = document.getElementById('search-input');
-  input.addEventListener('input', () => {
-    const searchValue = input.value.toLowerCase();
-    const isSearching = searchValue.trim() !== '';
+    // 🔄 Toggle visibility on button click
+    menuToggle.addEventListener('click', () => {
+      checkboxContainer.classList.toggle('show');
+    });
 
-    ['#airtable-data', '#feild-data'].forEach(tableSelector => {
-      const rows = document.querySelectorAll(`${tableSelector} tbody tr`);
-      let visibleCount = 0;
-
-      rows.forEach(row => {
-        const warrantyId = row.getAttribute('data-warranty-id')?.toLowerCase() || '';
-        const cellMatch = Array.from(row.cells).some(cell =>
-          cell.textContent.toLowerCase().includes(searchValue)
-        );
-        const match = cellMatch || warrantyId.includes(searchValue);
-        row.style.display = match ? '' : 'none';
-
-        // Unmerge: show all cells individually
-        const firstCell = row.cells[0];
-        if (firstCell) {
-          firstCell.style.display = '';
-          firstCell.removeAttribute('rowspan');
-        }
-
-        if (match) visibleCount++;
-      });
-
-      // ✅ Hide entire content section if no visible rows
-      const section = tableSelector === '#airtable-data'
-        ? document.getElementById('main-content')
-        : document.getElementById('secoundary-content');
-      section.style.display = visibleCount > 0 ? 'block' : 'none';
-
-      // ✅ Restore merged cells only if not searching
-      if (!isSearching) {
-        mergeTableCells(tableSelector, 0);
+    // ❌ Close on click outside
+    document.addEventListener('click', (event) => {
+      if (!checkboxContainer.contains(event.target) && !menuToggle.contains(event.target)) {
+        checkboxContainer.classList.remove('show');
       }
     });
-  });
-}
+
+    // ❌ Close on scroll
+    window.addEventListener('scroll', () => {
+      if (checkboxContainer.classList.contains('show')) {
+        checkboxContainer.classList.remove('show');
+      }
+    });
+  }
+
+  function setupSearchInput() {
+    const input = document.getElementById('search-input');
+    input.addEventListener('input', () => {
+      const searchValue = input.value.toLowerCase();
+      const isSearching = searchValue.trim() !== '';
+
+      ['#airtable-data', '#feild-data'].forEach(tableSelector => {
+        const rows = document.querySelectorAll(`${tableSelector} tbody tr`);
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+          const warrantyId = row.getAttribute('data-warranty-id')?.toLowerCase() || '';
+          const cellMatch = Array.from(row.cells).some(cell =>
+            cell.textContent.toLowerCase().includes(searchValue)
+          );
+          const match = cellMatch || warrantyId.includes(searchValue);
+          row.style.display = match ? '' : 'none';
+
+          // Unmerge: show all cells individually
+          const firstCell = row.cells[0];
+          if (firstCell) {
+            firstCell.style.display = '';
+            firstCell.removeAttribute('rowspan');
+          }
+
+          if (match) visibleCount++;
+        });
+
+        // ✅ Hide entire content section if no visible rows
+        const section = tableSelector === '#airtable-data'
+          ? document.getElementById('main-content')
+          : document.getElementById('secoundary-content');
+        section.style.display = visibleCount > 0 ? 'block' : 'none';
+
+        // ✅ Restore merged cells only if not searching
+        if (!isSearching) {
+          mergeTableCells(tableSelector, 0);
+        }
+      });
+    });
+  }
 
   function setupJumpLinkObserver() {
     const secondaryContent = document.getElementById("secoundary-content");
@@ -188,7 +190,7 @@ function setupSearchInput() {
       cb.addEventListener('change', () => {
         const selected = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
         localStorage.setItem('selectedFilters', JSON.stringify(selected));
-        updateURLWithFilters(selected);
+        updateURLWithFilters(selected); // ✅ keep URL in sync & properly encoded
         applyFilters();
       });
     });
@@ -201,153 +203,173 @@ function setupSearchInput() {
     });
   }
 
-function applyFilters() {
-  const selected = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
-  const isAll = selected.includes('All') || selected.length === 0;
+  function applyFilters() {
+    const selected = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
+    const isAll = selected.includes('All') || selected.length === 0;
 
-  ['#airtable-data', '#feild-data'].forEach(selector => {
-    const table = document.querySelector(selector);
-    const rows = table.querySelectorAll('tbody tr');
-    const thead = table.querySelector('thead');
-    const h2 = table.closest('.scrollable-div')?.previousElementSibling;
+    ['#airtable-data', '#feild-data'].forEach(selector => {
+      const table = document.querySelector(selector);
+      const rows = table.querySelectorAll('tbody tr');
+      const thead = table.querySelector('thead');
+      const h2 = table.closest('.scrollable-div')?.previousElementSibling;
 
-    let visibleCount = 0;
+      let visibleCount = 0;
 
-    rows.forEach(row => {
-      const tech = row.cells[0]?.textContent.trim() || '';
-      const techNames = tech.split(',').map(n => n.trim());
-      const shouldShow = isAll || selected.some(name => techNames.includes(name));
-      row.style.display = shouldShow ? '' : 'none';
-      if (shouldShow) visibleCount++;
+      rows.forEach(row => {
+        const tech = row.cells[0]?.textContent.trim() || '';
+        const techNames = tech.split(',').map(n => n.trim());
+        const shouldShow = isAll || selected.some(name => techNames.includes(name));
+        row.style.display = shouldShow ? '' : 'none';
+        if (shouldShow) visibleCount++;
+      });
+
+      // Hide table/h2/thead if no visible rows
+      if (visibleCount === 0) {
+        table.style.display = 'none';
+        if (thead) thead.style.display = 'none';
+        if (h2) h2.style.display = 'none';
+      } else {
+        table.style.display = 'table';
+        if (thead) thead.style.display = 'table-header-group';
+        if (h2) h2.style.display = 'block';
+      }
     });
-
-    // Hide table/h2/thead if no visible rows
-    if (visibleCount === 0) {
-      table.style.display = 'none';
-      if (thead) thead.style.display = 'none';
-      if (h2) h2.style.display = 'none';
-    } else {
-      table.style.display = 'table';
-      if (thead) thead.style.display = 'table-header-group';
-      if (h2) h2.style.display = 'block';
-    }
-  });
-}
+  }
 
   function updateURLWithFilters(selected) {
+    // ✅ Properly encode techs using URLSearchParams; write a full URL per environment
     const params = new URLSearchParams(window.location.search);
     if (selected.length > 0) {
-      params.set('techs', selected.join(','));
+      params.set('techs', selected.join(',')); // comma will become %2C, spaces become +
     } else {
       params.delete('techs');
     }
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    history.replaceState(null, '', newURL);
+
+    const qs = params.toString();
+
+    if (location.hostname === 'localhost') {
+      // ✅ Force the exact localhost format you wanted
+      const newURL = `${location.protocol}//${location.host}/index.html${qs ? `?${qs}` : ''}`;
+      history.replaceState(null, '', newURL);
+    } else {
+      // ✅ Keep current path on prod; still encodes as desired
+      const newURL = `${location.pathname}${qs ? `?${qs}` : ''}`;
+      history.replaceState(null, '', newURL);
+    }
   }
 
   async function fetchAllRecords(offset = null, collected = []) {
-  const viewName = 'viw6ak9NqjR7r0A4g'; // 👈 REPLACE with your actual view name
-  const encodedView = encodeURIComponent(viewName);
-  const url = `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableName}?view=${encodedView}${offset ? `&offset=${offset}` : ''}`;
+    const viewName = 'viw6ak9NqjR7r0A4g'; // 👈 REPLACE with your actual view name
+    const encodedView = encodeURIComponent(viewName);
+    const url = `https://api.airtable.com/v0/${airtableBaseId}/${airtableTableName}?view=${encodedView}${offset ? `&offset=${offset}` : ''}`;
 
-  try {
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${airtableApiKey}` }
-    });
+    try {
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${airtableApiKey}` }
+      });
 
-    const data = await response.json();
-    const records = collected.concat(data.records);
-    if (data.offset) return fetchAllRecords(data.offset, records);
-    return records;
-  } catch (err) {
-    console.error("❌ Error fetching records:", err);
-    return collected;
-  }
-}
-
-function applyAlternatingColors(selector) {
-  const table = document.querySelector(selector);
-  if (!table) {
-    console.warn(`⚠️ No table found for selector: ${selector}`);
-    return;
-  }
-
-  const rows = table.querySelectorAll('tbody tr');
-  console.log(`🎯 Found ${rows.length} rows in ${selector}`);
-
-  let colorToggle = false;
-const evenColor = '#ffffff';  // Stronger professional contrast
-const oddColor = '#ffffff';   // White
-
-  rows.forEach((row, index) => {
-    const firstCell = row.cells[0];
-    const isMerged = !firstCell || firstCell.style.display === 'none';
-    const color = colorToggle ? evenColor : oddColor;
-
-    if (isMerged) {
-      row.style.setProperty('background-color', color, 'important');
-    } else {
-      colorToggle = !colorToggle;
-      const toggleColor = colorToggle ? evenColor : oddColor;
-      row.style.setProperty('background-color', toggleColor, 'important');
+      const data = await response.json();
+      const records = collected.concat(data.records);
+      if (data.offset) return fetchAllRecords(data.offset, records);
+      return records;
+    } catch (err) {
+      console.error("❌ Error fetching records:", err);
+      return collected;
     }
-  });
-}
+  }
+
+  function applyAlternatingColors(selector) {
+    const table = document.querySelector(selector);
+    if (!table) {
+      console.warn(`⚠️ No table found for selector: ${selector}`);
+      return;
+    }
+
+    const rows = table.querySelectorAll('tbody tr');
+    console.log(`🎯 Found ${rows.length} rows in ${selector}`);
+
+    let colorToggle = false;
+    const evenColor = '#ffffff';  // Stronger professional contrast
+    const oddColor = '#ffffff';   // White
+
+    rows.forEach((row) => {
+      const firstCell = row.cells[0];
+      const isMerged = !firstCell || firstCell.style.display === 'none';
+      const color = colorToggle ? evenColor : oddColor;
+
+      if (isMerged) {
+        row.style.setProperty('background-color', color, 'important');
+      } else {
+        colorToggle = !colorToggle;
+        const toggleColor = colorToggle ? evenColor : oddColor;
+        row.style.setProperty('background-color', toggleColor, 'important');
+      }
+    });
+  }
 
   async function displayRecords(records, tableSelector) {
-  const table = document.querySelector(tableSelector);
-  const tbody = table.querySelector('tbody');
-  const thead = table.querySelector('thead');
-  const h2 = table.closest('.scrollable-div')?.previousElementSibling;
+    const table = document.querySelector(tableSelector);
+    const tbody = table.querySelector('tbody');
+    const thead = table.querySelector('thead');
+    const h2 = table.closest('.scrollable-div')?.previousElementSibling;
 
-  tbody.innerHTML = '';
+    tbody.innerHTML = '';
 
-  if (!records.length) {
-    if (thead) thead.style.display = 'none';
-    if (table) table.style.display = 'none';
-    if (h2) h2.style.display = 'none';
-    return;
-  }
+    if (!records.length) {
+      if (thead) thead.style.display = 'none';
+      if (table) table.style.display = 'none';
+      if (h2) h2.style.display = 'none';
+      return;
+    }
 
-  // 🔤 Sort by 'field tech' alphabetically (case-insensitive)
-  records.sort((a, b) => {
-    const nameA = (a.fields['field tech'] || '').toLowerCase();
-    const nameB = (b.fields['field tech'] || '').toLowerCase();
-    return nameA.localeCompare(nameB);
-  });
-
- records.forEach(record => {
-  const row = document.createElement('tr');
-  const tech = record.fields['field tech'] || 'N/A';
-  const lot = record.fields['Lot Number and Community/Neighborhood'] || record.fields['Street Address'] || 'N/A';
-  const warrantyId = record.fields['Warranty Record ID'] || '';
-
-  row.setAttribute('data-warranty-id', warrantyId); // ✅ Add this line
-
-  row.innerHTML = `
-    <td data-field="field tech">${tech}</td>
-    <td data-field="Lot Number and Community/Neighborhood" style="cursor:pointer;color:blue;text-decoration:underline">${lot}</td>
-    <td data-field="b" style="display:none">${record.fields['b'] || ''}</td>
-  `;
-
-    row.querySelector('[data-field="Lot Number and Community/Neighborhood"]').addEventListener('click', () => {
-      const id = record.fields['Warranty Record ID'];
-      if (!id) return;
-      localStorage.setItem("selectedJobId", id);
-      window.location.href = `job-details.html?id=${id}`;
+    // 🔤 Sort by 'field tech' alphabetically (case-insensitive)
+    records.sort((a, b) => {
+      const nameA = (a.fields['field tech'] || '').toLowerCase();
+      const nameB = (b.fields['field tech'] || '').toLowerCase();
+      return nameA.localeCompare(nameB);
     });
 
-    tbody.appendChild(row);
-  });
+    records.forEach(record => {
+      const row = document.createElement('tr');
+      const tech = record.fields['field tech'] || 'N/A';
+      const lot = record.fields['Lot Number and Community/Neighborhood'] || record.fields['Street Address'] || 'N/A';
+      const warrantyId = record.fields['Warranty Record ID'] || '';
 
-  // ✅ Merge sorted duplicate values in column 1
-  mergeTableCells(tableSelector, 0);
-applyAlternatingColors(tableSelector);
+      row.setAttribute('data-warranty-id', warrantyId); // ✅ Add this line
 
-  if (thead) thead.style.display = 'table-header-group';
-  if (table) table.style.display = 'table';
-  if (h2) h2.style.display = 'block';
-}
+      row.innerHTML = `
+        <td data-field="field tech">${tech}</td>
+        <td data-field="Lot Number and Community/Neighborhood" style="cursor:pointer;color:blue;text-decoration:underline">${lot}</td>
+        <td data-field="b" style="display:none">${record.fields['b'] || ''}</td>
+      `;
+
+      // ✅ CLICK HANDLER: build the EXACT URL formats you requested
+      row.querySelector('[data-field="Lot Number and Community/Neighborhood"]').addEventListener('click', () => {
+        const id = record.fields['Warranty Record ID'];
+        if (!id) return;
+
+        localStorage.setItem("selectedJobId", id);
+
+        if (location.hostname === 'localhost') {
+          // Local dev goes to the local job-details page
+          window.location.href = `${location.protocol}//${location.host}/job-details.html?id=${encodeURIComponent(id)}`;
+        } else {
+          // Production goes to the exact domain+path you specified
+          window.location.href = `https://warranty-updates.vanirinstalledsales.info/job-details.html?id=${encodeURIComponent(id)}`;
+        }
+      });
+
+      tbody.appendChild(row);
+    });
+
+    // ✅ Merge sorted duplicate values in column 0
+    mergeTableCells(tableSelector, 0);
+    applyAlternatingColors(tableSelector);
+
+    if (thead) thead.style.display = 'table-header-group';
+    if (table) table.style.display = 'table';
+    if (h2) h2.style.display = 'block';
+  }
 
   function mergeTableCells(selector, columnIndex) {
     const table = document.querySelector(selector);
@@ -355,7 +377,7 @@ applyAlternatingColors(tableSelector);
     const rows = table.querySelectorAll('tbody tr');
 
     let prevText = '', prevCell = null, rowspan = 1;
-    rows.forEach((row, i) => {
+    rows.forEach((row) => {
       const cell = row.cells[columnIndex];
       const text = cell?.textContent.trim();
       if (text === prevText) {
