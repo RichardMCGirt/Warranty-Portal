@@ -331,12 +331,17 @@ const oddColor = '#ffffff';   // White
     <td data-field="b" style="display:none">${record.fields['b'] || ''}</td>
   `;
 
-    row.querySelector('[data-field="Lot Number and Community/Neighborhood"]').addEventListener('click', () => {
-      const id = record.fields['Warranty Record ID'];
-      if (!id) return;
-      localStorage.setItem("selectedJobId", id);
-window.location.href = `${window.location.origin}/index.html?techs=${encodedName}`;
-    });
+   row.querySelector('[data-field="Lot Number and Community/Neighborhood"]').addEventListener('click', () => {
+  const id = record.fields['Warranty Record ID'];
+  if (!id) return;
+  localStorage.setItem("selectedJobId", id);
+
+  const tech = record.fields['field tech'] || 'N/A';
+  const encodedName = encodeURIComponent(tech);
+
+  window.location.href = `${window.location.origin}/index.html?techs=${encodedName}`;
+});
+
 
     tbody.appendChild(row);
   });
